@@ -462,13 +462,65 @@
   .modal-tab.loading-tab .tab-dot { background:var(--yellow); opacity:1; animation:blink 0.6s infinite; }
 
   .modal-panel {
-    display:none; padding:16px; min-height:80px;
-    font-size:13px; color:var(--text2); line-height:1.75; white-space:pre-wrap;
+    display:none; padding:16px 20px; min-height:80px;
+    font-size:13px; color:var(--text2); line-height:1.8;
     background:rgba(0,255,65,0.02);
   }
   .modal-panel.active { display:block; }
   .modal-panel.empty { color:var(--text3); font-family:var(--mono); font-size:11px; padding:20px 16px; }
   .modal-panel.typing::after { content:'▌'; animation:blink 0.7s infinite; color:var(--accent); }
+
+  /* ── rendered markdown inside panels ── */
+  .modal-panel .md-h1 {
+    font-family:var(--mono); font-size:10px; color:var(--accent);
+    letter-spacing:3px; text-transform:uppercase; margin:18px 0 8px;
+    padding-bottom:4px; border-bottom:1px solid var(--border2);
+  }
+  .modal-panel .md-h2 {
+    font-family:var(--mono); font-size:10px; color:var(--accent2);
+    letter-spacing:2px; text-transform:uppercase; margin:14px 0 6px;
+  }
+  .modal-panel .md-bold {
+    color:var(--text); font-weight:700; letter-spacing:0.3px;
+  }
+  .modal-panel .md-label {
+    display:inline-block; font-family:var(--mono); font-size:10px;
+    color:var(--accent); font-weight:700; letter-spacing:1px;
+    text-transform:uppercase; min-width:110px;
+  }
+  .modal-panel .md-risk-critical { color:#ff2244; font-weight:700; font-family:var(--mono); font-size:11px; letter-spacing:1px; }
+  .modal-panel .md-risk-high     { color:#ff8800; font-weight:700; font-family:var(--mono); font-size:11px; letter-spacing:1px; }
+  .modal-panel .md-risk-medium   { color:#ffcc00; font-weight:700; font-family:var(--mono); font-size:11px; letter-spacing:1px; }
+  .modal-panel .md-risk-low      { color:#00cc99; font-weight:700; font-family:var(--mono); font-size:11px; letter-spacing:1px; }
+  .modal-panel .md-block {
+    margin:6px 0 10px; padding:10px 14px;
+    background:rgba(0,0,0,0.25); border-left:3px solid var(--border2);
+  }
+  .modal-panel .md-block-threat  { border-left-color:#ff2244; }
+  .modal-panel .md-block-risk    { border-left-color:#ff8800; }
+  .modal-panel .md-block-action  { border-left-color:var(--accent); }
+  .modal-panel .md-block-vuln    { border-left-color:#ff8800; }
+  .modal-panel .md-li { display:flex; gap:8px; margin:3px 0; }
+  .modal-panel .md-li::before { content:'▸'; color:var(--accent3); flex-shrink:0; }
+  .modal-panel .md-p  { margin:4px 0 10px; }
+  .modal-panel .md-hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
+  .modal-panel .md-code {
+    font-family:var(--mono); font-size:11px; color:var(--accent2);
+    background:rgba(0,0,0,0.3); padding:1px 5px; border-radius:2px;
+  }
+  .modal-panel .ioc-section { margin:10px 0 14px; }
+  .modal-panel .ioc-section-title {
+    font-family:var(--mono); font-size:9px; color:var(--accent3);
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:5px;
+    border-bottom:1px solid var(--border); padding-bottom:3px;
+  }
+  .modal-panel .ioc-item {
+    font-family:var(--mono); font-size:11px; color:var(--text2);
+    padding:2px 0; display:flex; gap:8px; align-items:baseline;
+  }
+  .modal-panel .ioc-num { color:var(--text3); flex-shrink:0; min-width:18px; }
+  .modal-panel .ioc-val { color:var(--accent2); word-break:break-all; }
+  .modal-panel .ioc-meta { color:var(--text3); font-size:10px; }
 
   .modal-ai-section { margin-bottom:0; }
   .modal-footer { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:12px 16px; border-top:1px solid var(--border); background:var(--bg3); position:sticky; bottom:0; }
@@ -2258,16 +2310,19 @@ One sentence why.
 🎯 HUNT LEAD
 One sentence: what to hunt for and where to look.`;
 
-const CTI_EXEC_SUMMARY_PROMPT = `Write a tight executive briefing for a CISO or senior leadership. Maximum 200 words total. No padding. Lead with the threat, not the context. Use this exact structure:
+const CTI_EXEC_SUMMARY_PROMPT = `Write a tight executive briefing for a CISO or senior leadership. Maximum 200 words total. No padding. Lead with the threat, not the context. Use this EXACT structure with the labels in bold:
 
-THREAT: [One sentence — what it is, who is behind it if known]
-RISK: [CRITICAL / HIGH / MEDIUM / LOW] — one sentence on real-world impact potential
-AFFECTED: [Who/what is exposed — specific platforms, sectors, versions if relevant]
-WORST CASE: [One sentence — what happens if this is exploited and unmitigated]
-ACTION: [2-3 concrete directives for leadership — patch X, isolate Y, verify Z]
-BOTTOM LINE: [One sentence — the single most important thing to act on now]
+**THREAT:** [One sentence — what it is, who is behind it if known]
+**RISK:** [CRITICAL / HIGH / MEDIUM / LOW] — one sentence on real-world impact potential
+**AFFECTED:** [Who/what is exposed — specific platforms, sectors, versions if relevant]
+**WORST CASE:** [One sentence — what happens if this is exploited and unmitigated]
+**ACTION:**
+- [First concrete directive — patch X, disable Y, verify Z]
+- [Second directive if needed]
+- [Third directive if needed]
+**BOTTOM LINE:** [One sentence — the single most important thing to act on now]
 
-Write only these six labelled lines. No section separators, no extra commentary.`;
+Write only these labelled sections. Use the ** markers exactly as shown. No extra commentary.`;
 
 const CTI_DEEP_ANALYSIS_PROMPT = `Produce a full CTI analysis. Be precise and direct — write only what the source material supports. Skip any section where the article provides no evidence.
 
@@ -2461,7 +2516,7 @@ function resetModalTabs() {
     const panel = document.getElementById(`panel-${tabId}`);
     const tab   = document.querySelector(`[data-tab="${tabId}"]`);
     if (panel) {
-      panel.textContent = '';
+      panel.innerHTML = '';
       panel.className = 'modal-panel empty';
       const placeholders = {
         exec:  'Click EXEC BRIEF to generate a concise executive summary.',
@@ -2470,7 +2525,7 @@ function resetModalTabs() {
         ioc:   'Click IOCs to extract and defang indicators of compromise.',
         brief: 'Click CTI BRIEF for a rapid triage summary.',
       };
-      panel.textContent = placeholders[tabId] || '';
+      panel.innerHTML = `<span style='font-family:var(--mono);font-size:10px;color:var(--text3)'>${placeholders[tabId] || ''}</span>`;
     }
     if (tab) {
       tab.className = 'modal-tab';
@@ -2480,6 +2535,129 @@ function resetModalTabs() {
   // Reset first panel to active
   const firstPanel = document.getElementById('panel-exec');
   if (firstPanel) firstPanel.classList.add('active');
+}
+
+// ── MARKDOWN RENDERER ──────────────────────────────────────────
+function renderMd(text) {
+  if (!text) return '';
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const lines = text.split('\n');
+  let html = '';
+  let inIocSection = false;
+  let iocSectionTitle = '';
+  let iocItems = [];
+
+  const flushIoc = () => {
+    if (!iocSectionTitle) return;
+    html += `<div class="ioc-section"><div class="ioc-section-title">${esc(iocSectionTitle)}</div>`;
+    iocItems.forEach((item, i) => {
+      // item format: "1. value  [meta]" or "1. value"
+      const m = item.match(/^\d+\.\s*(.+?)(?:\s{2,}|\t)(.*)$/);
+      const val = m ? m[1] : item.replace(/^\d+\.\s*/,'');
+      const meta = m ? m[2] : '';
+      html += `<div class="ioc-item"><span class="ioc-num">${i+1}.</span><span class="ioc-val">${esc(val.trim())}</span>${meta ? `<span class="ioc-meta">${esc(meta.trim())}</span>` : ''}</div>`;
+    });
+    html += '</div>';
+    iocSectionTitle = '';
+    iocItems = [];
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const line = raw.trimEnd();
+
+    // IOC section headers (ALL CAPS followed by colon, like "IP ADDRESSES:")
+    if (/^[A-Z][A-Z\s]{3,}:$/.test(line.trim()) && !line.startsWith('**')) {
+      flushIoc();
+      inIocSection = true;
+      iocSectionTitle = line.trim().replace(/:$/, '');
+      continue;
+    }
+
+    // Numbered IOC items inside an IOC section
+    if (inIocSection && /^\s*\d+\.\s/.test(line)) {
+      iocItems.push(line.trim());
+      continue;
+    }
+
+    // End of IOC section on blank line (but only after collecting items)
+    if (inIocSection && line.trim() === '' && iocItems.length > 0) {
+      flushIoc();
+      inIocSection = false;
+      html += '<br>';
+      continue;
+    }
+
+    // Flush IOC on any non-item, non-blank line
+    if (inIocSection && !/^\s*\d+\.\s/.test(line) && line.trim() !== '') {
+      flushIoc();
+      inIocSection = false;
+    }
+
+    // Horizontal rule
+    if (/^[-═]{3,}$/.test(line.trim())) { html += '<hr class="md-hr">'; continue; }
+
+    // H1: # Title or ═══ Title ═══
+    if (/^#\s/.test(line) || /^[═]{3}/.test(line)) {
+      const t = line.replace(/^#+\s*/,'').replace(/[═]/g,'').trim();
+      if (t) html += `<div class="md-h1">${esc(t)}</div>`;
+      continue;
+    }
+
+    // H2: ## Title
+    if (/^##\s/.test(line)) {
+      html += `<div class="md-h2">${esc(line.replace(/^#+\s*/,''))}</div>`;
+      continue;
+    }
+
+    // Blank line
+    if (line.trim() === '') { html += '<div style="height:6px"></div>'; continue; }
+
+    // Process inline markdown on the line
+    let out = esc(line);
+
+    // Risk level badges
+    out = out.replace(/\bCRITICAL\b/g, '<span class="md-risk-critical">CRITICAL</span>');
+    out = out.replace(/\bHIGH\b/g,     '<span class="md-risk-high">HIGH</span>');
+    out = out.replace(/\bMEDIUM\b/g,   '<span class="md-risk-medium">MEDIUM</span>');
+    out = out.replace(/\bLOW\b/g,      '<span class="md-risk-low">LOW</span>');
+
+    // **bold** — but handle **LABEL:** as special styled label
+    out = out.replace(/\*\*([^*]+):\*\*/g, '<span class="md-label">$1:</span>');
+    out = out.replace(/\*\*([^*]+)\*\*/g,  '<span class="md-bold">$1</span>');
+
+    // `code`
+    out = out.replace(/`([^`]+)`/g, '<span class="md-code">$1</span>');
+
+    // List items: - or * or ▸
+    if (/^\s*[-*▸]\s/.test(line)) {
+      html += `<div class="md-li">${out.replace(/^\s*[-*▸]\s*/,'')}</div>`;
+      continue;
+    }
+
+    // Numbered list items (not IOC context)
+    if (/^\s*\d+\.\s/.test(line)) {
+      html += `<div class="md-li">${out.replace(/^\s*\d+\.\s*/,'')}</div>`;
+      continue;
+    }
+
+    // Detect exec brief label lines for block styling
+    const labelMatch = line.match(/^\*\*?(THREAT|RISK|AFFECTED|WORST CASE|ACTION|BOTTOM LINE):\*\*?/i);
+    if (labelMatch) {
+      const key = labelMatch[1].toUpperCase();
+      const blockClass = key === 'THREAT' ? 'md-block-threat'
+        : (key === 'RISK' ? 'md-block-risk'
+        : (key === 'ACTION' || key === 'BOTTOM LINE' ? 'md-block-action' : 'md-block-vuln'));
+      html += `<div class="md-block ${blockClass}">${out}</div>`;
+      continue;
+    }
+
+    html += `<div class="md-p">${out}</div>`;
+  }
+
+  flushIoc();
+  return html;
 }
 
 // ── TAB MANAGEMENT ─────────────────────────────────────────────
@@ -2530,11 +2708,11 @@ async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, prefillText
 
   // If prefill text provided (e.g. regex IOC scan), show it first
   const prefix = prefillText ? prefillText + '\n\n--- AI ANALYSIS ---\n' : '';
-  panel.textContent = prefix || '';
+  panel.innerHTML = prefix ? renderMd(prefix) : '';
 
   try {
     await aiChat(systemPrompt, userPrompt, (_, full) => {
-      panel.textContent = prefix + full;
+      panel.innerHTML = renderMd(prefix ? prefix + '\n' + full : full);
     });
     panel.classList.remove('typing');
     tab?.classList.remove('loading-tab');
@@ -2542,7 +2720,7 @@ async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, prefillText
   } catch(e) {
     panel.classList.remove('typing');
     tab?.classList.remove('loading-tab');
-    panel.textContent = (prefix || '') + `Error: ${e.message}`;
+    panel.innerHTML = renderMd((prefix || '') + `\nError: ${e.message}`);
     toast('AI request failed', 'error');
   } finally {
     const still = ollamaOnline || activeProvider !== 'ollama';
@@ -2649,8 +2827,8 @@ function iocResultsToText(iocs) {
   const fmt = (set, label) => {
     const items = [...set];
     if (!items.length) return '';
-    const numbered = items.map((x, i) => `  ${i+1}. ${x}`).join('\n');
-    return `\n${label}:\n${numbered}`;
+    const numbered = items.map((x, i) => `${i+1}. ${x}`).join('\n');
+    return `\n${label.toUpperCase()}:\n${numbered}`;
   };
   let out = '';
   out += fmt(iocs.ips,     'IP ADDRESSES');
