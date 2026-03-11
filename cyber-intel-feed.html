@@ -1042,28 +1042,28 @@ const SOURCES = [
   { id:'cisa',         name:'CISA Advisories',     url:'https://www.cisa.gov/cybersecurity-advisories/all.xml',          color:'#ff2244', tag:'advisory' },
   { id:'huntress',     name:'Huntress',            url:'https://www.huntress.com/blog/rss.xml',                          color:'#cc44ff', tag:'malware'  },
   { id:'isc',          name:'SANS ISC',            url:'https://isc.sans.edu/rssfeed_full.xml',                          color:'#00ffcc', tag:'advisory' },
-  { id:'gendigital',   name:'Gen Digital',         url:'https://www.gendigital.com/blog/feed/',                          color:'#4488ff', tag:'malware'  },
-  { id:'mandiant',     name:'Mandiant',            url:'https://www.mandiant.com/resources/blog/rss.xml',                color:'#ff4444', tag:'apt'      },
+  { id:'gendigital',   name:'Gen Digital',         url:'https://www.nortonlifelock.com/blogs/security-response/rss/',                          color:'#4488ff', tag:'malware'  },
+  { id:'mandiant',     name:'Mandiant',            url:'https://cloud.google.com/blog/topics/threat-intelligence/rss/',                color:'#ff4444', tag:'apt'      },
   { id:'msft',         name:'Microsoft SecBlog',   url:'https://www.microsoft.com/en-us/security/blog/feed/',            color:'#00aaff', tag:'advisory' },
   { id:'rapid7',       name:'Rapid7 Blog',         url:'https://blog.rapid7.com/rss/',                                   color:'#ff8800', tag:'vuln'     },
   { id:'cisaAlerts',   name:'CISA Alerts',         url:'https://www.cisa.gov/uscert/ncas/alerts.xml',                    color:'#ff2244', tag:'advisory' },
   { id:'cymru',        name:'Team Cymru',          url:'https://www.team-cymru.com/blog/feed/',                          color:'#00ffcc', tag:'apt'      },
   { id:'crowdstrike',  name:'CrowdStrike',         url:'https://www.crowdstrike.com/blog/feed/',                         color:'#ff6600', tag:'apt'      },
   { id:'reddit',       name:'r/blueteamsec',       url:'https://www.reddit.com/r/blueteamsec/.rss',                      color:'#ff6644', tag:'news'     },
-  { id:'zscaler',      name:'Zscaler ThreatLab',  url:'https://www.zscaler.com/blogs/security-research/feed',           color:'#4499ff', tag:'malware'  },
-  { id:'cybereason',   name:'Cybereason',          url:'https://www.cybereason.com/blog/rss.xml',                        color:'#cc44ff', tag:'malware'  },
+  { id:'zscaler',      name:'Zscaler ThreatLab',  url:'https://www.zscaler.com/blogs/security-research/rss.xml',           color:'#4499ff', tag:'malware'  },
+  { id:'cybereason',   name:'Cybereason',          url:'https://www.recordedfuture.com/feed',                        color:'#cc44ff', tag:'malware'  },
   { id:'decipher',     name:'Decipher',            url:'https://duo.com/decipher/feed',                                  color:'#88aaff', tag:'news'     },
   { id:'projectzero',  name:'Project Zero',        url:'https://googleprojectzero.blogspot.com/feeds/posts/default',     color:'#00ccff', tag:'vuln'     },
-  { id:'fortinet',     name:'Fortinet Threat',     url:'https://feeds.fortinet.com/fortinet/blog/threat-research',       color:'#ff4444', tag:'malware'  },
+  { id:'fortinet',     name:'Fortinet Threat',     url:'https://www.fortinet.com/blog/threat-research/rss.xml',       color:'#ff4444', tag:'malware'  },
   { id:'reversinglabs',name:'ReversingLabs',       url:'https://www.reversinglabs.com/blog/feed.xml',                    color:'#ffaa00', tag:'malware'  },
-  { id:'mitreview',    name:'MIT Tech Review',      url:'https://www.technologyreview.com/feed/',                          color:'#88ccff', tag:'news'     },
+  { id:'mitreview',    name:'MIT Tech Review',      url:'https://www.technologyreview.com/feed/topic/cybersecurity/',                          color:'#88ccff', tag:'news'     },
   { id:'detectfyi',    name:'Detect FYI',           url:'https://medium.com/feed/detect-fyi',                              color:'#00ffcc', tag:'advisory' },
   { id:'trustedsec',   name:'TrustedSec',           url:'https://trustedsec.com/feed.rss',                                 color:'#ff8800', tag:'malware'  },
   { id:'badsector',    name:'Bad Sector Labs',      url:'https://blog.badsectorlabs.com/feeds/all.atom.xml',               color:'#cc44ff', tag:'malware'  },
   { id:'dfirreport',   name:'DFIR Report',          url:'https://thedfirreport.com/feed/',                                 color:'#ff4444', tag:'apt'      },
   { id:'kostasmed',    name:'Kostas (Medium)',       url:'https://medium.com/feed/@kostas-ts',                              color:'#00cc99', tag:'apt'      },
   { id:'goblinloot',   name:'Lucy / GoblinLoot',    url:'https://www.goblinloot.net/feeds/posts/default',                  color:'#aa66ff', tag:'advisory' },
-  { id:'sentinel',     name:'MS Sentinel Blog',     url:'https://techcommunity.microsoft.com/gxcuf89792/rss/board?board.id=MicrosoftSentinelBlog', color:'#00aaff', tag:'advisory' },
+  { id:'sentinel',     name:'MS Sentinel Blog',     url:'https://techcommunity.microsoft.com/plugins/custom/microsoft/o365/custom-blog-rss?tid=1&board=MicrosoftSentinelBlog', color:'#00aaff', tag:'advisory' },
   { id:'socradar',     name:'SOCRadar',             url:'https://socradar.io/feed/',                                       color:'#ff6600', tag:'news'     },
   { id:'infostealers',  name:'InfoStealers',          url:'https://www.infostealers.com/feed/',                              color:'#ff2244', tag:'malware'  },
   { id:'theregister',   name:'The Register',          url:'https://www.theregister.com/security/headlines.atom',             color:'#cc0000', tag:'news'     },
@@ -1072,13 +1072,18 @@ const SOURCES = [
   { id:'helpnetsec',    name:'Help Net Security',      url:'https://www.helpnetsecurity.com/feed',                            color:'#00cc88', tag:'news'     },
   { id:'infosecmag',    name:'Infosecurity Magazine',  url:'https://www.infosecurity-magazine.com/rss/news',                 color:'#8844ff', tag:'news'     },
   { id:'malwarebytes', name:'Malwarebytes',         url:'https://www.malwarebytes.com/blog/feed/',                          color:'#0077cc', tag:'malware'  },
-  { id:'cryptika',     name:'Cryptika',             url:'https://www.cryptika.com/feed/',                                  color:'#00ccaa', tag:'advisory' },
+  { id:'cryptika',     name:'Cryptika',             url:'https://securityaffairs.com/feed',                                  color:'#00ccaa', tag:'advisory' },
 ];
 
+// Each entry: { url: fn, unwrap: fn|null }
+// unwrap() extracts XML from a proxy that returns JSON
 const CORS_PROXIES = [
-  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+  { url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,          unwrap: null },
+  { url: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,                   unwrap: null },
+  { url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,           unwrap: r => { try { return JSON.parse(r).contents; } catch { return r; } } },
+  { url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,     unwrap: null },
+  { url: u => `https://corsproxy.org/?url=${encodeURIComponent(u)}`,                  unwrap: null },
+  { url: u => `https://thingproxy.freeboard.io/fetch/${u}`,                           unwrap: null },
 ];
 
 // ============================================================
@@ -1213,7 +1218,7 @@ async function checkOllama() {
 }
 
 function enableAIButtons(on) {
-  document.querySelectorAll('.card-ai-btn, #modalExecBtn, #modalAnalyzeBtn, #modalHighlightsBtn, #modalIOCBtn, #btnDigest').forEach(b => {
+  document.querySelectorAll('.card-ai-btn, #modalExecBtn, #modalAnalyzeBtn, #modalHighlightsBtn, #modalIOCBtn, #modalBriefBtn, #btnDigest').forEach(b => {
     b.disabled = !on;
   });
 }
@@ -1510,9 +1515,10 @@ async function ollamaChat(systemPrompt, userPrompt, onChunk) {
 // CACHE (IndexedDB)
 // ============================================================
 const DB_NAME = 'threatfeed_cache';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_NAME = 'feeds';
 const CACHE_KEY = 'articles';
+const HUNT_STORE = 'hunts';
 const CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let db = null;
@@ -1672,7 +1678,6 @@ async function loadFromCache() {
 // ============================================================
 // THREAT HUNT SYSTEM
 // ============================================================
-const HUNT_STORE = 'hunts';
 let huntLinks = [];       // temp links being built in the form
 let editingHuntId = null; // null = new, string = editing
 let huntFilterMode = 'all';
@@ -2041,11 +2046,36 @@ async function fetchFeed(src) {
     await fetchRansomwareLive(src);
     return;
   }
-  for (const proxyFn of CORS_PROXIES) {
-    try {
-      const res = await fetch(proxyFn(src.url), { signal: AbortSignal.timeout(14000) });
-      if (!res.ok) continue;
+
+  // Try direct fetch first (works for CORS-enabled feeds like Reddit, CISA, Atom feeds)
+  try {
+    const res = await fetch(src.url, { signal: AbortSignal.timeout(8000), mode: 'cors' });
+    if (res.ok) {
       const text = await res.text();
+      const articles = parseRSS(text, src);
+      if (articles.length) {
+        allArticles.push(...articles);
+        sourceStatus[src.id] = 'loaded';
+        updateSourceItem(src.id, articles.length);
+        return;
+      }
+    }
+  } catch { /* fall through to proxies */ }
+
+  // Try each proxy in order
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = proxy.url(src.url);
+      const res = await fetch(proxyUrl, {
+        signal: AbortSignal.timeout(18000),
+        headers: { 'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
+      });
+      if (!res.ok) continue;
+      let text = await res.text();
+      // Unwrap JSON envelope if proxy wraps content
+      if (proxy.unwrap) text = proxy.unwrap(text) || text;
+      // If response looks like JSON (proxy error page or wrong format), skip
+      if (text.trim().startsWith('{') && !text.includes('<')) continue;
       const articles = parseRSS(text, src);
       if (!articles.length) continue;
       allArticles.push(...articles);
@@ -2054,6 +2084,7 @@ async function fetchFeed(src) {
       return;
     } catch { continue; }
   }
+
   sourceStatus[src.id] = 'error';
   updateSourceItem(src.id, 0);
 }
@@ -2133,31 +2164,103 @@ function updateRansomwareStats(victims) {
 
 function parseRSS(xmlText, src) {
   try {
-    const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+    // Strip BOM and leading whitespace that breaks DOMParser
+    const cleaned = xmlText.replace(/^\uFEFF/, '').trim();
+
+    // If this looks like a JSON RSS wrapper (rss2json etc), handle it
+    if (cleaned.startsWith('{')) {
+      try {
+        const json = JSON.parse(cleaned);
+        const items = json.items || json.entries || [];
+        return items.slice(0, 25).map((item, i) => {
+          const title = item.title || 'Untitled';
+          const link  = item.link || item.url || item.guid || '';
+          let desc    = item.description || item.content || item.summary || '';
+          desc = desc.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 500);
+          const date  = item.pubDate || item.published || item.updated || '';
+          const d     = date ? new Date(date) : new Date(Date.now() - i * 3600000);
+          return {
+            id: `${src.id}-${i}-${Date.now()}`,
+            title, link, desc,
+            date: isNaN(d) ? new Date() : d,
+            source: src,
+            tags: detectTags(title + ' ' + desc)
+          };
+        });
+      } catch { return []; }
+    }
+
+    const doc = new DOMParser().parseFromString(cleaned, 'text/xml');
+
+    // Check for XML parse error
+    if (doc.querySelector('parsererror')) {
+      // Try as HTML as last resort (some feeds return malformed XML)
+      const doc2 = new DOMParser().parseFromString(cleaned, 'text/html');
+      if (!doc2.querySelector('item, entry')) return [];
+    }
+
     const isAtom = !!doc.querySelector('feed');
-    const items = doc.querySelectorAll(isAtom ? 'entry' : 'item');
+    const items  = doc.querySelectorAll(isAtom ? 'entry' : 'item');
+    if (!items.length) return [];
+
     const articles = [];
     items.forEach((item, i) => {
       if (i >= 25) return;
-      const get = (sel) => item.querySelector(sel)?.textContent?.trim() || '';
-      const title = get('title') || 'Untitled';
-      let link = isAtom
-        ? (item.querySelector('link[rel="alternate"]')?.getAttribute('href') || item.querySelector('link')?.getAttribute('href') || get('link'))
-        : (get('link') || get('guid'));
-      let desc = get('description') || get('summary') || get('content') || '';
-      desc = desc.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 500);
-      const pubDate = get('pubDate') || get('updated') || get('published') || get('dc\\:date') || '';
-      const date = pubDate ? new Date(pubDate) : new Date(Date.now() - i * 3600000);
+
+      // Robust text extractor — handles CDATA and namespaced elements
+      const getText = (...sels) => {
+        for (const sel of sels) {
+          try {
+            const el = item.querySelector(sel);
+            if (el?.textContent?.trim()) return el.textContent.trim();
+          } catch { /* invalid selector, skip */ }
+        }
+        return '';
+      };
+
+      // Also grab by tag name for namespace-prefixed elements like dc:date
+      const getByTag = (tag) => {
+        const els = item.getElementsByTagName(tag);
+        return els.length ? (els[0].textContent?.trim() || '') : '';
+      };
+
+      const title = getText('title') || 'Untitled';
+
+      // Link extraction — Atom uses <link href="..."> or <link rel="alternate" href="...">
+      let link = '';
+      if (isAtom) {
+        const altLink = item.querySelector('link[rel="alternate"]');
+        const anyLink = item.querySelector('link[href]');
+        link = altLink?.getAttribute('href') || anyLink?.getAttribute('href') || getText('link', 'id');
+      } else {
+        link = getText('link') || getText('guid') || getByTag('link');
+        // Some feeds put URL in guid with isPermaLink=true
+        if (!link) {
+          const guid = item.querySelector('guid');
+          if (guid && guid.getAttribute('isPermaLink') !== 'false') link = guid.textContent.trim();
+        }
+      }
+
+      // Description — try multiple fields
+      let desc = getText('description', 'summary', 'content\\:encoded', 'content', 'media\\:description')
+               || getByTag('description') || getByTag('summary') || getByTag('encoded') || '';
+      desc = desc.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 500);
+
+      // Date — try all common fields + dc:date namespace
+      const pubDate = getText('pubDate', 'updated', 'published', 'date')
+                   || getByTag('pubDate') || getByTag('updated') || getByTag('published') || getByTag('date');
+      const d = pubDate ? new Date(pubDate) : new Date(Date.now() - i * 3600000);
+
       articles.push({
         id: `${src.id}-${i}-${Date.now()}`,
         title, link, desc,
-        date: isNaN(date) ? new Date() : date,
+        date: isNaN(d.getTime()) ? new Date() : d,
         source: src,
         tags: detectTags(title + ' ' + desc)
       });
     });
     return articles;
-  } catch { return []; }
+  } catch(e) { return []; }
 }
 
 function detectTags(text) {
@@ -2488,10 +2591,10 @@ function openArticle(id) {
     return `<span class="tag ${cls}">${t}</span>`;
   }).join('');
   resetModalTabs();
-  ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn'].forEach(id => {
-    document.getElementById(id).disabled = !ollamaOnline;
+  ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn','modalBriefBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !(ollamaOnline || activeProvider !== 'ollama');
   });
-  resetModalTabs();
   document.getElementById('articleModal').style.display = 'flex';
   // Show hunt count for this article
   updateArticleHuntBadge();
