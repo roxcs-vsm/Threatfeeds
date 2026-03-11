@@ -1,0 +1,2863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THREAT INTEL // FEED AGGREGATOR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #030a06;
+    --bg2: #060f09;
+    --bg3: #0a160d;
+    --panel: #0d1a10;
+    --panel2: #111e14;
+    --border: #1a3d20;
+    --border2: #224428;
+    --accent: #00ff41;
+    --accent2: #00cc33;
+    --accent3: #1a5c26;
+    --red: #ff2244;
+    --orange: #ff8800;
+    --yellow: #ffcc00;
+    --blue: #00aaff;
+    --purple: #cc44ff;
+    --dim: #3a6640;
+    --text: #c8e8cb;
+    --text2: #7aaa80;
+    --text3: #4a7050;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Orbitron', monospace;
+    --body: 'Rajdhani', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,0.012) 2px,rgba(0,255,65,0.012) 4px);
+    pointer-events:none; z-index:9999;
+  }
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg2); }
+  ::-webkit-scrollbar-thumb { background:var(--accent3); }
+  ::-webkit-scrollbar-thumb:hover { background:var(--accent2); }
+
+  /* HEADER */
+  .header {
+    border-bottom:1px solid var(--border2);
+    background:var(--bg2);
+    position:sticky; top:0; z-index:200;
+    display:flex; align-items:stretch; height:56px;
+  }
+  .header-logo {
+    font-family:var(--display);
+    font-size:14px; font-weight:900;
+    color:var(--accent); letter-spacing:3px;
+    padding:0 20px; border-right:1px solid var(--border2);
+    display:flex; align-items:center; gap:10px; flex-shrink:0;
+    text-shadow: 0 0 20px rgba(0,255,65,0.5);
+  }
+  .blink-dot {
+    width:8px; height:8px; background:var(--accent); border-radius:50%;
+    animation:blink 1.2s infinite; box-shadow:0 0 8px var(--accent); flex-shrink:0;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.1} }
+  .header-stats {
+    display:flex; align-items:center; gap:24px;
+    padding:0 20px; flex:1;
+    font-family:var(--mono); font-size:11px; color:var(--text3);
+  }
+  .header-stats .val { color:var(--accent2); font-size:13px; }
+  .header-ai-status {
+    display:flex; align-items:center; gap:8px;
+    padding:0 16px; border-left:1px solid var(--border);
+    font-family:var(--mono); font-size:10px;
+  }
+  .ai-dot {
+    width:7px; height:7px; border-radius:50%;
+    background:#444; transition:all 0.3s;
+  }
+  .ai-dot.online { background:var(--accent); box-shadow:0 0 8px var(--accent); animation:blink 2s infinite; }
+  .ai-dot.offline { background:var(--red); box-shadow:0 0 6px var(--red); }
+  .ai-dot.checking { background:var(--yellow); animation:blink 0.5s infinite; }
+  .header-controls {
+    display:flex; align-items:center; gap:6px;
+    padding:0 14px; border-left:1px solid var(--border);
+  }
+  .btn {
+    font-family:var(--mono); font-size:10px;
+    padding:6px 12px; border:1px solid var(--border2);
+    background:transparent; color:var(--text2);
+    cursor:pointer; text-transform:uppercase; letter-spacing:1px;
+    transition:all 0.15s; white-space:nowrap;
+  }
+  .btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,255,65,0.06); box-shadow:0 0 10px rgba(0,255,65,0.15); }
+  .btn.active { border-color:var(--accent); color:var(--bg); background:var(--accent); }
+  .btn:disabled { opacity:0.35; cursor:not-allowed; }
+
+
+
+  /* LAYOUT */
+  .app-body {
+    display:grid;
+    grid-template-columns:220px 1fr 300px;
+    min-height:calc(100vh - 56px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background:var(--bg2); border-right:1px solid var(--border);
+    overflow-y:auto; max-height:calc(100vh - 56px);
+    position:sticky; top:56px;
+  }
+  .sidebar-section { border-bottom:1px solid var(--border); }
+  .sidebar-label {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    letter-spacing:3px; text-transform:uppercase; padding:10px 14px 6px;
+  }
+  .source-item {
+    display:flex; align-items:center; gap:8px; padding:7px 14px; cursor:pointer;
+    font-size:12px; color:var(--text2); transition:all 0.1s;
+    border-left:2px solid transparent; font-family:var(--body); font-weight:500;
+  }
+  .source-item:hover { color:var(--text); background:rgba(0,255,65,0.04); border-left-color:var(--accent3); }
+  .source-item.active { color:var(--accent); background:rgba(0,255,65,0.07); border-left-color:var(--accent); }
+  .src-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; background:var(--text3); }
+  .source-item.loaded .src-dot { background:var(--accent2); box-shadow:0 0 4px var(--accent2); }
+  .source-item.error .src-dot { background:var(--red); }
+  .source-item.loading .src-dot { background:var(--yellow); animation:blink 0.6s infinite; }
+  .source-item.disabled { opacity:0.45; }
+  .source-item.disabled .src-dot { background:var(--red) !important; box-shadow:0 0 4px rgba(255,34,68,0.5) !important; animation:none !important; }
+  .src-dot { cursor:pointer; transition:box-shadow 0.15s; }
+  .src-dot:hover { box-shadow:0 0 6px #fff4 !important; transform:scale(1.3); }
+  .src-digest-btn {
+    display:none; margin-left:auto; padding:1px 5px; font-family:var(--mono); font-size:8px;
+    color:var(--accent3); border:1px solid var(--accent3); border-radius:2px; cursor:pointer;
+    background:none; flex-shrink:0; white-space:nowrap; line-height:1.5;
+  }
+  .source-item:hover .src-digest-btn { display:block; }
+  .source-item.disabled .src-digest-btn { display:none !important; }
+  .trend-digest-btn {
+    display:none; padding:1px 5px; font-family:var(--mono); font-size:8px;
+    color:var(--accent3); border:1px solid var(--accent3); border-radius:2px; cursor:pointer;
+    background:none; flex-shrink:0; white-space:nowrap; line-height:1.5; margin-left:4px;
+  }
+  .trend-item:hover .trend-digest-btn { display:block; }
+
+  /* ── FOCUS DIGEST PANEL ── */
+  .focus-digest-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1400;
+    display:flex; align-items:flex-end; justify-content:flex-end;
+  }
+  .focus-digest-panel {
+    width:520px; max-width:100vw; height:100vh; max-height:100vh;
+    background:var(--bg2); border-left:1px solid var(--border);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .focus-digest-header {
+    padding:14px 16px 10px; border-bottom:1px solid var(--border);
+    display:flex; align-items:flex-start; gap:10px; flex-shrink:0; background:var(--bg3);
+  }
+  .focus-digest-title { font-family:var(--mono); font-size:10px; color:var(--accent3); letter-spacing:2px; margin-bottom:3px; }
+  .focus-digest-subject { font-family:var(--font); font-size:15px; color:var(--text); font-weight:600; line-height:1.3; }
+  .focus-digest-meta { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:3px; }
+  .focus-digest-body {
+    flex:1; overflow-y:auto; padding:16px; font-family:var(--font);
+    font-size:14px; line-height:1.7; color:var(--text2); white-space:pre-wrap;
+  }
+  .focus-digest-body.typing { opacity:0.8; }
+  .src-count { margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--text3); flex-shrink:0; }
+
+  .filter-section { padding:10px 14px; border-bottom:1px solid var(--border); }
+  .filter-input {
+    width:100%; background:var(--bg3); border:1px solid var(--border);
+    color:var(--text); font-family:var(--mono); font-size:11px;
+    padding:7px 10px; outline:none; transition:border-color 0.15s;
+  }
+  .filter-input:focus { border-color:var(--accent2); box-shadow:0 0 8px rgba(0,255,65,0.1); }
+  .filter-input::placeholder { color:var(--text3); }
+
+  .tag-filters { display:flex; flex-wrap:wrap; gap:4px; padding:8px 14px; border-bottom:1px solid var(--border); }
+  .tag-btn {
+    font-family:var(--mono); font-size:9px; padding:3px 8px;
+    border:1px solid var(--border); background:transparent;
+    color:var(--text3); cursor:pointer; text-transform:uppercase; letter-spacing:1px; transition:all 0.1s;
+  }
+  .tag-btn:hover { border-color:var(--accent3); color:var(--text2); }
+  .tag-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(0,255,65,0.08); }
+
+  /* OLLAMA CONFIG PANEL */
+  .ollama-panel { padding:12px 14px; border-bottom:1px solid var(--border); }
+  .ollama-title {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    letter-spacing:3px; text-transform:uppercase; margin-bottom:8px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .ollama-title span { color:var(--accent2); }
+  .model-select, .ollama-url-input {
+    width:100%; background:var(--bg3); border:1px solid var(--border);
+    color:var(--text2); font-family:var(--mono); font-size:11px;
+    padding:6px 8px; outline:none; margin-bottom:6px;
+  }
+  .model-select { cursor:pointer; }
+  .model-select option { background:var(--bg2); }
+  .ollama-url-input:focus, .model-select:focus { border-color:var(--accent2); }
+  #ollamaDiag a { color:var(--accent2); text-decoration:none; }
+  #ollamaDiag a:hover { text-decoration:underline; }
+  .provider-tabs {
+    display:flex; gap:3px; margin-bottom:8px;
+  }
+  .provider-tab {
+    flex:1; background:var(--bg3); border:1px solid var(--border);
+    color:var(--text3); font-family:var(--mono); font-size:9px;
+    letter-spacing:1px; padding:5px 2px; cursor:pointer;
+    text-transform:uppercase; transition:all 0.15s;
+  }
+  .provider-tab:hover { border-color:var(--accent2); color:var(--text2); }
+  .provider-tab.active {
+    background:rgba(0,255,65,0.1); border-color:var(--accent);
+    color:var(--accent);
+  }
+  .api-key-label {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    letter-spacing:2px; margin-bottom:4px; text-transform:uppercase;
+  }
+
+  /* MAIN FEED */
+  .main-feed {
+    overflow-y:auto; max-height:calc(100vh - 56px);
+    background:var(--bg); padding:0;
+  }
+  .feed-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 20px; border-bottom:1px solid var(--border);
+    background:var(--bg2); position:sticky; top:0; z-index:10;
+  }
+  .feed-header-left { font-family:var(--mono); font-size:11px; color:var(--text3); }
+  .feed-header-left .count { color:var(--accent2); font-size:14px; font-weight:bold; }
+  .sort-btns { display:flex; gap:4px; }
+  .feed-loading {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:60px 20px; gap:16px; font-family:var(--mono); color:var(--text3);
+  }
+  .loader-bar {
+    width:240px; height:2px; background:var(--border); position:relative; overflow:hidden;
+  }
+  .loader-bar::after {
+    content:''; position:absolute; top:0; left:-40%;
+    width:40%; height:100%; background:var(--accent); animation:load 1s ease-in-out infinite;
+  }
+  @keyframes load { 0%{left:-40%} 100%{left:100%} }
+
+  /* ARTICLE CARD */
+  .article-card {
+    border-bottom:1px solid var(--border);
+    padding:14px 20px; transition:background 0.1s; cursor:pointer;
+    animation:fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  .article-card:hover { background:rgba(0,255,65,0.03); }
+  .card-meta {
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:5px; flex-wrap:wrap;
+  }
+  .card-source {
+    font-family:var(--mono); font-size:11px;
+    text-transform:uppercase; letter-spacing:2px;
+    border:1px solid; padding:1px 6px;
+  }
+  .card-date { font-family:var(--mono); font-size:12px; color:var(--text3); }
+  .card-tags { display:flex; gap:4px; flex-wrap:wrap; }
+  .tag {
+    font-family:var(--mono); font-size:11px; padding:1px 6px;
+    text-transform:uppercase; letter-spacing:1px; border:1px solid;
+  }
+  .tag.critical { color:var(--red); border-color:var(--red); background:rgba(255,34,68,0.08); }
+  .tag.high { color:var(--orange); border-color:var(--orange); background:rgba(255,136,0,0.08); }
+  .tag.medium { color:var(--yellow); border-color:var(--yellow); background:rgba(255,204,0,0.08); }
+  .tag.info { color:var(--blue); border-color:var(--blue); background:rgba(0,170,255,0.08); }
+  .tag.malware { color:var(--purple); border-color:var(--purple); background:rgba(204,68,255,0.08); }
+  .card-title {
+    font-family:var(--body); font-size:17px; font-weight:600;
+    color:var(--text); line-height:1.35; margin-bottom:5px;
+  }
+  .article-card:hover .card-title { color:var(--accent); }
+  .card-summary {
+    font-size:15px; color:var(--text2); line-height:1.5;
+    margin-bottom:8px; display:-webkit-box;
+    -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .card-footer { display:flex; align-items:center; gap:12px; justify-content:space-between; }
+  .card-link {
+    font-family:var(--mono); font-size:12px; color:var(--accent3);
+    text-decoration:none; letter-spacing:1px; transition:color 0.1s;
+  }
+  .card-link:hover { color:var(--accent); }
+  .card-ai-btn {
+    font-family:var(--mono); font-size:10px;
+    padding:4px 10px; border:1px solid var(--accent3);
+    background:transparent; color:var(--accent3);
+    cursor:pointer; text-transform:uppercase; letter-spacing:1px;
+    transition:all 0.15s; white-space:nowrap;
+  }
+  .card-ai-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); background:rgba(0,255,65,0.08); }
+  .card-ai-btn:disabled { opacity:0.3; cursor:not-allowed; }
+  .card-ai-btn.summarizing { color:var(--yellow); border-color:var(--yellow); animation:blink 0.8s infinite; }
+  .ai-summary-box {
+    margin-top:10px; padding:10px 14px;
+    background:rgba(0,255,65,0.04); border:1px solid var(--accent3); border-left:3px solid var(--accent);
+    font-size:13px; color:var(--text); line-height:1.8;
+    white-space:pre-wrap; word-break:break-word;
+    display:none;
+  }
+  .ai-summary-box.visible { display:block; animation:fadeIn 0.3s ease; }
+  .ai-summary-label {
+    font-family:var(--mono); font-size:9px; color:var(--accent2);
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:6px;
+  }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    background:var(--bg2); border-left:1px solid var(--border);
+    overflow-y:auto; max-height:calc(100vh - 56px);
+    position:sticky; top:56px;
+  }
+  .rp-section { border-bottom:1px solid var(--border); }
+  .rp-title {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    letter-spacing:3px; text-transform:uppercase;
+    padding:12px 14px 6px;
+    display:flex; align-items:center; gap:8px; justify-content:space-between;
+  }
+  .trend-clear {
+    font-size:9px; color:var(--accent3); cursor:pointer;
+    letter-spacing:1px; opacity:0.8; display:none;
+  }
+  .trend-clear:hover { color:var(--accent); opacity:1; }
+  .stats-grid { padding:10px 14px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat-box {
+    background:var(--bg3); border:1px solid var(--border);
+    padding:10px; text-align:center;
+  }
+  .stat-val {
+    font-family:var(--display); font-size:20px; font-weight:700;
+    color:var(--accent); display:block; line-height:1;
+    text-shadow:0 0 16px rgba(0,255,65,0.4);
+  }
+  .stat-lbl { font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:1px; margin-top:4px; display:block; }
+  .trend-list { padding:0 14px 14px; }
+  .trend-item {
+    display:flex; align-items:center; gap:8px;
+    padding:6px 14px; border-bottom:1px solid var(--border);
+    font-size:12px; color:var(--text2);
+    cursor:pointer; transition:background 0.15s;
+  }
+  .trend-item:hover { background:rgba(0,255,65,0.05); }
+  .trend-item.active { background:rgba(0,255,65,0.1); border-left:2px solid var(--accent); padding-left:12px; }
+  .trend-item:last-child { border-bottom:none; }
+  .trend-rank { font-family:var(--mono); font-size:10px; color:var(--text3); width:16px; flex-shrink:0; }
+  .trend-bar-wrap { flex:1; }
+  .trend-label { margin-bottom:3px; font-size:12px; transition:color 0.15s; }
+  .trend-label.active-kw { color:var(--accent); font-weight:600; }
+  .trend-bar { height:3px; background:var(--accent3); }
+  .trend-bar-fill { height:100%; background:var(--accent2); transition:width 1s ease; }
+  .trend-item.active .trend-bar-fill { background:var(--accent); }
+  .trend-count { font-family:var(--mono); font-size:10px; color:var(--accent3); width:24px; text-align:right; flex-shrink:0; }
+  .digest-area { padding:12px 14px; }
+  .digest-placeholder { font-family:var(--mono); font-size:11px; color:var(--text3); line-height:1.8; }
+  .digest-placeholder .cmd { color:var(--accent2); }
+  .digest-text { font-size:13px; color:var(--text2); line-height:1.65; white-space:pre-wrap; display:none; }
+  .recent-list { padding:0; }
+  .recent-item {
+    padding:9px 14px; border-bottom:1px solid var(--border);
+    cursor:pointer; transition:background 0.1s; font-size:12px;
+  }
+  .recent-item:hover { background:rgba(0,255,65,0.04); }
+  .ri-src { font-family:var(--mono); font-size:9px; color:var(--accent3); margin-bottom:2px; }
+  .ri-title { color:var(--text2); line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ri-time { font-family:var(--mono); font-size:9px; color:var(--text3); margin-top:2px; }
+
+  /* EMPTY */
+  .empty-state {
+    padding:40px 20px; text-align:center;
+    font-family:var(--mono); font-size:11px; color:var(--text3); line-height:2;
+  }
+
+  /* TOAST */
+  .toast-container { position:fixed; bottom:20px; right:20px; z-index:9998; display:flex; flex-direction:column; gap:8px; }
+  .toast {
+    background:var(--panel2); border:1px solid var(--border2);
+    padding:10px 16px; font-family:var(--mono); font-size:11px;
+    color:var(--text2); border-left:3px solid var(--accent2);
+    animation:slideIn 0.2s ease; min-width:260px;
+  }
+  .toast.error { border-left-color:var(--red); color:#ff6677; }
+  .toast.info { border-left-color:var(--blue); }
+  @keyframes slideIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+  #btnLoadCache {
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+  #btnLoadCache:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(0,204,255,0.08);
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:500;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px); padding:20px;
+  }
+  .modal {
+    background:var(--bg2); border:1px solid var(--border2);
+    max-width:780px; width:100%; max-height:88vh; overflow-y:auto;
+  }
+  .modal-header {
+    padding:16px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+    position:sticky; top:0; background:var(--bg2); z-index:2;
+  }
+  .modal-source { font-family:var(--mono); font-size:10px; color:var(--accent3); letter-spacing:2px; margin-bottom:6px; }
+  .modal-title { font-size:17px; font-weight:600; color:var(--text); line-height:1.35; }
+  .modal-close {
+    background:none; border:1px solid var(--border); color:var(--text2);
+    font-size:16px; cursor:pointer; width:30px; height:30px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    transition:all 0.1s; font-family:var(--mono);
+  }
+  .modal-close:hover { border-color:var(--red); color:var(--red); }
+  .modal-body { padding:20px; }
+  .modal-desc { font-size:14px; color:var(--text2); line-height:1.7; margin-bottom:16px; }
+  .modal-ai-section {
+    background:rgba(0,255,65,0.04); border:1px solid var(--accent3);
+    border-left:3px solid var(--accent); padding:14px; margin-bottom:16px;
+    min-height:60px;
+  }
+  .modal-ai-label {
+    font-family:var(--mono); font-size:9px; color:var(--accent2);
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
+  }
+  .modal-ai-text { font-size:13px; color:var(--text2); line-height:1.7; white-space:pre-wrap; }
+  .modal-footer { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+  /* typing cursor */
+  .typing::after { content:'▌'; animation:blink 0.7s infinite; color:var(--accent); }
+
+  @media (max-width: 1100px) {
+    .app-body { grid-template-columns: 200px 1fr; }
+    .right-panel { display:none; }
+  }
+  @media (max-width: 700px) {
+    .app-body { grid-template-columns: 1fr; }
+    .sidebar { display:none; }
+    .header-stats { display:none; }
+  }
+
+  /* ═══ RANSOMWARE STATS ═══ */
+  .rstats-list { display:flex; flex-direction:column; gap:3px; }
+  .rstats-row { display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--mono); font-size:10px; color:var(--text2); }
+  .rstats-name { color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70px; }
+  .rstats-count { color:var(--red); font-weight:bold; flex-shrink:0; margin-left:4px; }
+
+  /* ═══ HUNT MODAL ═══ */
+  .hunt-modal { max-width:640px; width:95vw; max-height:90vh; overflow-y:auto; }
+  .hunt-field-label {
+    font-family:var(--mono); font-size:9px; color:#aa66ff;
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:5px;
+  }
+  .hunt-input {
+    width:100%; background:var(--bg3); border:1px solid var(--border);
+    color:var(--text2); font-family:var(--body); font-size:13px;
+    padding:8px 10px; outline:none; box-sizing:border-box;
+    transition:border-color 0.15s; margin-bottom:0; resize:vertical;
+  }
+  .hunt-input:focus { border-color:#aa66ff; }
+  .hunt-input option { background:var(--bg2); }
+  .hunt-textarea { height:80px; font-family:var(--mono); font-size:12px; line-height:1.6; }
+  .hunt-link-item {
+    display:flex; align-items:center; gap:8px;
+    padding:5px 8px; background:rgba(170,102,255,0.07); border:1px solid rgba(170,102,255,0.2);
+    font-family:var(--mono); font-size:11px;
+  }
+  .hunt-link-item a { color:#aa66ff; text-decoration:none; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hunt-link-item a:hover { text-decoration:underline; }
+  .hunt-link-remove { cursor:pointer; color:var(--red); font-size:14px; flex-shrink:0; }
+
+  /* ═══ HUNTS LIST ═══ */
+  .hunts-list-modal { max-width:780px; width:95vw; }
+  .hunt-card {
+    padding:14px 16px; border-bottom:1px solid var(--border);
+    transition:background 0.1s; cursor:pointer;
+  }
+  .hunt-card:hover { background:rgba(170,102,255,0.04); }
+  .hunt-card-header { display:flex; align-items:flex-start; gap:10px; margin-bottom:6px; }
+  .hunt-priority {
+    font-family:var(--mono); font-size:9px; padding:2px 7px; border:1px solid;
+    text-transform:uppercase; letter-spacing:1px; flex-shrink:0; margin-top:2px;
+  }
+  .hunt-priority.critical { color:var(--red); border-color:var(--red); background:rgba(255,34,68,0.08); }
+  .hunt-priority.high     { color:var(--orange); border-color:var(--orange); background:rgba(255,136,0,0.08); }
+  .hunt-priority.medium   { color:var(--yellow); border-color:var(--yellow); background:rgba(255,204,0,0.08); }
+  .hunt-priority.low      { color:#00cc99; border-color:#00cc99; background:rgba(0,204,153,0.08); }
+  .hunt-card-title { font-size:15px; font-weight:600; color:var(--text); flex:1; line-height:1.3; }
+  .hunt-card-meta { display:flex; gap:12px; font-family:var(--mono); font-size:10px; color:var(--text3); flex-wrap:wrap; }
+  .hunt-card-desc { font-size:13px; color:var(--text2); margin:6px 0; line-height:1.5;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .hunt-status {
+    font-family:var(--mono); font-size:9px; padding:2px 7px; border:1px solid;
+    text-transform:uppercase; letter-spacing:1px;
+  }
+  .hunt-status.backlog     { color:var(--text3); border-color:var(--border); }
+  .hunt-status.in-progress { color:var(--accent2); border-color:var(--accent2); }
+  .hunt-status.completed   { color:#00cc99; border-color:#00cc99; }
+  .hunt-status.blocked     { color:var(--red); border-color:var(--red); }
+  .hunt-filter-btn {
+    background:var(--bg3); border:1px solid var(--border);
+    color:var(--text3); font-family:var(--mono); font-size:9px;
+    letter-spacing:1px; padding:4px 10px; cursor:pointer;
+    text-transform:uppercase; transition:all 0.15s;
+  }
+  .hunt-filter-btn:hover { border-color:var(--accent2); color:var(--text2); }
+  .hunt-filter-btn.active { background:rgba(170,102,255,0.12); border-color:#aa66ff; color:#aa66ff; }
+  .hunt-card-actions { display:flex; gap:6px; margin-top:8px; }
+  .hunt-action-btn {
+    font-family:var(--mono); font-size:9px; padding:3px 8px;
+    background:transparent; border:1px solid var(--border);
+    color:var(--text3); cursor:pointer; letter-spacing:1px;
+    transition:all 0.15s; text-transform:uppercase;
+  }
+  .hunt-action-btn:hover { border-color:var(--accent2); color:var(--text2); }
+  .hunt-action-btn.delete:hover { border-color:var(--red); color:var(--red); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">
+    <div class="blink-dot"></div>
+    THREATFEED
+  </div>
+  <div class="header-stats">
+    <span>ARTICLES: <span class="val" id="totalCount">0</span></span>
+    <span>SOURCES: <span class="val" id="sourceCount">0</span>/39</span>
+    <span>UPDATED: <span class="val" id="lastUpdate">—</span></span>
+    <span id="cacheAge" style="display:none">CACHE: <span class="val" id="cacheAgeVal">—</span></span>
+  </div>
+  <div class="header-ai-status">
+    <div class="ai-dot checking" id="aiDot"></div>
+    <span id="aiStatus" style="font-family:var(--mono);font-size:10px;color:var(--text3)">OLLAMA: CHECKING</span>
+  </div>
+  <div class="header-controls">
+    <button class="btn active" id="btnAll" onclick="setFilter('all')">ALL</button>
+    <button class="btn" id="btnToday" onclick="setFilter('today')">TODAY</button>
+    <button class="btn" id="btnWeek" onclick="setFilter('week')">WEEK</button>
+    <button class="btn" id="btnLoadCache" onclick="loadFromCache()" style="display:none">⬡ LOAD CACHE</button>
+    <button class="btn" id="btnRefresh" onclick="fetchAllFeeds()">↻ REFRESH</button>
+    <button class="btn" onclick="generateDigest()" id="btnDigest">AI DIGEST</button>
+    <button class="btn" id="btnHunts" onclick="openHuntsList()" style="border-color:#aa66ff;color:#aa66ff">🎯 HUNTS</button>
+  </div>
+</header>
+
+
+
+<!-- BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="filter-section">
+      <input class="filter-input" id="searchInput" placeholder="SEARCH ARTICLES…" oninput="onSearchInput()">
+    </div>
+
+    <div class="tag-filters">
+      <button class="tag-btn active" onclick="toggleTag('all')" data-tag="all">ALL</button>
+      <button class="tag-btn" onclick="toggleTag('malware')" data-tag="malware">MALWARE</button>
+      <button class="tag-btn" onclick="toggleTag('vuln')" data-tag="vuln">VULN</button>
+      <button class="tag-btn" onclick="toggleTag('apt')" data-tag="apt">APT</button>
+      <button class="tag-btn" onclick="toggleTag('ransomware')" data-tag="ransomware">RANSOM</button>
+      <button class="tag-btn" onclick="toggleTag('advisory')" data-tag="advisory">ADVISORY</button>
+    </div>
+
+    <!-- AI PROVIDER CONFIG -->
+    <div class="ollama-panel">
+      <div class="ollama-title">⬡ AI PROVIDER &nbsp;<span id="ollamaModelInfo"></span></div>
+
+      <!-- Provider selector -->
+      <div class="provider-tabs">
+        <button class="provider-tab active" id="tab-ollama"  onclick="switchProvider('ollama')">OLLAMA</button>
+        <button class="provider-tab"        id="tab-claude"  onclick="switchProvider('claude')">CLAUDE</button>
+        <button class="provider-tab"        id="tab-gemini"  onclick="switchProvider('gemini')">GEMINI</button>
+      </div>
+
+      <!-- Ollama config -->
+      <div id="cfg-ollama">
+        <input class="ollama-url-input" id="ollamaUrl" value="http://localhost:11434" placeholder="http://localhost:11434">
+        <select class="model-select" id="modelSelect">
+          <option value="llama3.2">llama3.2</option>
+          <option value="llama3.1">llama3.1</option>
+          <option value="llama3">llama3</option>
+          <option value="mistral">mistral</option>
+          <option value="mistral-nemo">mistral-nemo</option>
+          <option value="phi3">phi3</option>
+          <option value="phi3.5">phi3.5</option>
+          <option value="gemma2">gemma2</option>
+          <option value="gemma3">gemma3</option>
+          <option value="qwen2.5">qwen2.5</option>
+          <option value="deepseek-r1">deepseek-r1</option>
+          <option value="mixtral">mixtral</option>
+        </select>
+        <button class="btn" style="width:100%;margin-top:2px" onclick="checkOllama()">▶ TEST CONNECTION</button>
+        <div id="ollamaDiag" style="display:none;margin-top:8px;padding:8px;background:rgba(255,34,68,0.07);border:1px solid #ff224440;font-family:var(--mono);font-size:10px;line-height:1.8;color:var(--text3)"></div>
+      </div>
+
+      <!-- Claude config -->
+      <div id="cfg-claude" style="display:none">
+        <div class="api-key-label">API KEY</div>
+        <input class="ollama-url-input" id="claudeKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+        <select class="model-select" id="claudeModel">
+          <option value="claude-opus-4-5">claude-opus-4-5</option>
+          <option value="claude-sonnet-4-5" selected>claude-sonnet-4-5</option>
+          <option value="claude-haiku-4-5">claude-haiku-4-5</option>
+          <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet</option>
+          <option value="claude-3-5-haiku-20241022">claude-3-5-haiku</option>
+          <option value="claude-3-opus-20240229">claude-3-opus</option>
+        </select>
+        <button class="btn" style="width:100%;margin-top:2px" onclick="checkCommercial()">▶ VERIFY KEY</button>
+        <div id="claudeDiag" style="display:none;margin-top:8px;padding:8px;background:rgba(255,34,68,0.07);border:1px solid #ff224440;font-family:var(--mono);font-size:10px;line-height:1.8;color:var(--text3)"></div>
+        <div style="margin-top:6px;font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.6">
+          ⚠ Key stored in memory only.<br>Not saved to disk or sent elsewhere.
+        </div>
+      </div>
+
+      <!-- Gemini config -->
+      <div id="cfg-gemini" style="display:none">
+        <div class="api-key-label">API KEY</div>
+        <input class="ollama-url-input" id="geminiKey" type="password" placeholder="AIza…" autocomplete="off">
+        <select class="model-select" id="geminiModel">
+          <option value="gemini-2.0-flash" selected>gemini-2.0-flash</option>
+          <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
+          <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+          <option value="gemini-2.5-pro-preview-03-25">gemini-2.5-pro</option>
+        </select>
+        <button class="btn" style="width:100%;margin-top:2px" onclick="checkCommercial()">▶ VERIFY KEY</button>
+        <div id="geminiDiag" style="display:none;margin-top:8px;padding:8px;background:rgba(255,34,68,0.07);border:1px solid #ff224440;font-family:var(--mono);font-size:10px;line-height:1.8;color:var(--text3)"></div>
+        <div style="margin-top:6px;font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.6">
+          ⚠ Key stored in memory only.<br>Not saved to disk or sent elsewhere.
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">SOURCES</div>
+      <div id="sourceList"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN FEED -->
+  <main class="main-feed" id="mainFeed">
+    <div class="feed-header">
+      <div class="feed-header-left">
+        <span class="count" id="visibleCount">0</span>&nbsp;ARTICLES
+      </div>
+      <div class="sort-btns">
+        <button class="btn active" id="sortNewest" onclick="setSort('newest')">NEWEST</button>
+        <button class="btn" id="sortOldest" onclick="setSort('oldest')">OLDEST</button>
+        <button class="btn" id="sortSource" onclick="setSort('source')">SOURCE</button>
+      </div>
+    </div>
+    <div id="feedContent">
+      <div class="feed-loading">
+        <div style="font-family:var(--display);font-size:12px;letter-spacing:4px;color:var(--accent2)">INITIALIZING FEEDS</div>
+        <div class="loader-bar"></div>
+        <div>Fetching intelligence from 23 sources…</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="right-panel">
+    <div class="rp-section">
+      <div class="rp-title">STATISTICS</div>
+      <div class="stats-grid">
+        <div class="stat-box"><span class="stat-val" id="statTotal">0</span><span class="stat-lbl">TOTAL</span></div>
+        <div class="stat-box"><span class="stat-val" id="statToday">0</span><span class="stat-lbl">TODAY</span></div>
+        <div class="stat-box"><span class="stat-val" id="statSources">0</span><span class="stat-lbl">LIVE SRCS</span></div>
+        <div class="stat-box"><span class="stat-val" id="statWeek">0</span><span class="stat-lbl">THIS WEEK</span></div>
+      </div>
+    </div>
+
+    <div class="rp-section">
+      <div class="rp-title">TRENDING TOPICS <span class="trend-clear" id="trendClear" onclick="clearTrendFilter()">✕ CLEAR</span></div>
+      <div class="trend-list" id="trendList">
+        <div style="padding:10px 0;font-family:var(--mono);font-size:10px;color:var(--text3)">Loading…</div>
+      </div>
+    </div>
+
+    <div class="rp-section">
+      <div class="rp-title">
+        <span>AI THREAT DIGEST</span>
+        <button class="btn" style="padding:3px 8px;font-size:9px" onclick="generateDigest()">GENERATE</button>
+      </div>
+      <div class="digest-area">
+        <div class="digest-placeholder" id="digestPlaceholder">
+          <span class="cmd">$</span> cti-analyst --mode digest<br>
+          <span class="cmd">&gt;</span> Awaiting feed data…<br>
+          <span class="cmd">&gt;</span> Click GENERATE for daily<br>
+          <span class="cmd">&gt;</span> threat intel briefing +<br>
+          <span class="cmd">&gt;</span> hunt-of-the-day
+        </div>
+        <div class="digest-text" id="digestText"></div>
+      </div>
+    </div>
+
+    <div class="rp-section" id="ransomwareStatsPanel" style="display:none">
+      <div class="rp-title">🔴 RANSOMWARE INTEL</div>
+      <div style="padding:8px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:2px;margin-bottom:4px">TOP COUNTRIES</div>
+          <div id="rstatsCountries" class="rstats-list"></div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:2px;margin-bottom:4px">TOP GANGS</div>
+          <div id="rstatsGangs" class="rstats-list"></div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:2px;margin-bottom:4px">TOP SECTORS</div>
+          <div id="rstatsSectors" class="rstats-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rp-section">
+      <div class="rp-title">LATEST ITEMS</div>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- FOCUS DIGEST PANEL -->
+<div class="focus-digest-overlay" id="focusDigestOverlay" style="display:none" onclick="if(event.target===this)closeFocusDigest()">
+  <div class="focus-digest-panel">
+    <div class="focus-digest-header">
+      <div style="flex:1;min-width:0">
+        <div class="focus-digest-title" id="focusDigestType">SOURCE DIGEST</div>
+        <div class="focus-digest-subject" id="focusDigestSubject"></div>
+        <div class="focus-digest-meta" id="focusDigestMeta"></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+        <button class="btn" id="focusDigestRegenBtn" onclick="regenFocusDigest()" style="font-size:9px;padding:3px 8px">↻ REGEN</button>
+        <button class="modal-close" onclick="closeFocusDigest()">✕</button>
+      </div>
+    </div>
+    <div class="focus-digest-body" id="focusDigestBody">Generating intelligence digest…</div>
+  </div>
+</div>
+
+<!-- ARTICLE MODAL -->
+<div class="modal-overlay" id="articleModal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="flex:1">
+        <div class="modal-source" id="modalSource"></div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap" id="modalTags"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc" id="modalDesc"></div>
+      <div class="modal-ai-section">
+        <div class="modal-ai-label">⬡ OLLAMA ANALYSIS</div>
+        <div class="modal-ai-text" id="modalAiContent">Click a button below to generate AI insights using your local Ollama instance — no API costs.</div>
+      </div>
+      <div class="modal-footer">
+        <a class="card-link" id="modalLink" href="#" target="_blank" rel="noopener">[ OPEN ORIGINAL → ]</a>
+        <button class="btn" id="modalExecBtn" onclick="execSummaryCurrentArticle()">📋 EXEC SUMMARY</button>
+        <button class="btn" id="modalAnalyzeBtn" onclick="analyzeCurrentArticle()">⬡ FULL ANALYSIS</button>
+        <button class="btn" id="modalHighlightsBtn" onclick="highlightsCurrentArticle()">🎯 HUNT LEADS</button>
+        <button class="btn" id="modalIOCBtn" onclick="extractIOCs()">⚑ EXTRACT IOCs</button>
+        <button class="btn" id="modalHuntCreateBtn" onclick="openHuntModal()" style="border-color:#aa66ff;color:#aa66ff">+ CREATE HUNT</button>
+        <button class="btn" onclick="openHuntsList(true)" style="border-color:#aa66ff;color:#aa66ff;opacity:0.7;font-size:10px" title="View hunts from this article">📋 HISTORY</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HUNT CREATION MODAL ═══ -->
+<div class="modal-overlay" id="huntModal" style="display:none" onclick="if(event.target===this)closeHuntModal()">
+  <div class="modal hunt-modal">
+    <div class="modal-header">
+      <div style="flex:1">
+        <div class="modal-source" style="color:#aa66ff">+ NEW THREAT HUNT</div>
+        <div class="modal-title" id="huntModalSource" style="font-size:13px;margin-top:2px;opacity:0.6"></div>
+      </div>
+      <button class="modal-close" onclick="closeHuntModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+
+      <!-- AI Auto-fill bar -->
+      <div id="huntAIBar" style="display:none;padding:8px 16px;background:rgba(170,102,255,0.08);border-bottom:1px solid rgba(170,102,255,0.2);display:flex;align-items:center;gap:10px">
+        <span style="font-family:var(--mono);font-size:10px;color:#aa66ff;letter-spacing:1px">⬡ AI AUTO-FILL</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex:1">Use AI to populate fields from the article</span>
+        <button class="btn" id="huntAIBtn" onclick="aiAutoFillHunt()" style="border-color:#aa66ff;color:#aa66ff;padding:3px 10px;font-size:10px">⬡ GENERATE</button>
+      </div>
+
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+
+        <!-- Title -->
+        <div>
+          <div class="hunt-field-label">HUNT TITLE *</div>
+          <input class="hunt-input" id="huntTitle" placeholder="e.g. Hunt for Cobalt Strike beacon C2 via named pipes" type="text">
+        </div>
+
+        <!-- Description -->
+        <div>
+          <div class="hunt-field-label">DESCRIPTION</div>
+          <textarea class="hunt-input hunt-textarea" id="huntDesc" placeholder="What is this hunt looking for? What threat / campaign / behaviour does it target?"></textarea>
+        </div>
+
+        <!-- Expectations / Hypothesis -->
+        <div>
+          <div class="hunt-field-label">HYPOTHESIS / EXPECTATIONS</div>
+          <textarea class="hunt-input hunt-textarea" id="huntHypothesis" placeholder="We believe [actor/malware] is using [technique] which would be observable as [artifact] in [data source]…"></textarea>
+        </div>
+
+        <!-- MITRE ATT&CK -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div class="hunt-field-label">MITRE TACTIC</div>
+            <select class="hunt-input" id="huntTactic">
+              <option value="">— Select —</option>
+              <option>Reconnaissance</option><option>Resource Development</option>
+              <option>Initial Access</option><option>Execution</option>
+              <option>Persistence</option><option>Privilege Escalation</option>
+              <option>Defense Evasion</option><option>Credential Access</option>
+              <option>Discovery</option><option>Lateral Movement</option>
+              <option>Collection</option><option>Command &amp; Control</option>
+              <option>Exfiltration</option><option>Impact</option>
+            </select>
+          </div>
+          <div>
+            <div class="hunt-field-label">TECHNIQUE ID(S)</div>
+            <input class="hunt-input" id="huntTechniqueId" placeholder="e.g. T1055, T1059.001">
+          </div>
+        </div>
+
+        <!-- Data Sources -->
+        <div>
+          <div class="hunt-field-label">DATA SOURCES</div>
+          <input class="hunt-input" id="huntDataSources" placeholder="e.g. Windows Event Logs, Sysmon, EDR telemetry, Network flow">
+        </div>
+
+        <!-- Useful Links -->
+        <div>
+          <div class="hunt-field-label">USEFUL LINKS</div>
+          <div id="huntLinksList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+          <div style="display:flex;gap:6px">
+            <input class="hunt-input" id="huntLinkText" placeholder="Link title / label" style="flex:1;margin-bottom:0">
+            <input class="hunt-input" id="huntLinkUrl" placeholder="https://…" style="flex:2;margin-bottom:0">
+            <button class="btn" onclick="addHuntLink()" style="border-color:#aa66ff;color:#aa66ff;white-space:nowrap">+ ADD</button>
+          </div>
+        </div>
+
+        <!-- Priority + Source -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div class="hunt-field-label">PRIORITY</div>
+            <select class="hunt-input" id="huntPriority">
+              <option value="critical">🔴 Critical</option>
+              <option value="high">🟠 High</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+          </div>
+          <div>
+            <div class="hunt-field-label">STATUS</div>
+            <select class="hunt-input" id="huntStatus">
+              <option value="backlog" selected>Backlog</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <div class="hunt-field-label">NOTES / ADDITIONAL CONTEXT</div>
+          <textarea class="hunt-input hunt-textarea" id="huntNotes" placeholder="Any additional notes, findings, or context…" style="height:70px"></textarea>
+        </div>
+
+      </div>
+    </div>
+    <div style="padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" onclick="closeHuntModal()">CANCEL</button>
+      <button class="btn" onclick="saveHunt()" style="border-color:#aa66ff;color:#aa66ff">⚑ SAVE HUNT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HUNTS LIST PANEL ═══ -->
+<div class="modal-overlay" id="huntsListModal" style="display:none" onclick="if(event.target===this)closeHuntsList()">
+  <div class="modal hunts-list-modal">
+    <div class="modal-header">
+      <div style="flex:1">
+        <div class="modal-source" style="color:#aa66ff">THREAT HUNT BACKLOG</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px"><span id="huntsCount">0</span> hunts tracked</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn" onclick="exportHunts()" style="font-size:9px;padding:3px 8px">↓ EXPORT JSON</button>
+        <button class="modal-close" onclick="closeHuntsList()">✕</button>
+      </div>
+    </div>
+    <div style="padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
+      <button class="hunt-filter-btn active" data-hf="all"         onclick="setHuntFilter('all')">ALL</button>
+      <button class="hunt-filter-btn"        data-hf="backlog"      onclick="setHuntFilter('backlog')">BACKLOG</button>
+      <button class="hunt-filter-btn"        data-hf="in-progress"  onclick="setHuntFilter('in-progress')">IN PROGRESS</button>
+      <button class="hunt-filter-btn"        data-hf="completed"    onclick="setHuntFilter('completed')">COMPLETED</button>
+      <button class="hunt-filter-btn"        data-hf="critical"     onclick="setHuntFilter('critical')" style="color:var(--red);border-color:var(--red)">CRITICAL</button>
+      <button class="hunt-filter-btn"        data-hf="this-article" onclick="setHuntFilter('this-article')" id="huntFilterThisArticle" style="display:none;color:#aa66ff;border-color:#aa66ff">📰 THIS ARTICLE</button>
+    </div>
+    <div id="huntsList" style="overflow-y:auto;max-height:60vh"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA SOURCES
+// ============================================================
+const SOURCES = [
+  { id:'talos',        name:'Talos Intel',       url:'https://blog.talosintelligence.com/rss/',                        color:'#00ff41', tag:'malware'  },
+  { id:'s1labs',       name:'SentinelOne Labs',   url:'https://www.sentinelone.com/labs/feed/',                         color:'#00cc33', tag:'malware'  },
+  { id:'checkpoint',   name:'Check Point',        url:'https://research.checkpoint.com/feed/',                          color:'#00aaff', tag:'malware'  },
+  { id:'unit42',       name:'Unit 42',             url:'https://unit42.paloaltonetworks.com/feed/',                      color:'#ff6600', tag:'apt'      },
+  { id:'sophos',       name:'Sophos Labs',         url:'https://news.sophos.com/en-us/category/threat-research/feed/',  color:'#ffcc00', tag:'malware'  },
+  { id:'cisa',         name:'CISA Advisories',     url:'https://www.cisa.gov/cybersecurity-advisories/all.xml',          color:'#ff2244', tag:'advisory' },
+  { id:'huntress',     name:'Huntress',            url:'https://www.huntress.com/blog/rss.xml',                          color:'#cc44ff', tag:'malware'  },
+  { id:'isc',          name:'SANS ISC',            url:'https://isc.sans.edu/rssfeed_full.xml',                          color:'#00ffcc', tag:'advisory' },
+  { id:'gendigital',   name:'Gen Digital',         url:'https://www.gendigital.com/blog/feed/',                          color:'#4488ff', tag:'malware'  },
+  { id:'mandiant',     name:'Mandiant',            url:'https://www.mandiant.com/resources/blog/rss.xml',                color:'#ff4444', tag:'apt'      },
+  { id:'msft',         name:'Microsoft SecBlog',   url:'https://www.microsoft.com/en-us/security/blog/feed/',            color:'#00aaff', tag:'advisory' },
+  { id:'rapid7',       name:'Rapid7 Blog',         url:'https://blog.rapid7.com/rss/',                                   color:'#ff8800', tag:'vuln'     },
+  { id:'cisaAlerts',   name:'CISA Alerts',         url:'https://www.cisa.gov/uscert/ncas/alerts.xml',                    color:'#ff2244', tag:'advisory' },
+  { id:'cymru',        name:'Team Cymru',          url:'https://www.team-cymru.com/blog/feed/',                          color:'#00ffcc', tag:'apt'      },
+  { id:'crowdstrike',  name:'CrowdStrike',         url:'https://www.crowdstrike.com/blog/feed/',                         color:'#ff6600', tag:'apt'      },
+  { id:'reddit',       name:'r/blueteamsec',       url:'https://www.reddit.com/r/blueteamsec/.rss',                      color:'#ff6644', tag:'news'     },
+  { id:'zscaler',      name:'Zscaler ThreatLab',  url:'https://www.zscaler.com/blogs/security-research/feed',           color:'#4499ff', tag:'malware'  },
+  { id:'cybereason',   name:'Cybereason',          url:'https://www.cybereason.com/blog/rss.xml',                        color:'#cc44ff', tag:'malware'  },
+  { id:'decipher',     name:'Decipher',            url:'https://duo.com/decipher/feed',                                  color:'#88aaff', tag:'news'     },
+  { id:'projectzero',  name:'Project Zero',        url:'https://googleprojectzero.blogspot.com/feeds/posts/default',     color:'#00ccff', tag:'vuln'     },
+  { id:'fortinet',     name:'Fortinet Threat',     url:'https://feeds.fortinet.com/fortinet/blog/threat-research',       color:'#ff4444', tag:'malware'  },
+  { id:'reversinglabs',name:'ReversingLabs',       url:'https://www.reversinglabs.com/blog/feed.xml',                    color:'#ffaa00', tag:'malware'  },
+  { id:'mitreview',    name:'MIT Tech Review',      url:'https://www.technologyreview.com/feed/',                          color:'#88ccff', tag:'news'     },
+  { id:'detectfyi',    name:'Detect FYI',           url:'https://medium.com/feed/detect-fyi',                              color:'#00ffcc', tag:'advisory' },
+  { id:'trustedsec',   name:'TrustedSec',           url:'https://trustedsec.com/feed.rss',                                 color:'#ff8800', tag:'malware'  },
+  { id:'badsector',    name:'Bad Sector Labs',      url:'https://blog.badsectorlabs.com/feeds/all.atom.xml',               color:'#cc44ff', tag:'malware'  },
+  { id:'dfirreport',   name:'DFIR Report',          url:'https://thedfirreport.com/feed/',                                 color:'#ff4444', tag:'apt'      },
+  { id:'kostasmed',    name:'Kostas (Medium)',       url:'https://medium.com/feed/@kostas-ts',                              color:'#00cc99', tag:'apt'      },
+  { id:'goblinloot',   name:'Lucy / GoblinLoot',    url:'https://www.goblinloot.net/feeds/posts/default',                  color:'#aa66ff', tag:'advisory' },
+  { id:'sentinel',     name:'MS Sentinel Blog',     url:'https://techcommunity.microsoft.com/gxcuf89792/rss/board?board.id=MicrosoftSentinelBlog', color:'#00aaff', tag:'advisory' },
+  { id:'socradar',     name:'SOCRadar',             url:'https://socradar.io/feed/',                                       color:'#ff6600', tag:'news'     },
+  { id:'infostealers',  name:'InfoStealers',          url:'https://www.infostealers.com/feed/',                              color:'#ff2244', tag:'malware'  },
+  { id:'theregister',   name:'The Register',          url:'https://www.theregister.com/security/headlines.atom',             color:'#cc0000', tag:'news'     },
+  { id:'thehackernews', name:'The Hacker News',        url:'https://thehackernews.com/feeds/posts/default',                   color:'#00aaff', tag:'news'     },
+  { id:'arstechnica',   name:'Ars Technica Sec',       url:'https://feeds.arstechnica.com/arstechnica/security',              color:'#ff6600', tag:'news'     },
+  { id:'helpnetsec',    name:'Help Net Security',      url:'https://www.helpnetsecurity.com/feed',                            color:'#00cc88', tag:'news'     },
+  { id:'infosecmag',    name:'Infosecurity Magazine',  url:'https://www.infosecurity-magazine.com/rss/news',                 color:'#8844ff', tag:'news'     },
+  { id:'malwarebytes', name:'Malwarebytes',         url:'https://www.malwarebytes.com/blog/feed/',                          color:'#0077cc', tag:'malware'  },
+  { id:'cryptika',     name:'Cryptika',             url:'https://www.cryptika.com/feed/',                                  color:'#00ccaa', tag:'advisory' },
+];
+
+const CORS_PROXIES = [
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let allArticles = [];
+let filteredArticles = [];
+let sourceStatus = {};
+let currentFilter = 'all';
+let currentSort = 'newest';
+let currentTagFilter = 'all';
+let currentArticle = null;
+let ollamaOnline = false;
+let activeSourceFilter = null;
+let activeProvider = 'ollama';
+let activeTrendFilter = null;
+let disabledSources = new Set(JSON.parse(localStorage.getItem('tf_disabled') || '[]'));
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  renderSourceList();
+  checkOllama();
+  initCache().then(() => {
+    checkCacheAndInit();
+    updateHuntsHeaderBtn();
+  });
+  setInterval(checkOllama, 30000);
+});
+
+// ============================================================
+// OLLAMA
+// ============================================================
+async function checkOllama() {
+  const dot = document.getElementById('aiDot');
+  const statusEl = document.getElementById('aiStatus');
+  const diagEl = document.getElementById('ollamaDiag');
+  const url = document.getElementById('ollamaUrl').value.trim().replace(/\/$/, '');
+  document.getElementById('ollamaUrl').value = url;
+  dot.className = 'ai-dot checking';
+  statusEl.textContent = 'OLLAMA: CHECKING';
+  diagEl.style.display = 'none';
+
+  // Helper: show diagnostic panel
+  function showDiag(html) {
+    diagEl.innerHTML = html;
+    diagEl.style.display = 'block';
+  }
+
+  let fetchError = null;
+  let res = null;
+
+  try {
+    res = await fetch(`${url}/api/tags`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(6000)
+    });
+  } catch(e) {
+    fetchError = e;
+  }
+
+  // SUCCESS
+  if (res && res.ok) {
+    try {
+      const data = await res.json();
+      ollamaOnline = true;
+      dot.className = 'ai-dot online';
+      const models = (data.models || []).map(m => m.name.split(':')[0]);
+      statusEl.textContent = 'OLLAMA: ONLINE';
+      document.getElementById('aiDot').className = 'ai-dot online';
+      document.getElementById('ollamaModelInfo').textContent = `${models.length} MODEL${models.length!==1?'S':''}`;
+      if (models.length) updateModelSelect(models);
+      if (activeProvider === 'ollama') enableAIButtons(true);
+      diagEl.style.display = 'none';
+      toast(`Ollama online — ${models.length} model(s) detected`);
+      return;
+    } catch(e) {
+      fetchError = e;
+    }
+  }
+
+  // FAILURE — diagnose why
+  ollamaOnline = false;
+  dot.className = 'ai-dot offline';
+  document.getElementById('ollamaModelInfo').textContent = '';
+  enableAIButtons(false);
+
+  const isCORS = fetchError && (
+    fetchError.name === 'TypeError' ||
+    fetchError.message?.includes('NetworkError') ||
+    fetchError.message?.includes('Failed to fetch') ||
+    fetchError.message?.includes('Load failed') ||
+    fetchError.message?.includes('CORS')
+  );
+  const isTimeout = fetchError?.name === 'TimeoutError' || fetchError?.name === 'AbortError';
+  const isHTTPErr = res && !res.ok;
+
+  if (isCORS) {
+    statusEl.textContent = 'OLLAMA: CORS BLOCKED';
+    showDiag(`<span style="color:var(--red)">✗ CORS ERROR — browser blocked request</span><br><br>
+<span style="color:var(--yellow)">FIX: Restart Ollama with CORS enabled:</span><br><br>
+<span style="color:var(--accent2)">macOS / Linux:</span><br>
+<span style="color:var(--text2)">OLLAMA_ORIGINS="*" ollama serve</span><br><br>
+<span style="color:var(--accent2)">Windows (PowerShell):</span><br>
+<span style="color:var(--text2)">$env:OLLAMA_ORIGINS="*"<br>ollama serve</span><br><br>
+<span style="color:var(--accent2)">Windows (CMD):</span><br>
+<span style="color:var(--text2)">set OLLAMA_ORIGINS=*<br>ollama serve</span><br><br>
+<span style="color:var(--text3)">Then click TEST CONNECTION again.</span>`);
+  } else if (isTimeout) {
+    statusEl.textContent = 'OLLAMA: TIMEOUT';
+    showDiag(`<span style="color:var(--red)">✗ CONNECTION TIMEOUT</span><br><br>
+<span style="color:var(--yellow)">Ollama may not be running.</span><br><br>
+<span style="color:var(--accent2)">Start Ollama:</span><br>
+<span style="color:var(--text2)">OLLAMA_ORIGINS="*" ollama serve</span><br><br>
+<span style="color:var(--text3)">Check URL: ${url}<br>Default port is 11434.</span>`);
+  } else if (isHTTPErr) {
+    statusEl.textContent = `OLLAMA: HTTP ${res.status}`;
+    showDiag(`<span style="color:var(--red)">✗ HTTP ${res.status} from Ollama</span><br><br>
+<span style="color:var(--text3)">URL: ${url}<br>Check Ollama is running and URL is correct.</span>`);
+  } else {
+    statusEl.textContent = 'OLLAMA: OFFLINE';
+    showDiag(`<span style="color:var(--red)">✗ Cannot reach Ollama</span><br><br>
+<span style="color:var(--accent2)">Quick setup:</span><br>
+<span style="color:var(--text2)">1. Install: <a href="https://ollama.ai" target="_blank" style="color:var(--accent2)">ollama.ai</a><br>
+2. Pull a model: ollama pull llama3.2<br>
+3. Start with CORS:<br>
+   OLLAMA_ORIGINS="*" ollama serve<br>
+4. Click TEST CONNECTION</span>`);
+  }
+}
+
+function enableAIButtons(on) {
+  document.querySelectorAll('.card-ai-btn, #modalExecBtn, #modalAnalyzeBtn, #modalHighlightsBtn, #modalIOCBtn, #btnDigest').forEach(b => {
+    b.disabled = !on;
+  });
+}
+
+function updateModelSelect(models) {
+  const sel = document.getElementById('modelSelect');
+  const current = sel.value;
+  const defaults = ['llama3.2','llama3.1','llama3','mistral','mistral-nemo','phi3','phi3.5','gemma2','gemma3','qwen2.5','deepseek-r1','mixtral'];
+  const all = [...new Set([...models, ...defaults])];
+  sel.innerHTML = all.map(m => `<option value="${m}"${m===current?' selected':''}>${m}</option>`).join('');
+}
+
+// ============================================================
+// PROVIDER SWITCHING
+// ============================================================
+function switchProvider(p) {
+  activeProvider = p;
+  ['ollama','claude','gemini'].forEach(name => {
+    document.getElementById('cfg-' + name).style.display = (name === p) ? 'block' : 'none';
+    document.getElementById('tab-' + name).classList.toggle('active', name === p);
+  });
+  // Update status dot & label based on provider
+  const dot = document.getElementById('aiDot');
+  const status = document.getElementById('aiStatus');
+  if (p === 'ollama') {
+    checkOllama();
+  } else {
+    const key = p === 'claude'
+      ? document.getElementById('claudeKey').value.trim()
+      : document.getElementById('geminiKey').value.trim();
+    if (key) {
+      dot.className = 'ai-dot online';
+      status.textContent = p.toUpperCase() + ': KEY SET';
+      enableAIButtons(true);
+    } else {
+      dot.className = 'ai-dot offline';
+      status.textContent = p.toUpperCase() + ': NO KEY';
+      enableAIButtons(false);
+    }
+  }
+}
+
+async function checkCommercial() {
+  const p = activeProvider;
+  const diagId = p + 'Diag';
+  const diagEl = document.getElementById(diagId);
+  const dot = document.getElementById('aiDot');
+  const status = document.getElementById('aiStatus');
+  const key = p === 'claude'
+    ? document.getElementById('claudeKey').value.trim()
+    : document.getElementById('geminiKey').value.trim();
+
+  diagEl.style.display = 'none';
+
+  if (!key) {
+    diagEl.style.display = 'block';
+    diagEl.innerHTML = '<span style="color:var(--red)">✗ No API key entered.</span>';
+    dot.className = 'ai-dot offline';
+    status.textContent = p.toUpperCase() + ': NO KEY';
+    enableAIButtons(false);
+    return;
+  }
+
+  dot.className = 'ai-dot checking';
+  status.textContent = p.toUpperCase() + ': CHECKING…';
+
+  try {
+    if (p === 'claude') {
+      // Send a minimal test message
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: document.getElementById('claudeModel').value,
+          max_tokens: 8,
+          messages: [{ role: 'user', content: 'hi' }]
+        })
+      });
+      if (r.ok) {
+        dot.className = 'ai-dot online';
+        status.textContent = 'CLAUDE: ONLINE';
+        enableAIButtons(true);
+        toast('Claude API key verified');
+      } else {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error?.message || 'HTTP ' + r.status);
+      }
+    } else {
+      // Gemini test
+      const model = document.getElementById('geminiModel').value;
+      const r = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }] })
+        }
+      );
+      if (r.ok) {
+        dot.className = 'ai-dot online';
+        status.textContent = 'GEMINI: ONLINE';
+        enableAIButtons(true);
+        toast('Gemini API key verified');
+      } else {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error?.message || 'HTTP ' + r.status);
+      }
+    }
+  } catch(e) {
+    dot.className = 'ai-dot offline';
+    status.textContent = p.toUpperCase() + ': ERROR';
+    enableAIButtons(false);
+    diagEl.style.display = 'block';
+    diagEl.innerHTML = '<span style="color:var(--red)">✗ ' + e.message + '</span>';
+  }
+}
+
+// Universal AI dispatcher — routes to correct provider
+async function aiChat(systemPrompt, userPrompt, onChunk) {
+  if (activeProvider === 'claude') return claudeChat(systemPrompt, userPrompt, onChunk);
+  if (activeProvider === 'gemini') return geminiChat(systemPrompt, userPrompt, onChunk);
+  return ollamaChat(systemPrompt, userPrompt, onChunk);
+}
+
+async function claudeChat(systemPrompt, userPrompt, onChunk) {
+  const key = document.getElementById('claudeKey').value.trim();
+  if (!key) throw new Error('No Claude API key set. Enter your key in the AI panel.');
+  const model = document.getElementById('claudeModel').value;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 4096,
+      system: systemPrompt,
+      stream: true,
+      messages: [{ role: 'user', content: userPrompt }]
+    }),
+    signal: AbortSignal.timeout(300000)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error('Claude API error: ' + (err.error?.message || 'HTTP ' + res.status));
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (data === '[DONE]') continue;
+      try {
+        const j = JSON.parse(data);
+        const chunk = j.delta?.text || '';
+        if (chunk) { full += chunk; if (onChunk) onChunk(chunk, full); }
+      } catch {}
+    }
+  }
+  if (!full) throw new Error('Claude returned empty response.');
+  return full;
+}
+
+async function geminiChat(systemPrompt, userPrompt, onChunk) {
+  const key = document.getElementById('geminiKey').value.trim();
+  if (!key) throw new Error('No Gemini API key set. Enter your key in the AI panel.');
+  const model = document.getElementById('geminiModel').value;
+  const res = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':streamGenerateContent?alt=sse&key=' + key,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { maxOutputTokens: 4096 }
+      }),
+      signal: AbortSignal.timeout(300000)
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error('Gemini API error: ' + (err.error?.message || 'HTTP ' + res.status));
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (!data || data === '[DONE]') continue;
+      try {
+        const j = JSON.parse(data);
+        const chunk = j.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (chunk) { full += chunk; if (onChunk) onChunk(chunk, full); }
+      } catch {}
+    }
+  }
+  if (!full) throw new Error('Gemini returned empty response.');
+  return full;
+}
+
+async function ollamaChat(systemPrompt, userPrompt, onChunk) {
+  const baseUrl = document.getElementById('ollamaUrl').value.trim().replace(/\/$/, '');
+  const model = document.getElementById('modelSelect').value;
+  let res;
+  try {
+    res = await fetch(`${baseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        stream: true,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      }),
+      signal: AbortSignal.timeout(300000)
+    });
+  } catch(e) {
+    if (e.name === 'TimeoutError' || e.name === 'AbortError') {
+      throw new Error('Request timed out — try a smaller/faster model.');
+    }
+    const isCORS = e.name === 'TypeError' || e.message?.includes('Failed to fetch') || e.message?.includes('Load failed') || e.message?.includes('NetworkError');
+    if (isCORS) throw new Error('CORS blocked — restart Ollama with: OLLAMA_ORIGINS="*" ollama serve');
+    throw new Error('Connection error: ' + e.message);
+  }
+  if (!res.ok) {
+    let errBody = '';
+    try { errBody = await res.text(); } catch {}
+    throw new Error('Ollama HTTP ' + res.status + (errBody ? ': ' + errBody.slice(0,200) : '') + ' — check model name');
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  let buffer = '';
+  while (true) {
+    let done, value;
+    try { ({ done, value } = await reader.read()); }
+    catch(e) { throw new Error('Stream read error: ' + e.message); }
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const j = JSON.parse(trimmed);
+        if (j.error) throw new Error('Ollama model error: ' + j.error);
+        const chunk = (j.message && j.message.content) || j.response || '';
+        if (chunk) { full += chunk; if (onChunk) onChunk(chunk, full); }
+      } catch(pe) {
+        if (pe.message && pe.message.startsWith('Ollama model error:')) throw pe;
+      }
+    }
+  }
+  if (buffer.trim()) {
+    try {
+      const j = JSON.parse(buffer.trim());
+      const chunk = (j.message && j.message.content) || j.response || '';
+      if (chunk) { full += chunk; if (onChunk) onChunk(chunk, full); }
+    } catch {}
+  }
+  if (!full) throw new Error('Model returned empty response — it may still be loading. Wait and retry.');
+  return full;
+}
+
+// ============================================================
+// CACHE (IndexedDB)
+// ============================================================
+const DB_NAME = 'threatfeed_cache';
+const DB_VERSION = 2;
+const STORE_NAME = 'feeds';
+const CACHE_KEY = 'articles';
+const CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+let db = null;
+
+async function initCache() {
+  return new Promise((resolve) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE_NAME)) {
+        d.createObjectStore(STORE_NAME, { keyPath: 'key' });
+      }
+      if (!d.objectStoreNames.contains(HUNT_STORE)) {
+        const hs = d.createObjectStore(HUNT_STORE, { keyPath: 'id' });
+        hs.createIndex('status', 'status', { unique: false });
+        hs.createIndex('priority', 'priority', { unique: false });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(); };
+    req.onerror = e => { console.warn('IndexedDB init failed:', e); resolve(); };
+  });
+}
+
+async function saveToCache(articles) {
+  if (!db) return;
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    // Serialize articles: replace source object with just source.id to avoid circular issues
+    const serializable = articles.map(a => ({
+      ...a,
+      date: a.date instanceof Date ? a.date.getTime() : a.date,
+      source: a.source.id
+    }));
+    store.put({ key: CACHE_KEY, data: serializable, savedAt: Date.now() });
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+async function readFromCache() {
+  if (!db) return null;
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(CACHE_KEY);
+    req.onsuccess = e => resolve(e.target.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function clearCache() {
+  if (!db) return;
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(CACHE_KEY);
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+function deserializeArticles(serialized) {
+  const srcMap = {};
+  SOURCES.forEach(s => { srcMap[s.id] = s; });
+  return serialized
+    .filter(a => !disabledSources.has(a.source))
+    .map(a => ({
+      ...a,
+      date: new Date(a.date),
+      source: srcMap[a.source] || { id: a.source, name: a.source, color: '#888', tag: 'news' }
+    }));
+}
+
+function formatCacheAge(savedAt) {
+  const ms = Date.now() - savedAt;
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs/24)}d ago`;
+}
+
+function updateCacheAgeDisplay(savedAt) {
+  const el = document.getElementById('cacheAge');
+  const val = document.getElementById('cacheAgeVal');
+  if (!savedAt) { el.style.display = 'none'; return; }
+  el.style.display = 'inline';
+  val.textContent = formatCacheAge(savedAt);
+  // refresh display every minute
+  clearInterval(window._cacheAgeTimer);
+  window._cacheAgeTimer = setInterval(() => {
+    val.textContent = formatCacheAge(savedAt);
+  }, 60000);
+}
+
+async function checkCacheAndInit() {
+  const cached = await readFromCache();
+  const cacheBtn = document.getElementById('btnLoadCache');
+
+  if (cached && cached.data && cached.data.length > 0) {
+    const age = Date.now() - cached.savedAt;
+    const isStale = age > CACHE_TTL_MS;
+    const ageStr = formatCacheAge(cached.savedAt);
+
+    // Show the cache button with age info
+    cacheBtn.style.display = 'inline-block';
+    cacheBtn.textContent = `⬡ CACHE (${ageStr})`;
+
+    if (!isStale) {
+      // Fresh cache — load it automatically
+      loadCachedArticles(cached);
+      toast(`Loaded ${cached.data.length} articles from cache (${ageStr})`);
+    } else {
+      // Stale cache — show it but prompt refresh
+      loadCachedArticles(cached);
+      toast(`Cache is ${ageStr} old — consider refreshing`, 'info');
+    }
+  } else {
+    // No cache — fetch live
+    cacheBtn.style.display = 'none';
+    fetchAllFeeds();
+  }
+}
+
+function loadCachedArticles(cached) {
+  allArticles = deserializeArticles(cached.data);
+  // Rebuild sourceStatus from articles
+  sourceStatus = {};
+  allArticles.forEach(a => { sourceStatus[a.source.id] = 'loaded'; });
+  SOURCES.forEach(s => { if (!sourceStatus[s.id]) sourceStatus[s.id] = 'error'; });
+  renderSourceList();
+  allArticles.sort((a,b) => b.date - a.date);
+  applyFilters();
+  updateStats();
+  updateTrends();
+  updateRecent();
+  document.getElementById('lastUpdate').textContent = new Date(cached.savedAt).toLocaleTimeString();
+  document.getElementById('totalCount').textContent = allArticles.length;
+  const liveSrcs = Object.values(sourceStatus).filter(s => s === 'loaded').length;
+  document.getElementById('sourceCount').textContent = liveSrcs;
+  updateCacheAgeDisplay(cached.savedAt);
+}
+
+async function loadFromCache() {
+  const cached = await readFromCache();
+  if (!cached || !cached.data || !cached.data.length) {
+    toast('No cache found — fetching live feeds', 'info');
+    fetchAllFeeds();
+    return;
+  }
+  loadCachedArticles(cached);
+  toast(`Loaded ${cached.data.length} articles from cache (${formatCacheAge(cached.savedAt)})`);
+}
+
+
+// ============================================================
+// THREAT HUNT SYSTEM
+// ============================================================
+const HUNT_STORE = 'hunts';
+let huntLinks = [];       // temp links being built in the form
+let editingHuntId = null; // null = new, string = editing
+let huntFilterMode = 'all';
+
+async function dbGetAllHunts() {
+  if (!db) return [];
+  return new Promise(resolve => {
+    const tx = db.transaction(HUNT_STORE, 'readonly');
+    const req = tx.objectStore(HUNT_STORE).getAll();
+    req.onsuccess = e => resolve(e.target.result || []);
+    req.onerror = () => resolve([]);
+  });
+}
+
+async function dbSaveHunt(hunt) {
+  if (!db) return;
+  return new Promise(resolve => {
+    const tx = db.transaction(HUNT_STORE, 'readwrite');
+    tx.objectStore(HUNT_STORE).put(hunt);
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+async function dbDeleteHunt(id) {
+  if (!db) return;
+  return new Promise(resolve => {
+    const tx = db.transaction(HUNT_STORE, 'readwrite');
+    tx.objectStore(HUNT_STORE).delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+// ── MODAL OPEN / CLOSE ────────────────────────────────────────
+function openHuntModal(huntId) {
+  editingHuntId = huntId || null;
+  huntLinks = [];
+
+  if (huntId) {
+    // Editing existing hunt — load data
+    dbGetAllHunts().then(hunts => {
+      const h = hunts.find(x => x.id === huntId);
+      if (!h) return;
+      document.getElementById('huntTitle').value = h.title || '';
+      document.getElementById('huntDesc').value = h.description || '';
+      document.getElementById('huntHypothesis').value = h.hypothesis || '';
+      document.getElementById('huntTactic').value = h.tactic || '';
+      document.getElementById('huntTechniqueId').value = h.techniqueId || '';
+      document.getElementById('huntDataSources').value = h.dataSources || '';
+      document.getElementById('huntPriority').value = h.priority || 'medium';
+      document.getElementById('huntStatus').value = h.status || 'backlog';
+      document.getElementById('huntNotes').value = h.notes || '';
+      huntLinks = h.links || [];
+      renderHuntLinks();
+      document.getElementById('huntModalSource').textContent = h.sourceArticle || '';
+      document.querySelector('#huntModal .modal-source').textContent = '✏ EDIT HUNT';
+      document.getElementById('huntAIBar').style.display = 'none';
+    });
+  } else {
+    // New hunt from current article
+    clearHuntForm();
+    if (currentArticle) {
+      document.getElementById('huntTitle').value = '';
+      document.getElementById('huntModalSource').textContent =
+        `📰 ${currentArticle.source.name}: ${currentArticle.title.slice(0, 80)}`;
+      document.getElementById('huntAIBar').style.display = 'flex';
+      // Pre-fill a link to the article
+      huntLinks = [{ text: currentArticle.source.name + ': ' + currentArticle.title.slice(0,60), url: currentArticle.link }];
+      renderHuntLinks();
+    } else {
+      document.getElementById('huntModalSource').textContent = '';
+      document.getElementById('huntAIBar').style.display = 'none';
+    }
+    document.querySelector('#huntModal .modal-source').textContent = '+ NEW THREAT HUNT';
+  }
+
+  document.getElementById('huntModal').style.display = 'flex';
+}
+
+function clearHuntForm() {
+  ['huntTitle','huntDesc','huntHypothesis','huntTechniqueId','huntDataSources','huntNotes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('huntTactic').value = '';
+  document.getElementById('huntPriority').value = 'medium';
+  document.getElementById('huntStatus').value = 'backlog';
+  document.getElementById('huntLinkText').value = '';
+  document.getElementById('huntLinkUrl').value = '';
+  huntLinks = [];
+  renderHuntLinks();
+}
+
+function closeHuntModal() {
+  document.getElementById('huntModal').style.display = 'none';
+  editingHuntId = null;
+}
+
+// ── LINKS ─────────────────────────────────────────────────────
+function addHuntLink() {
+  const text = document.getElementById('huntLinkText').value.trim();
+  const url = document.getElementById('huntLinkUrl').value.trim();
+  if (!url) { toast('Enter a URL first', 'info'); return; }
+  huntLinks.push({ text: text || url, url });
+  document.getElementById('huntLinkText').value = '';
+  document.getElementById('huntLinkUrl').value = '';
+  renderHuntLinks();
+}
+
+function removeHuntLink(i) {
+  huntLinks.splice(i, 1);
+  renderHuntLinks();
+}
+
+function renderHuntLinks() {
+  document.getElementById('huntLinksList').innerHTML = huntLinks.map((l, i) => `
+    <div class="hunt-link-item">
+      <a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.text)}</a>
+      <span class="hunt-link-remove" onclick="removeHuntLink(${i})">✕</span>
+    </div>`).join('');
+}
+
+// ── SAVE ──────────────────────────────────────────────────────
+async function saveHunt() {
+  const title = document.getElementById('huntTitle').value.trim();
+  if (!title) { toast('Hunt title is required', 'error'); return; }
+
+  const hunt = {
+    id: editingHuntId || ('hunt-' + Date.now()),
+    title,
+    description:  document.getElementById('huntDesc').value.trim(),
+    hypothesis:   document.getElementById('huntHypothesis').value.trim(),
+    tactic:       document.getElementById('huntTactic').value,
+    techniqueId:  document.getElementById('huntTechniqueId').value.trim(),
+    dataSources:  document.getElementById('huntDataSources').value.trim(),
+    priority:     document.getElementById('huntPriority').value,
+    status:       document.getElementById('huntStatus').value,
+    notes:        document.getElementById('huntNotes').value.trim(),
+    links:        [...huntLinks],
+    sourceArticle: currentArticle
+      ? `${currentArticle.source.name}: ${currentArticle.title}`
+      : (document.getElementById('huntModalSource').textContent || ''),
+    sourceUrl:    currentArticle?.link || '',
+    createdAt:    editingHuntId ? undefined : Date.now(),
+    updatedAt:    Date.now(),
+  };
+  if (editingHuntId) {
+    // preserve original createdAt
+    const all = await dbGetAllHunts();
+    const orig = all.find(h => h.id === editingHuntId);
+    if (orig) hunt.createdAt = orig.createdAt;
+  }
+
+  await dbSaveHunt(hunt);
+  closeHuntModal();
+  updateHuntsHeaderBtn();
+  toast(`Hunt saved: ${title.slice(0,40)}`);
+}
+
+// ── AI AUTO-FILL ──────────────────────────────────────────────
+const CTI_HUNT_FORM_PROMPT = `You are a CTI analyst creating a threat hunting task card from a cybersecurity article.
+Respond ONLY with a valid JSON object — no markdown fences, no explanation, nothing else.
+Base EVERYTHING on what is explicitly in the article. Do not invent details.
+
+{
+  "title": "Short hunt title derived from the article threat (max 90 chars)",
+  "description": "1-2 sentences: what behaviour or threat this hunt targets, based on the article",
+  "hypothesis": "We believe [actor or malware from article] is [behaviour from article], which would appear as [artifact] in [data source]",
+  "links": [
+    { "text": "Article source name and title", "url": "article URL if available" }
+  ]
+}`;
+
+async function aiAutoFillHunt() {
+  if (!currentArticle) return;
+  const btn = document.getElementById('huntAIBtn');
+  btn.disabled = true; btn.textContent = '⬡ GENERATING…';
+
+  try {
+    const raw = await aiChat(
+      CTI_HUNT_FORM_PROMPT,
+      `ARTICLE TITLE: ${currentArticle.title}\nARTICLE CONTENT: ${currentArticle.desc}\nARTICLE SOURCE: ${currentArticle.source.name}\nARTICLE URL: ${currentArticle.link}`
+    );
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const data = JSON.parse(clean);
+
+    if (data.title)       document.getElementById('huntTitle').value      = data.title;
+    if (data.description) document.getElementById('huntDesc').value       = data.description;
+    if (data.hypothesis)  document.getElementById('huntHypothesis').value = data.hypothesis;
+    if (data.links && Array.isArray(data.links)) {
+      data.links.forEach(l => { if (l.url && l.url !== 'article URL if available') huntLinks.push({ text: l.text || l.url, url: l.url }); });
+      renderHuntLinks();
+    }
+
+    toast('AI auto-fill complete — review and edit before saving');
+  } catch(e) {
+    toast('AI auto-fill failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '⬡ GENERATE';
+  }
+}
+
+// ── HUNTS LIST PANEL ─────────────────────────────────────────
+async function openHuntsList(fromArticle) {
+  document.getElementById('huntsListModal').style.display = 'flex';
+  const thisArticleBtn = document.getElementById('huntFilterThisArticle');
+  if (fromArticle && currentArticle) {
+    thisArticleBtn.style.display = 'inline-block';
+    huntFilterMode = 'this-article';
+    document.querySelectorAll('.hunt-filter-btn').forEach(b => b.classList.remove('active'));
+    thisArticleBtn.classList.add('active');
+  } else {
+    thisArticleBtn.style.display = 'none';
+    if (huntFilterMode === 'this-article') huntFilterMode = 'all';
+  }
+  await renderHuntsList();
+}
+
+function closeHuntsList() {
+  document.getElementById('huntsListModal').style.display = 'none';
+}
+
+function setHuntFilter(f) {
+  huntFilterMode = f;
+  document.querySelectorAll('.hunt-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-hf="${f}"]`)?.classList.add('active');
+  renderHuntsList();
+}
+
+async function renderHuntsList() {
+  const all = await dbGetAllHunts();
+  let hunts = all.sort((a,b) => {
+    const pOrder = { critical:0, high:1, medium:2, low:3 };
+    return (pOrder[a.priority]||2) - (pOrder[b.priority]||2) || b.updatedAt - a.updatedAt;
+  });
+
+  if (huntFilterMode === 'this-article' && currentArticle) {
+    const artTitle = currentArticle.title;
+    hunts = hunts.filter(h => h.sourceArticle && h.sourceArticle.includes(artTitle.slice(0, 40)));
+  } else if (huntFilterMode !== 'all') {
+    hunts = hunts.filter(h => h.status === huntFilterMode || h.priority === huntFilterMode);
+  }
+
+  document.getElementById('huntsCount').textContent = all.length;
+  const container = document.getElementById('huntsList');
+
+  if (!hunts.length) {
+    container.innerHTML = `<div style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">
+      NO HUNTS ${huntFilterMode !== 'all' ? 'MATCHING FILTER' : 'YET'}<br><br>
+      <span style="color:var(--accent3)">Open an article and click + CREATE HUNT</span></div>`;
+    return;
+  }
+
+  container.innerHTML = hunts.map(h => {
+    const linksHtml = h.links?.length
+      ? h.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener"
+          style="color:#aa66ff;font-family:var(--mono);font-size:10px;text-decoration:none"
+          onclick="event.stopPropagation()">🔗 ${esc(l.text)}</a>`).join(' &nbsp;')
+      : '';
+    const tactics = [h.tactic, h.techniqueId].filter(Boolean).join(' · ');
+    return `
+    <div class="hunt-card" onclick="openHuntModal('${h.id}')">
+      <div class="hunt-card-header">
+        <span class="hunt-priority ${h.priority}">${h.priority.toUpperCase()}</span>
+        <div class="hunt-card-title">${esc(h.title)}</div>
+        <span class="hunt-status ${h.status}">${h.status.replace('-',' ')}</span>
+      </div>
+      ${h.description ? `<div class="hunt-card-desc">${esc(h.description)}</div>` : ''}
+      <div class="hunt-card-meta">
+        ${tactics ? `<span>🎯 ${esc(tactics)}</span>` : ''}
+        ${h.dataSources ? `<span>📊 ${esc(h.dataSources.slice(0,60))}</span>` : ''}
+        ${h.sourceArticle ? `<span style="color:var(--accent3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px" title="${esc(h.sourceArticle)}">📰 ${esc(h.sourceArticle.slice(0,50))}${h.sourceArticle.length>50?'…':''}</span>` : ''}
+        <span style="margin-left:auto">${new Date(h.createdAt).toLocaleDateString()}</span>
+      </div>
+      ${linksHtml ? `<div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap">${linksHtml}</div>` : ''}
+      <div class="hunt-card-actions" onclick="event.stopPropagation()">
+        <button class="hunt-action-btn" onclick="cycleHuntStatus('${h.id}')">↻ STATUS</button>
+        <button class="hunt-action-btn" onclick="openHuntModal('${h.id}')">✏ EDIT</button>
+        <button class="hunt-action-btn delete" onclick="deleteHunt('${h.id}')">✕ DELETE</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function cycleHuntStatus(id) {
+  const all = await dbGetAllHunts();
+  const h = all.find(x => x.id === id);
+  if (!h) return;
+  const cycle = ['backlog','in-progress','completed','blocked'];
+  h.status = cycle[(cycle.indexOf(h.status) + 1) % cycle.length];
+  h.updatedAt = Date.now();
+  await dbSaveHunt(h);
+  await renderHuntsList();
+  toast(`Status → ${h.status}`);
+}
+
+async function deleteHunt(id) {
+  if (!confirm('Delete this hunt?')) return;
+  await dbDeleteHunt(id);
+  await renderHuntsList();
+  updateHuntsHeaderBtn();
+  toast('Hunt deleted');
+}
+
+async function updateHuntsHeaderBtn() {
+  const all = await dbGetAllHunts();
+  const btn = document.getElementById('btnHunts');
+  if (btn) btn.textContent = `🎯 HUNTS${all.length ? ' ('+all.length+')' : ''}`;
+}
+
+async function exportHunts() {
+  const all = await dbGetAllHunts();
+  const blob = new Blob([JSON.stringify(all, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `threat-hunts-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast(`Exported ${all.length} hunts`);
+}
+
+// ============================================================
+// RSS FETCHING
+// ============================================================
+async function fetchAllFeeds() {
+  const btn = document.getElementById('btnRefresh');
+  btn.disabled = true; btn.textContent = '↻ LOADING';
+  allArticles = [];
+  sourceStatus = {};
+  renderSourceList();
+  document.getElementById('feedContent').innerHTML = `
+    <div class="feed-loading">
+      <div style="font-family:var(--display);font-size:12px;letter-spacing:4px;color:var(--accent2)">FETCHING INTEL FEEDS</div>
+      <div class="loader-bar"></div>
+      <div>Contacting ${SOURCES.length} intelligence sources… (this may take 30-60s)</div>
+    </div>`;
+
+  await Promise.allSettled(SOURCES.filter(s => !disabledSources.has(s.id)).map(s => fetchFeed(s)));
+
+  allArticles.sort((a,b) => b.date - a.date);
+  applyFilters();
+  updateStats();
+  updateTrends();
+  updateRecent();
+
+
+  btn.disabled = false; btn.textContent = '↻ REFRESH';
+  const now = Date.now();
+  document.getElementById('lastUpdate').textContent = new Date(now).toLocaleTimeString();
+  document.getElementById('totalCount').textContent = allArticles.length;
+  const liveSrcs = Object.values(sourceStatus).filter(s=>s==='loaded').length;
+  document.getElementById('sourceCount').textContent = liveSrcs;
+  toast(`Loaded ${allArticles.length} articles from ${liveSrcs} sources`);
+
+  // Save to cache
+  await saveToCache(allArticles);
+  updateCacheAgeDisplay(now);
+  const cacheBtn = document.getElementById('btnLoadCache');
+  cacheBtn.style.display = 'inline-block';
+  cacheBtn.textContent = `⬡ CACHE (just now)`;
+}
+
+async function fetchFeed(src) {
+  sourceStatus[src.id] = 'loading';
+  updateSourceItem(src.id);
+  if (src.apiType === 'rlive') {
+    await fetchRansomwareLive(src);
+    return;
+  }
+  for (const proxyFn of CORS_PROXIES) {
+    try {
+      const res = await fetch(proxyFn(src.url), { signal: AbortSignal.timeout(14000) });
+      if (!res.ok) continue;
+      const text = await res.text();
+      const articles = parseRSS(text, src);
+      if (!articles.length) continue;
+      allArticles.push(...articles);
+      sourceStatus[src.id] = 'loaded';
+      updateSourceItem(src.id, articles.length);
+      return;
+    } catch { continue; }
+  }
+  sourceStatus[src.id] = 'error';
+  updateSourceItem(src.id, 0);
+}
+
+async function fetchRansomwareLive(src) {
+  try {
+    const res = await fetch('https://api.ransomware.live/v2/recentvictims', {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(14000)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const victims = Array.isArray(data) ? data : (data.data || data.victims || []);
+    const articles = victims.slice(0, 40).map((v, i) => {
+      const name = v.victim || v.name || v.company || 'Unknown victim';
+      const group = v.group || v.gang || v.ransomware_group || 'Unknown group';
+      const country = v.country || v.country_code || '';
+      const sector = v.activity || v.sector || v.industry || '';
+      const date = v.discovered || v.date || v.published || v.added || new Date().toISOString();
+      const url = v.website || v.url || v.post_url || `https://www.ransomware.live/`;
+      const desc = [
+        sector ? `Sector: ${sector}` : '',
+        country ? `Country: ${country}` : '',
+        v.description ? v.description.slice(0, 300) : ''
+      ].filter(Boolean).join(' | ');
+      return {
+        id: `rlive-${i}-${Date.now()}`,
+        title: `[${group}] ${name}`,
+        link: url,
+        desc,
+        date: new Date(date),
+        source: src,
+        tags: ['ransomware'],
+        rliveGroup: group,
+        rliveCountry: country,
+        rliveSector: sector
+      };
+    });
+    allArticles.push(...articles);
+    sourceStatus[src.id] = 'loaded';
+    updateSourceItem(src.id, articles.length);
+    // Update ransomware stats panel
+    updateRansomwareStats(victims.slice(0, 40));
+  } catch(e) {
+    sourceStatus[src.id] = 'error';
+    updateSourceItem(src.id, 0);
+  }
+}
+
+function updateRansomwareStats(victims) {
+  // Count top countries
+  const countries = {}, gangs = {}, sectors = {};
+  victims.forEach(v => {
+    const c = v.country || v.country_code || 'Unknown';
+    const g = v.group || v.gang || v.ransomware_group || 'Unknown';
+    const s = v.activity || v.sector || v.industry || 'Unknown';
+    countries[c] = (countries[c]||0)+1;
+    gangs[g] = (gangs[g]||0)+1;
+    sectors[s] = (sectors[s]||0)+1;
+  });
+  const topCountries = Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topGangs    = Object.entries(gangs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topSectors  = Object.entries(sectors).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const panel = document.getElementById('ransomwareStatsPanel');
+  if (!panel) return;
+  panel.style.display = 'block';
+
+  const fmt = (arr) => arr.map(([k,v]) =>
+    `<div class="rstats-row"><span class="rstats-name">${esc(k)}</span><span class="rstats-count">${v}</span></div>`
+  ).join('');
+
+  document.getElementById('rstatsCountries').innerHTML = fmt(topCountries);
+  document.getElementById('rstatsGangs').innerHTML     = fmt(topGangs);
+  document.getElementById('rstatsSectors').innerHTML   = fmt(topSectors);
+}
+
+function parseRSS(xmlText, src) {
+  try {
+    const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+    const isAtom = !!doc.querySelector('feed');
+    const items = doc.querySelectorAll(isAtom ? 'entry' : 'item');
+    const articles = [];
+    items.forEach((item, i) => {
+      if (i >= 25) return;
+      const get = (sel) => item.querySelector(sel)?.textContent?.trim() || '';
+      const title = get('title') || 'Untitled';
+      let link = isAtom
+        ? (item.querySelector('link[rel="alternate"]')?.getAttribute('href') || item.querySelector('link')?.getAttribute('href') || get('link'))
+        : (get('link') || get('guid'));
+      let desc = get('description') || get('summary') || get('content') || '';
+      desc = desc.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 500);
+      const pubDate = get('pubDate') || get('updated') || get('published') || get('dc\\:date') || '';
+      const date = pubDate ? new Date(pubDate) : new Date(Date.now() - i * 3600000);
+      articles.push({
+        id: `${src.id}-${i}-${Date.now()}`,
+        title, link, desc,
+        date: isNaN(date) ? new Date() : date,
+        source: src,
+        tags: detectTags(title + ' ' + desc)
+      });
+    });
+    return articles;
+  } catch { return []; }
+}
+
+function detectTags(text) {
+  const t = text.toLowerCase();
+  const tags = [];
+  if (/ransomware|ransom\b/.test(t)) tags.push('ransomware');
+  if (/malware|trojan|backdoor|\brat\b|spyware|botnet|loader|dropper|stealer|infostealer/.test(t)) tags.push('malware');
+  if (/cve-\d|vulnerabilit|exploit|patch|zero.?day|rce|privilege esc|lpe/.test(t)) tags.push('vuln');
+  if (/\bapt\b|nation.?state|threat actor|lazarus|fancy bear|cozy bear|unc\d{4}|volt typhoon/.test(t)) tags.push('apt');
+  if (/advisory|alert|warning|cisa|ics-cert|ncas/.test(t)) tags.push('advisory');
+  if (/phish|spear.?phish|credential harvest/.test(t)) tags.push('phishing');
+  return tags.length ? tags : ['info'];
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function renderSourceList() {
+  document.getElementById('sourceList').innerHTML = SOURCES.map(s => {
+    const disabled = disabledSources.has(s.id);
+    const st = disabled ? 'disabled' : (sourceStatus[s.id] || 'pending');
+    const cnt = allArticles.filter(a => a.source.id === s.id).length;
+    return `<div class="source-item ${st}" id="src-${s.id}" onclick="filterBySource('${s.id}')">
+      <div class="src-dot" onclick="event.stopPropagation();toggleSourceDisabled('${s.id}')" title="${disabled ? 'Click to enable' : 'Click to disable'}"></div>
+      <span>${s.name}</span>
+      ${disabled
+        ? '<span style="font-family:var(--mono);font-size:9px;color:var(--red);margin-left:auto">OFF</span>'
+        : (cnt > 0 ? `<span class="src-count">${cnt}</span>` : '')
+      }
+      <button class="src-digest-btn" onclick="event.stopPropagation();focusDigest('source','${s.id}','${s.name.replace(/'/g,"\\'")}')">⬡ DIGEST</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleSourceDisabled(id) {
+  if (disabledSources.has(id)) {
+    disabledSources.delete(id);
+  } else {
+    disabledSources.add(id);
+    // Remove its articles from current view
+    allArticles = allArticles.filter(a => a.source.id !== id);
+    applyFilters();
+    updateStats();
+    updateTrends();
+    updateRecent();
+  }
+  // Persist
+  localStorage.setItem('tf_disabled', JSON.stringify([...disabledSources]));
+  renderSourceList();
+  toast(disabledSources.has(id) ? `Disabled: ${SOURCES.find(s=>s.id===id)?.name}` : `Enabled: ${SOURCES.find(s=>s.id===id)?.name}`);
+}
+
+function updateSourceItem(id, count) {
+  const el = document.getElementById(`src-${id}`);
+  if (!el) return;
+  const disabled = disabledSources.has(id);
+  const st = disabled ? 'disabled' : (sourceStatus[id] || 'pending');
+  el.className = `source-item ${st}`;
+  if (!disabled && count !== undefined && count > 0) {
+    let cntEl = el.querySelector('.src-count');
+    if (!cntEl) { cntEl = document.createElement('span'); cntEl.className = 'src-count'; el.appendChild(cntEl); }
+    cntEl.textContent = count;
+  }
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const now = Date.now();
+  let pool = activeSourceFilter ? allArticles.filter(a => a.source.id === activeSourceFilter) : allArticles;
+
+  filteredArticles = pool.filter(a => {
+    if (currentFilter === 'today' && (now - a.date) > 86400000) return false;
+    if (currentFilter === 'week' && (now - a.date) > 86400000*7) return false;
+    if (currentTagFilter !== 'all' && !a.tags.includes(currentTagFilter)) return false;
+    const kw = activeTrendFilter || search;
+    if (kw && !a.title.toLowerCase().includes(kw) && !a.desc.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+
+  if (currentSort === 'newest') filteredArticles.sort((a,b) => b.date - a.date);
+  else if (currentSort === 'oldest') filteredArticles.sort((a,b) => a.date - b.date);
+  else filteredArticles.sort((a,b) => a.source.name.localeCompare(b.source.name));
+
+  document.getElementById('visibleCount').textContent = filteredArticles.length;
+  renderFeed();
+}
+
+function renderFeed() {
+  const c = document.getElementById('feedContent');
+  if (!filteredArticles.length) {
+    c.innerHTML = `<div class="empty-state">NO ARTICLES MATCH<br><span style="color:var(--accent3)">ADJUST FILTERS OR REFRESH</span></div>`;
+    return;
+  }
+  c.innerHTML = filteredArticles.map(articleCardHtml).join('');
+}
+
+function articleCardHtml(a) {
+  const ago = timeAgo(a.date);
+  const tagHtml = a.tags.map(t => {
+    const cls = t==='ransomware'?'critical':t==='vuln'?'high':t==='apt'?'medium':t==='malware'?'malware':'info';
+    return `<span class="tag ${cls}">${t}</span>`;
+  }).join('');
+  return `<div class="article-card" onclick="openArticle('${a.id}')">
+    <div class="card-meta">
+      <span class="card-source" style="border-color:${a.source.color};color:${a.source.color}">${a.source.name}</span>
+      <span class="card-date">${ago}</span>
+      <div class="card-tags">${tagHtml}</div>
+    </div>
+    <div class="card-title">${esc(a.title)}</div>
+    ${a.desc ? `<div class="card-summary">${esc(a.desc)}</div>` : ''}
+    <div class="card-footer">
+      <a class="card-link" href="${a.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">[ READ ORIGINAL → ]</a>
+      <button class="card-ai-btn" id="aibtn-${a.id}" onclick="event.stopPropagation();summarizeCard('${a.id}')" ${!ollamaOnline?'disabled':''}>⬡ CTI BRIEF</button>
+    </div>
+    <div class="ai-summary-box" id="aibox-${a.id}">
+      <div class="ai-summary-label">▶ CTI BRIEF</div>
+      <div id="aitext-${a.id}"></div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// CTI ANALYST PROMPTS
+// ============================================================
+
+const CTI_SYSTEM_PROMPT = `You are an elite Cyber Threat Intelligence (CTI) analyst with 15+ years of experience across SOC, DFIR, and threat hunting operations. You have deep expertise in:
+- MITRE ATT&CK framework (Enterprise, Mobile, ICS)
+- Threat actor profiling and campaign tracking (APT groups, ransomware operators, hacktivists)
+- Malware reverse engineering and behavioral analysis
+- Network and host-based forensics
+- Threat hunting hypothesis development and detection engineering
+- SIEM/EDR query writing (Sigma, KQL, SPL, YARA)
+- Vulnerability management and exploit chain analysis
+- Diamond Model and kill chain methodologies
+
+Your output is ALWAYS practical, defence-oriented, and immediately actionable by blue team operators. You avoid speculation. You flag confidence levels. You think like an attacker to defend like a defender. Use technical language appropriate for senior security engineers. Format output clearly with section headers.`;
+
+const CTI_QUICK_SUMMARY_PROMPT = `Summarise this cybersecurity article for a blue team analyst. Be brief and direct — no jargon, no padding. Use this exact format:
+
+🔍 WHAT HAPPENED
+One plain sentence.
+
+⚠️ PRIORITY: [CRITICAL / HIGH / MEDIUM / LOW]
+One sentence why.
+
+✅ ACT NOW (max 2 bullets)
+- Most important immediate action.
+- Second action if needed.
+
+🎯 HUNT LEAD
+One sentence: what to hunt for and where to look.`;
+
+const CTI_EXEC_SUMMARY_PROMPT = `You are a CTI analyst writing for a non-technical executive audience (C-suite, board members, senior management). Produce a concise, jargon-free executive summary.
+
+Respond in this exact format:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXECUTIVE THREAT BRIEFING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HEADLINE
+One sentence: what happened, in plain business language.
+
+BUSINESS RISK  [CRITICAL / HIGH / MEDIUM / LOW]
+2-3 sentences explaining the potential business impact — financial, operational, reputational — without technical jargon.
+
+WHO IS AFFECTED
+Describe the affected organisations, sectors, or geographies in business terms.
+
+WHAT IS AT RISK
+List 2-3 specific business assets or operations that could be impacted (data, services, revenue, reputation).
+
+WHAT WE KNOW
+3 bullet points summarising the key facts a decision-maker needs to know.
+
+RECOMMENDED ACTIONS FOR LEADERSHIP
+3 clear, actionable decisions or directives for senior management. Frame as instructions, not observations.
+
+BOTTOM LINE
+One sentence: the most important thing leadership needs to understand about this threat right now.`;
+
+const CTI_DEEP_ANALYSIS_PROMPT = `Perform a full CTI analysis of this article. Structure your response exactly as follows:
+
+═══ THREAT INTELLIGENCE REPORT ═══
+
+EXECUTIVE SUMMARY
+2-3 sentences: what this threat is, who it targets, and the business impact.
+
+THREAT ACTOR PROFILE
+- Name / Alias / Cluster (if identified or suspected):
+- Motivation (financial / espionage / hacktivism / destructive):
+- Known previous campaigns or overlap:
+- Confidence level: [HIGH / MEDIUM / LOW / UNATTRIBUTED]
+
+ATTACK LIFECYCLE (MITRE ATT&CK)
+Map observed or implied techniques to ATT&CK tactics. Format:
+- [TACTIC] Technique ID — Technique Name: brief description of how used
+
+TECHNICAL INDICATORS
+List any explicit or implied indicators:
+- Network: IPs, domains, URLs, C2 patterns
+- Host: file names, hashes, registry keys, mutexes, scheduled tasks
+- Behavioral: process chains, API calls, LOLBins abused
+
+AFFECTED SYSTEMS & SCOPE
+- Platforms, OS versions, software, sectors, geographies at risk.
+
+DETECTION OPPORTUNITIES
+For each key TTP, suggest a detection approach:
+- [TTP] → Detection method (log source, query concept, EDR rule idea)
+
+DEFENSIVE RECOMMENDATIONS
+Prioritised list of concrete mitigations. Tag each: [IMMEDIATE] [SHORT-TERM] [STRATEGIC]
+
+THREAT HUNTING HYPOTHESES
+2-3 actionable hunt hypotheses a threat hunter can operationalise today. Include suggested data sources.
+
+INTELLIGENCE GAPS
+What information is missing that would change the assessment?`;
+
+const CTI_HUNT_PROMPT = `Extract ONLY threat actor and TTP information explicitly mentioned or strongly implied in this article. Do not add context from outside the article. Use this format:
+
+🕵️ THREAT ACTOR
+Name/alias (if mentioned), motivation, target sectors/regions. Write "Unknown" if not stated.
+
+⚔️ TACTICS & TECHNIQUES (MITRE ATT&CK)
+List only TTPs evidenced in the article:
+- [TID] Technique Name — one sentence on how it was used in this case.
+
+🎯 HUNTING HYPOTHESES
+For each TTP above, one hypothesis:
+"[Actor/malware] used [technique] — look for [specific observable] in [data source]."
+
+🔁 PIVOT POINTS
+2-3 artifacts from this article that could anchor a hunt (hashes, domain patterns, behaviour signatures).`;
+
+const CTI_IOC_PROMPT = `Extract ONLY indicators of compromise explicitly present in this article.
+IOCs are often DEFANGED/SANITIZED for safe sharing. You MUST recognise and extract these patterns:
+
+DEFANGING CONVENTIONS TO RECOGNISE:
+- Brackets around dots:  192[.]168[.]1[.]1  →  192.168.1.1
+- Brackets around ://   hxxps[://]  hxxp[://]  →  https://  http://
+- hxxp/hxxps prefix:    hxxps://example[.]com  →  https://example.com
+- DOT substitution:     example DOT com,  example(.)com,  example{.}com
+- AT substitution:      user AT domain DOT com  →  user@domain.com
+- Partial redaction:    198.51.x.x,  10.0.0[.]X
+- Mixed formats:        hxxps[:]//www[.]evil[.]com/path[.]exe
+
+For EACH IOC found (defanged or plain), output the RESTORED/CLEAN form, then note if it was defanged.
+
+STRICT RULES:
+- ONLY extract IOCs that are EXPLICITLY present — verbatim or defanged — in the article text provided.
+- Do NOT invent, infer, fabricate, or add any examples not literally in the text.
+- Do NOT fill sections with generic placeholders or hypothetical values.
+- If the article contains NO actionable IOCs at all, respond ONLY with:
+  "No IOCs found in this article. The content does not contain extractable IP addresses, domains, URLs, file hashes, or CVEs."
+  Then stop — do not output any section headers.
+- Only output section headers for categories that have actual findings.
+
+---
+
+📡 IP ADDRESSES
+Format: <restored IP> [defanged] — context (omit section entirely if none found)
+
+🌐 DOMAINS
+Format: <restored domain> [defanged] — context (omit section entirely if none found)
+
+🔗 URLS
+Format: <restored URL> [defanged] — context (omit section entirely if none found)
+
+🔑 FILE HASHES (MD5 / SHA1 / SHA256)
+List exactly as found — hashes are never defanged. (omit section entirely if none found)
+
+📋 CVEs
+CVE ID — affected product — exploitation status (omit section entirely if none found)
+
+⚠️ CONFIDENCE: Only include if at least one IOC was found. [HIGH / MEDIUM / LOW] — one sentence.`;
+
+const CTI_DIGEST_PROMPT = `You are preparing the daily Cyber Threat Intelligence briefing for a senior security leadership team and SOC operators. Analyse these headlines and produce a structured intelligence digest.
+
+═══ DAILY CTI BRIEFING ═══
+
+DATE CONTEXT: Today's feed.
+
+THREAT LANDSCAPE OVERVIEW
+3-4 sentences summarising the overall threat environment visible in today's feed. Highlight any patterns, escalation, or novel activity.
+
+TOP THREATS (ranked by defender priority)
+For each major threat (max 5):
+▸ THREAT NAME / CAMPAIGN
+  Severity: [CRITICAL/HIGH/MEDIUM]
+  Summary: what it is and who is targeted
+  Defender Action: one concrete immediate action
+
+ACTIVE THREAT ACTORS
+Note any named APT groups, ransomware operators, or cybercriminal clusters active in today's feed.
+
+VULNERABILITY WATCH
+List critical CVEs or exploited vulnerabilities mentioned. Flag if actively exploited in the wild.
+
+HUNT OF THE DAY
+One high-value threat hunting hypothesis derived from today's intelligence that any SOC can act on immediately. Include suggested data sources and what to look for.
+
+DETECTION ENGINEERING SIGNAL
+One new detection opportunity from today's feed — describe a Sigma rule concept or detection logic.
+
+EMERGING TRENDS
+What patterns are building across multiple sources? What might this signal for the next 7-30 days?
+
+RECOMMENDED ACTIONS FOR TODAY
+3 prioritised actions for blue teams, ranked [P1] [P2] [P3].`;
+
+// ============================================================
+// AI ACTIONS
+// ============================================================
+async function summarizeCard(id) {
+  if (!ollamaOnline) { toast('Ollama is offline', 'error'); return; }
+  const a = allArticles.find(x => x.id === id);
+  if (!a) return;
+  const btn = document.getElementById(`aibtn-${id}`);
+  const box = document.getElementById(`aibox-${id}`);
+  const textEl = document.getElementById(`aitext-${id}`);
+  btn.disabled = true; btn.className = 'card-ai-btn summarizing'; btn.textContent = '⬡ ANALYZING…';
+  box.className = 'ai-summary-box visible';
+  textEl.className = 'typing'; textEl.textContent = '';
+  try {
+    await aiChat(
+      CTI_SYSTEM_PROMPT,
+      `${CTI_QUICK_SUMMARY_PROMPT}\n\nARTICLE TITLE: ${a.title}\nARTICLE CONTENT: ${a.desc}`,
+      (_, full) => { textEl.textContent = full; }
+    );
+    textEl.className = '';
+    btn.disabled = false; btn.className = 'card-ai-btn'; btn.textContent = '⬡ CTI BRIEF ✓';
+  } catch(e) {
+    textEl.className = '';
+    textEl.textContent = `Error: ${e.message}`;
+    btn.disabled = false; btn.className = 'card-ai-btn'; btn.textContent = '⬡ RETRY';
+    toast('Ollama request failed', 'error');
+  }
+}
+
+function openArticle(id) {
+  const a = allArticles.find(x => x.id === id);
+  if (!a) return;
+  currentArticle = a;
+  document.getElementById('modalSource').textContent = a.source.name.toUpperCase();
+  document.getElementById('modalTitle').textContent = a.title;
+  document.getElementById('modalDesc').textContent = a.desc || 'No description available.';
+  document.getElementById('modalLink').href = a.link;
+  document.getElementById('modalTags').innerHTML = a.tags.map(t => {
+    const cls = t==='ransomware'?'critical':t==='vuln'?'high':t==='apt'?'medium':t==='malware'?'malware':'info';
+    return `<span class="tag ${cls}">${t}</span>`;
+  }).join('');
+  document.getElementById('modalAiContent').className = 'modal-ai-text';
+  document.getElementById('modalAiContent').textContent = 'Select an analysis mode below. FULL ANALYSIS produces a structured CTI report. HUNT LEADS generates threat hunting hypotheses and queries. EXTRACT IOCs pulls all indicators and detection concepts.';
+  ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn'].forEach(id => {
+    document.getElementById(id).disabled = !ollamaOnline;
+  });
+  document.getElementById('articleModal').style.display = 'flex';
+  // Show hunt count for this article
+  updateArticleHuntBadge();
+}
+
+async function updateArticleHuntBadge() {
+  if (!currentArticle) return;
+  const all = await dbGetAllHunts();
+  const count = all.filter(h => h.sourceArticle && h.sourceArticle.includes(currentArticle.title.slice(0,40))).length;
+  const btn = document.getElementById('modalHuntCreateBtn');
+  if (btn) btn.textContent = count > 0 ? `+ HUNT (${count})` : '+ CREATE HUNT';
+}
+
+function closeModal() {
+  document.getElementById('articleModal').style.display = 'none';
+  currentArticle = null;
+}
+
+async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, regexSuffix) {
+  if (!currentArticle) return;
+  const canUseAI = ollamaOnline || activeProvider !== 'ollama';
+  if (!canUseAI) return;
+  const contentEl = document.getElementById('modalAiContent');
+  const btn = document.getElementById(btnId);
+  ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn'].forEach(id => document.getElementById(id).disabled = true);
+  btn.textContent = '⬡ PROCESSING…';
+  contentEl.className = 'modal-ai-text typing';
+  contentEl.textContent = '';
+  try {
+    await aiChat(systemPrompt, userPrompt, (_, full) => {
+      contentEl.textContent = (regexSuffix && regexSuffix.trim()) ? full + regexSuffix : full;
+    });
+    contentEl.className = 'modal-ai-text';
+  } catch(e) {
+    contentEl.className = 'modal-ai-text';
+    contentEl.textContent = `Error: ${e.message}`;
+    toast('AI request failed', 'error');
+  } finally {
+    const still = ollamaOnline || activeProvider !== 'ollama';
+    ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn'].forEach(id => document.getElementById(id).disabled = !still);
+    btn.textContent = btnLabel;
+  }
+}
+
+function execSummaryCurrentArticle() {
+  if (!currentArticle) return;
+  runModalAI(
+    CTI_SYSTEM_PROMPT,
+    `${CTI_EXEC_SUMMARY_PROMPT}\n\nARTICLE TITLE: ${currentArticle.title}\nARTICLE CONTENT: ${currentArticle.desc}`,
+    'modalExecBtn', '📋 EXEC SUMMARY'
+  );
+}
+
+function analyzeCurrentArticle() {
+  if (!currentArticle) return;
+  runModalAI(
+    CTI_SYSTEM_PROMPT,
+    `${CTI_DEEP_ANALYSIS_PROMPT}\n\nARTICLE TITLE: ${currentArticle.title}\nARTICLE CONTENT: ${currentArticle.desc}`,
+    'modalAnalyzeBtn', '⬡ ANALYZE'
+  );
+}
+
+function highlightsCurrentArticle() {
+  if (!currentArticle) return;
+  runModalAI(
+    CTI_SYSTEM_PROMPT,
+    `${CTI_HUNT_PROMPT}\n\nARTICLE TITLE: ${currentArticle.title}\nARTICLE CONTENT: ${currentArticle.desc}`,
+    'modalHighlightsBtn', '🎯 HUNT LEADS'
+  );
+}
+
+// ── IOC DEFANG DEOBFUSCATOR ────────────────────────────────────────────────
+function defangDecode(text) {
+  if (!text) return text;
+  let t = text;
+  // hxxp/hxxps → http/https
+  t = t.replace(/hxxps?(\[:\]|:)/gi, (m) => m.toLowerCase().startsWith('hxxps') ? 'https:' : 'http:');
+  // [://] [//] → ://
+  t = t.replace(/\[[:\/]+\]\/\//gi, '://');
+  t = t.replace(/\[:\]\/\//gi, '://');
+  // brackets around dots: [.] (.) {.} DOT
+  t = t.replace(/\[\.\]/g, '.');
+  t = t.replace(/\(\.\)/g, '.');
+  t = t.replace(/\{\.}/g, '.');
+  t = t.replace(/\s+DOT\s+/gi, '.');
+  // brackets around slashes: [/]
+  t = t.replace(/\[\/\]/g, '/');
+  // AT substitutions
+  t = t.replace(/\s+AT\s+/gi, '@');
+  t = t.replace(/\[@\]/g, '@');
+  // brackets around colons: [:]
+  t = t.replace(/\[:\]/g, ':');
+  // trailing [.ext] or [.com] — remove brackets
+  t = t.replace(/\[(\.[a-zA-Z]{2,6})\]/g, '$1');
+  return t;
+}
+
+// ── REGEX IOC EXTRACTOR (runs on raw text) ──────────────────────────────
+function regexExtractIOCs(rawText) {
+  const decoded = defangDecode(rawText);
+  const results = { ips: new Set(), domains: new Set(), urls: new Set(), hashes: new Set(), cves: new Set() };
+
+  // IPs (v4) — including defanged originals
+  const ipRaw = rawText.match(/\b(?:\d{1,3}[\[\({\.]?\]?\d{1,3}[\[\({\.]?\]?\d{1,3}[\[\({\.]?\]?\d{1,3})\b/g) || [];
+  const ipClean = decoded.match(/\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b/g) || [];
+  [...ipRaw, ...ipClean].forEach(ip => { const clean = defangDecode(ip); if (/^\d+\.\d+\.\d+\.\d+$/.test(clean)) results.ips.add(clean); });
+
+  // URLs — including hxxp/hxxps defanged
+  const urlRaw = rawText.match(/(?:hxxps?|https?)\s*(?:\[:\]|:)\s*(?:\/\/|\[\/\/\]|\[:\/{2}\]|\/\/)[\w\[\]\.\-\/\?=&#%_+]+/gi) || [];
+  const urlClean = decoded.match(/https?:\/\/[\w\.\-\/\?=&#%_+]+/gi) || [];
+  [...urlRaw, ...urlClean].forEach(u => results.urls.add(defangDecode(u)));
+
+  // Domains — anything that looks like domain.tld (from defanged context)
+  const domainRaw = rawText.match(/(?:[\w\-]+\[[\.\]\({\)}\.][\w\-]+)+(?:\[[\.\]\({\)}\.][\w]{2,})+/g) || [];
+  domainRaw.forEach(d => { const clean = defangDecode(d); if (clean.includes('.') && !clean.match(/^\d+\.\d+/)) results.domains.add(clean); });
+
+  // Hashes — MD5/SHA1/SHA256
+  const md5    = rawText.match(/\b[a-fA-F0-9]{32}\b/g) || [];
+  const sha1   = rawText.match(/\b[a-fA-F0-9]{40}\b/g) || [];
+  const sha256 = rawText.match(/\b[a-fA-F0-9]{64}\b/g) || [];
+  [...md5, ...sha1, ...sha256].forEach(h => results.hashes.add(h));
+
+  // CVEs
+  const cves = rawText.match(/CVE-\d{4}-\d{4,7}/gi) || [];
+  cves.forEach(v => results.cves.add(v.toUpperCase()));
+
+  return results;
+}
+
+function iocResultsToText(iocs) {
+  const fmt = (set, label) => {
+    const items = [...set];
+    if (!items.length) return '';
+    return `\n─── REGEX-EXTRACTED: ${label} ───\n` + items.map(x => `  • ${x}`).join('\n');
+  };
+  let out = '';
+  out += fmt(iocs.ips, 'IP ADDRESSES');
+  out += fmt(iocs.domains, 'DOMAINS');
+  out += fmt(iocs.urls, 'URLS');
+  out += fmt(iocs.hashes, 'HASHES');
+  out += fmt(iocs.cves, 'CVEs');
+  // Return null if truly nothing found — caller will handle the empty case
+  return out.trim() ? out : null;
+}
+
+function extractIOCs() {
+  if (!currentArticle) return;
+  const rawText = (currentArticle.title || '') + '\n' + (currentArticle.desc || '');
+  const decodedText = defangDecode(rawText);
+
+  // Run regex extractor first — fast client-side pass
+  const regexIOCs = regexExtractIOCs(rawText);
+  const regexSummary = iocResultsToText(regexIOCs);
+
+  // Pass BOTH raw (with defanged IOCs visible) AND decoded text to AI
+  const combinedText = `RAW ARTICLE TEXT (may contain defanged IOCs):\n${rawText}\n\nDEFANGED-DECODED VERSION:\n${decodedText}`;
+
+  // Append regex findings only if they found something
+  const suffix = regexSummary
+    ? `\n\n━━━ PATTERN-MATCHED IOCs (client-side regex) ━━━${regexSummary}`
+    : null;
+
+  runModalAI(
+    CTI_SYSTEM_PROMPT,
+    `${CTI_IOC_PROMPT}\n\n${combinedText}`,
+    'modalIOCBtn', '⚑ EXTRACT IOCs',
+    suffix
+  );
+}
+
+async function generateDigest() {
+  if (!ollamaOnline) { toast('Ollama must be online to generate digest', 'error'); return; }
+  if (!allArticles.length) { toast('Load feeds first', 'info'); return; }
+  const placeholder = document.getElementById('digestPlaceholder');
+  const digestEl = document.getElementById('digestText');
+  placeholder.style.display = 'none';
+  digestEl.style.display = 'block';
+  digestEl.className = 'digest-text typing';
+  digestEl.textContent = '';
+  const headlines = allArticles.slice(0, 25).map(a =>
+    `[${a.source.name}] ${a.title}${a.desc ? ' — ' + a.desc.slice(0,120) : ''}`
+  ).join('\n');
+  try {
+    await aiChat(
+      CTI_SYSTEM_PROMPT,
+      `${CTI_DIGEST_PROMPT}\n\nFEED HEADLINES (last 25 articles):\n${headlines}`,
+      (_, full) => { digestEl.textContent = full; }
+    );
+    digestEl.className = 'digest-text';
+    toast('CTI digest generated');
+  } catch(e) {
+    digestEl.textContent = `Error: ${e.message}`;
+    digestEl.className = 'digest-text';
+    toast('Digest generation failed', 'error');
+  }
+}
+
+// ============================================================
+// FOCUS DIGEST (per source / per topic)
+// ============================================================
+let focusDigestContext = null; // { type: 'source'|'topic', key, label }
+
+async function focusDigest(type, key, label) {
+  const canUseAI = ollamaOnline || activeProvider !== 'ollama';
+  if (!canUseAI) { toast('No AI provider active', 'error'); return; }
+  if (!allArticles.length) { toast('Load feeds first', 'info'); return; }
+
+  focusDigestContext = { type, key, label };
+
+  // Gather relevant articles
+  let articles;
+  if (type === 'source') {
+    articles = allArticles.filter(a => a.source.id === key);
+  } else {
+    articles = allArticles.filter(a =>
+      (a.title + ' ' + (a.desc||'')).toLowerCase().includes(key.toLowerCase())
+    );
+  }
+
+  if (!articles.length) { toast(`No articles found for: ${label}`, 'info'); return; }
+
+  const typeLabel = type === 'source' ? 'SOURCE DIGEST' : 'TOPIC DIGEST';
+  const metaLabel = `${articles.length} articles analysed`;
+
+  document.getElementById('focusDigestType').textContent = typeLabel;
+  document.getElementById('focusDigestSubject').textContent = label;
+  document.getElementById('focusDigestMeta').textContent = metaLabel;
+  document.getElementById('focusDigestOverlay').style.display = 'flex';
+
+  await runFocusDigestAI(articles, type, label);
+}
+
+async function runFocusDigestAI(articles, type, label) {
+  const body = document.getElementById('focusDigestBody');
+  const regenBtn = document.getElementById('focusDigestRegenBtn');
+  body.className = 'focus-digest-body typing';
+  body.textContent = '';
+  regenBtn.disabled = true;
+
+  const headlines = articles.slice(0, 30).map(a =>
+    `[${a.source.name}] ${a.title}${a.desc ? ' — ' + a.desc.slice(0,150) : ''}`
+  ).join('\n');
+
+  const scopeDesc = type === 'source'
+    ? `These articles are ALL from the source: "${label}". Focus your analysis on what this specific source is reporting, their coverage angle, and what defenders should action.`
+    : `These articles all relate to the topic/threat category: "${label}". Focus on what this topic cluster reveals — patterns, escalation, key actors, and what defenders should action.`;
+
+  const prompt = `${CTI_DIGEST_PROMPT}
+
+SCOPE: ${scopeDesc}
+
+ARTICLES (${articles.length} total):
+${headlines}`;
+
+  try {
+    await aiChat(
+      CTI_SYSTEM_PROMPT,
+      prompt,
+      (_, full) => { body.textContent = full; }
+    );
+    body.className = 'focus-digest-body';
+  } catch(e) {
+    body.textContent = `Error: ${e.message}`;
+    body.className = 'focus-digest-body';
+    toast('Digest failed', 'error');
+  } finally {
+    regenBtn.disabled = false;
+  }
+}
+
+async function regenFocusDigest() {
+  if (!focusDigestContext) return;
+  const { type, key, label } = focusDigestContext;
+  let articles;
+  if (type === 'source') {
+    articles = allArticles.filter(a => a.source.id === key);
+  } else {
+    articles = allArticles.filter(a =>
+      (a.title + ' ' + (a.desc||'')).toLowerCase().includes(key.toLowerCase())
+    );
+  }
+  await runFocusDigestAI(articles, type, label);
+}
+
+function closeFocusDigest() {
+  document.getElementById('focusDigestOverlay').style.display = 'none';
+  focusDigestContext = null;
+}
+
+// ============================================================
+// STATS & TRENDS
+// ============================================================
+function updateStats() {
+  const now = Date.now();
+  document.getElementById('statTotal').textContent = allArticles.length;
+  document.getElementById('statToday').textContent = allArticles.filter(a => now - a.date < 86400000).length;
+  document.getElementById('statSources').textContent = Object.values(sourceStatus).filter(s=>s==='loaded').length;
+  document.getElementById('statWeek').textContent = allArticles.filter(a => now - a.date < 86400000*7).length;
+}
+
+function updateTrends() {
+  const keywords = ['ransomware','malware','vulnerability','CVE','phishing','APT','zero-day','exploit','backdoor','trojan','botnet','supply chain','threat actor','credential'];
+  const counts = {};
+  allArticles.forEach(a => {
+    const t = (a.title + ' ' + a.desc).toLowerCase();
+    keywords.forEach(kw => { if (t.includes(kw.toLowerCase())) counts[kw] = (counts[kw]||0)+1; });
+  });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max = sorted[0]?.[1] || 1;
+  document.getElementById('trendList').innerHTML = sorted.map(([kw,cnt],i) => {
+    const isActive = activeTrendFilter === kw.toLowerCase();
+    return `<div class="trend-item${isActive?' active':''}" onclick="filterByKeyword('${kw.toLowerCase()}')">
+      <span class="trend-rank">${i+1}</span>
+      <div class="trend-bar-wrap">
+        <div class="trend-label${isActive?' active-kw':''}">${kw}</div>
+        <div class="trend-bar"><div class="trend-bar-fill" style="width:${(cnt/max*100).toFixed(0)}%"></div></div>
+      </div>
+      <span class="trend-count">${cnt}</span>
+      <button class="trend-digest-btn" onclick="event.stopPropagation();focusDigest('topic','${kw.toLowerCase()}','${kw}')">⬡</button>
+    </div>`;
+  }).join('');
+}
+
+function updateRecent() {
+  document.getElementById('recentList').innerHTML = allArticles.slice(0,12).map(a => `
+    <div class="recent-item" onclick="openArticle('${a.id}')">
+      <div class="ri-src">${a.source.name}</div>
+      <div class="ri-title">${esc(a.title)}</div>
+      <div class="ri-time">${timeAgo(a.date)}</div>
+    </div>`).join('');
+}
+
+
+
+// ============================================================
+// FILTERS & SORT
+// ============================================================
+function setFilter(f) {
+  currentFilter = f;
+  ['btnAll','btnToday','btnWeek'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById({all:'btnAll',today:'btnToday',week:'btnWeek'}[f]).classList.add('active');
+  applyFilters();
+}
+
+function setSort(s) {
+  currentSort = s;
+  ['sortNewest','sortOldest','sortSource'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById({newest:'sortNewest',oldest:'sortOldest',source:'sortSource'}[s]).classList.add('active');
+  applyFilters();
+}
+
+function toggleTag(tag) {
+  currentTagFilter = tag;
+  document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-tag="${tag}"]`)?.classList.add('active');
+  applyFilters();
+}
+
+function filterBySource(id) {
+  if (activeSourceFilter === id) {
+    activeSourceFilter = null;
+    document.querySelectorAll('.source-item').forEach(el => el.classList.remove('active'));
+  } else {
+    activeSourceFilter = id;
+    document.querySelectorAll('.source-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`src-${id}`)?.classList.add('active');
+  }
+  applyFilters();
+}
+
+function filterByKeyword(kw) {
+  if (activeTrendFilter === kw) {
+    clearTrendFilter();
+    return;
+  }
+  activeTrendFilter = kw;
+  // Push keyword into the search box so user can see what's active
+  document.getElementById('searchInput').value = kw;
+  document.getElementById('trendClear').style.display = 'inline';
+  updateTrends();
+  applyFilters();
+  // Scroll feed to top
+  document.getElementById('feedContent').parentElement.scrollTop = 0;
+  toast(`Filtering by: ${kw}`);
+}
+
+function clearTrendFilter() {
+  activeTrendFilter = null;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('trendClear').style.display = 'none';
+  updateTrends();
+  applyFilters();
+}
+
+function onSearchInput() {
+  // If user types manually, clear any active trend filter
+  if (activeTrendFilter) {
+    activeTrendFilter = null;
+    document.getElementById('trendClear').style.display = 'none';
+    updateTrends();
+  }
+  applyFilters();
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function timeAgo(date) {
+  const d = Date.now() - date;
+  if (d < 60000) return 'just now';
+  if (d < 3600000) return `${Math.floor(d/60000)}m ago`;
+  if (d < 86400000) return `${Math.floor(d/3600000)}h ago`;
+  if (d < 604800000) return `${Math.floor(d/86400000)}d ago`;
+  return date.toLocaleDateString();
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type='') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast${type?' '+type:''}`;
+  el.textContent = `▶ ${msg}`;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+</body>
+</html>
