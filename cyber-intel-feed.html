@@ -439,17 +439,39 @@
   .modal-close:hover { border-color:var(--red); color:var(--red); }
   .modal-body { padding:20px; }
   .modal-desc { font-size:14px; color:var(--text2); line-height:1.7; margin-bottom:16px; }
-  .modal-ai-section {
-    background:rgba(0,255,65,0.04); border:1px solid var(--accent3);
-    border-left:3px solid var(--accent); padding:14px; margin-bottom:16px;
-    min-height:60px;
+  /* ── ANALYSIS TABS ── */
+  .modal-tabs {
+    display:flex; border-bottom:1px solid var(--border);
+    background:var(--bg3); flex-shrink:0; overflow-x:auto;
   }
-  .modal-ai-label {
-    font-family:var(--mono); font-size:9px; color:var(--accent2);
-    letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
+  .modal-tab {
+    font-family:var(--mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
+    padding:9px 14px; cursor:pointer; color:var(--text3); border:none; background:none;
+    border-bottom:2px solid transparent; white-space:nowrap; transition:all 0.15s;
+    position:relative;
   }
-  .modal-ai-text { font-size:13px; color:var(--text2); line-height:1.7; white-space:pre-wrap; }
-  .modal-footer { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .modal-tab:hover { color:var(--text2); background:rgba(255,255,255,0.03); }
+  .modal-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:rgba(0,255,65,0.04); }
+  .modal-tab .tab-dot {
+    display:inline-block; width:5px; height:5px; border-radius:50%;
+    background:var(--accent2); margin-left:5px; vertical-align:middle;
+    opacity:0; transition:opacity 0.2s;
+  }
+  .modal-tab.has-content .tab-dot { opacity:1; }
+  .modal-tab.loading-tab { color:var(--yellow); }
+  .modal-tab.loading-tab .tab-dot { background:var(--yellow); opacity:1; animation:blink 0.6s infinite; }
+
+  .modal-panel {
+    display:none; padding:16px; min-height:80px;
+    font-size:13px; color:var(--text2); line-height:1.75; white-space:pre-wrap;
+    background:rgba(0,255,65,0.02);
+  }
+  .modal-panel.active { display:block; }
+  .modal-panel.empty { color:var(--text3); font-family:var(--mono); font-size:11px; padding:20px 16px; }
+  .modal-panel.typing::after { content:'▌'; animation:blink 0.7s infinite; color:var(--accent); }
+
+  .modal-ai-section { margin-bottom:0; }
+  .modal-footer { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:12px 16px; border-top:1px solid var(--border); background:var(--bg3); position:sticky; bottom:0; }
 
   /* typing cursor */
   .typing::after { content:'▌'; animation:blink 0.7s infinite; color:var(--accent); }
@@ -781,20 +803,36 @@
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="modal-desc" id="modalDesc"></div>
-      <div class="modal-ai-section">
-        <div class="modal-ai-label">⬡ OLLAMA ANALYSIS</div>
-        <div class="modal-ai-text" id="modalAiContent">Click a button below to generate AI insights using your local Ollama instance — no API costs.</div>
+    <div class="modal-body" style="padding:0;display:flex;flex-direction:column">
+      <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border)">
+        <div class="modal-desc" id="modalDesc" style="margin-bottom:0"></div>
       </div>
+
+      <!-- ANALYSIS TABS -->
+      <div class="modal-tabs" id="modalTabBar">
+        <button class="modal-tab active" data-tab="exec"      onclick="switchTab('exec')">📋 EXEC BRIEF<span class="tab-dot"></span></button>
+        <button class="modal-tab"        data-tab="cti"       onclick="switchTab('cti')">⬡ FULL ANALYSIS<span class="tab-dot"></span></button>
+        <button class="modal-tab"        data-tab="hunt"      onclick="switchTab('hunt')">🎯 HUNT LEADS<span class="tab-dot"></span></button>
+        <button class="modal-tab"        data-tab="ioc"       onclick="switchTab('ioc')">⚑ IOCs<span class="tab-dot"></span></button>
+        <button class="modal-tab"        data-tab="brief"     onclick="switchTab('brief')">⬡ CTI BRIEF<span class="tab-dot"></span></button>
+      </div>
+
+      <!-- PANELS — one per tab, content persists independently -->
+      <div class="modal-panel active empty" id="panel-exec">Click EXEC BRIEF to generate a concise executive summary.</div>
+      <div class="modal-panel empty"        id="panel-cti">Click FULL ANALYSIS to generate a structured CTI report.</div>
+      <div class="modal-panel empty"        id="panel-hunt">Click HUNT LEADS to extract threat actor TTPs and hunting hypotheses.</div>
+      <div class="modal-panel empty"        id="panel-ioc">Click IOCs to extract and defang indicators of compromise.</div>
+      <div class="modal-panel empty"        id="panel-brief">Click CTI BRIEF for a rapid triage summary.</div>
+
       <div class="modal-footer">
         <a class="card-link" id="modalLink" href="#" target="_blank" rel="noopener">[ OPEN ORIGINAL → ]</a>
-        <button class="btn" id="modalExecBtn" onclick="execSummaryCurrentArticle()">📋 EXEC SUMMARY</button>
-        <button class="btn" id="modalAnalyzeBtn" onclick="analyzeCurrentArticle()">⬡ FULL ANALYSIS</button>
+        <button class="btn" id="modalExecBtn"       onclick="execSummaryCurrentArticle()">📋 EXEC BRIEF</button>
+        <button class="btn" id="modalAnalyzeBtn"    onclick="analyzeCurrentArticle()">⬡ FULL ANALYSIS</button>
         <button class="btn" id="modalHighlightsBtn" onclick="highlightsCurrentArticle()">🎯 HUNT LEADS</button>
-        <button class="btn" id="modalIOCBtn" onclick="extractIOCs()">⚑ EXTRACT IOCs</button>
+        <button class="btn" id="modalIOCBtn"        onclick="extractIOCs()">⚑ IOCs</button>
+        <button class="btn" id="modalBriefBtn"      onclick="quickSummaryFromModal()">⬡ CTI BRIEF</button>
         <button class="btn" id="modalHuntCreateBtn" onclick="openHuntModal()" style="border-color:#aa66ff;color:#aa66ff">+ CREATE HUNT</button>
-        <button class="btn" onclick="openHuntsList(true)" style="border-color:#aa66ff;color:#aa66ff;opacity:0.7;font-size:10px" title="View hunts from this article">📋 HISTORY</button>
+        <button class="btn" onclick="openHuntsList(true)" style="border-color:#aa66ff;color:#aa66ff;opacity:0.7;font-size:10px">📋 HISTORY</button>
       </div>
     </div>
   </div>
@@ -2193,17 +2231,17 @@ function articleCardHtml(a) {
 // CTI ANALYST PROMPTS
 // ============================================================
 
-const CTI_SYSTEM_PROMPT = `You are an elite Cyber Threat Intelligence (CTI) analyst with 15+ years of experience across SOC, DFIR, and threat hunting operations. You have deep expertise in:
-- MITRE ATT&CK framework (Enterprise, Mobile, ICS)
-- Threat actor profiling and campaign tracking (APT groups, ransomware operators, hacktivists)
-- Malware reverse engineering and behavioral analysis
-- Network and host-based forensics
-- Threat hunting hypothesis development and detection engineering
-- SIEM/EDR query writing (Sigma, KQL, SPL, YARA)
-- Vulnerability management and exploit chain analysis
-- Diamond Model and kill chain methodologies
+const CTI_SYSTEM_PROMPT = `You are a CTI analyst with 25 years of hands-on experience across nation-state incident response, SOC operations, DFIR, red team, and intelligence production. You have tracked APT campaigns, responded to destructive attacks, and briefed executive leadership at Fortune 500s and government agencies.
 
-Your output is ALWAYS practical, defence-oriented, and immediately actionable by blue team operators. You avoid speculation. You flag confidence levels. You think like an attacker to defend like a defender. Use technical language appropriate for senior security engineers. Format output clearly with section headers.`;
+Your core principles:
+- Only say what is TRUE based on the source material. Never fabricate, pad, or speculate beyond evidence.
+- Be CONCISE. Senior analysts and defenders are busy. No filler sentences.
+- Be ACTIONABLE. Every output must contain something a defender can do TODAY.
+- Think like the attacker. Identify what the adversary is optimising for and counter it.
+- Flag confidence levels explicitly. Distinguish confirmed facts from inferred context.
+- For vulnerabilities: always call out affected versions, patch status, and exploitability.
+- For threat actors: always map to MITRE ATT&CK where evidence supports it.
+- Format cleanly. Use plain text with clear section headers. No markdown decorations.`;
 
 const CTI_QUICK_SUMMARY_PROMPT = `Summarise this cybersecurity article for a blue team analyst. Be brief and direct — no jargon, no padding. Use this exact format:
 
@@ -2220,73 +2258,53 @@ One sentence why.
 🎯 HUNT LEAD
 One sentence: what to hunt for and where to look.`;
 
-const CTI_EXEC_SUMMARY_PROMPT = `You are a CTI analyst writing for a non-technical executive audience (C-suite, board members, senior management). Produce a concise, jargon-free executive summary.
+const CTI_EXEC_SUMMARY_PROMPT = `Write a tight executive briefing for a CISO or senior leadership. Maximum 200 words total. No padding. Lead with the threat, not the context. Use this exact structure:
 
-Respond in this exact format:
+THREAT: [One sentence — what it is, who is behind it if known]
+RISK: [CRITICAL / HIGH / MEDIUM / LOW] — one sentence on real-world impact potential
+AFFECTED: [Who/what is exposed — specific platforms, sectors, versions if relevant]
+WORST CASE: [One sentence — what happens if this is exploited and unmitigated]
+ACTION: [2-3 concrete directives for leadership — patch X, isolate Y, verify Z]
+BOTTOM LINE: [One sentence — the single most important thing to act on now]
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EXECUTIVE THREAT BRIEFING
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Write only these six labelled lines. No section separators, no extra commentary.`;
 
-HEADLINE
-One sentence: what happened, in plain business language.
+const CTI_DEEP_ANALYSIS_PROMPT = `Produce a full CTI analysis. Be precise and direct — write only what the source material supports. Skip any section where the article provides no evidence.
 
-BUSINESS RISK  [CRITICAL / HIGH / MEDIUM / LOW]
-2-3 sentences explaining the potential business impact — financial, operational, reputational — without technical jargon.
+SUMMARY
+2 sentences max: threat type, target, and immediate defender relevance.
 
-WHO IS AFFECTED
-Describe the affected organisations, sectors, or geographies in business terms.
+THREAT ACTOR  [skip entire section if unknown/unattributed]
+- Name/alias:
+- Motivation:
+- Previous campaigns with overlap:
+- Attribution confidence: [HIGH / MEDIUM / LOW]
 
-WHAT IS AT RISK
-List 2-3 specific business assets or operations that could be impacted (data, services, revenue, reputation).
+VULNERABILITY DETAIL  [only if this is a CVE/vuln article]
+- CVE ID:
+- Affected product and EXACT versions:
+- Patch available: [YES / NO / PARTIAL] — version that fixes it
+- Exploitability: [In-the-wild / PoC available / No public exploit]
+- Attack vector and privileges required:
 
-WHAT WE KNOW
-3 bullet points summarising the key facts a decision-maker needs to know.
+ATTACK LIFECYCLE — MITRE ATT&CK
+Only map what is evidenced. Format each line:
+[TACTIC] TID — Technique: how specifically observed in this case
 
-RECOMMENDED ACTIONS FOR LEADERSHIP
-3 clear, actionable decisions or directives for senior management. Frame as instructions, not observations.
+DETECTION
+For each confirmed TTP, one detection lead:
+- TID — log source + what to look for
 
-BOTTOM LINE
-One sentence: the most important thing leadership needs to understand about this threat right now.`;
+MITIGATIONS  [tag each]
+[IMMEDIATE] action within 24h
+[SHORT-TERM] action within 2 weeks
+[STRATEGIC] longer-term hardening
 
-const CTI_DEEP_ANALYSIS_PROMPT = `Perform a full CTI analysis of this article. Structure your response exactly as follows:
-
-═══ THREAT INTELLIGENCE REPORT ═══
-
-EXECUTIVE SUMMARY
-2-3 sentences: what this threat is, who it targets, and the business impact.
-
-THREAT ACTOR PROFILE
-- Name / Alias / Cluster (if identified or suspected):
-- Motivation (financial / espionage / hacktivism / destructive):
-- Known previous campaigns or overlap:
-- Confidence level: [HIGH / MEDIUM / LOW / UNATTRIBUTED]
-
-ATTACK LIFECYCLE (MITRE ATT&CK)
-Map observed or implied techniques to ATT&CK tactics. Format:
-- [TACTIC] Technique ID — Technique Name: brief description of how used
-
-TECHNICAL INDICATORS
-List any explicit or implied indicators:
-- Network: IPs, domains, URLs, C2 patterns
-- Host: file names, hashes, registry keys, mutexes, scheduled tasks
-- Behavioral: process chains, API calls, LOLBins abused
-
-AFFECTED SYSTEMS & SCOPE
-- Platforms, OS versions, software, sectors, geographies at risk.
-
-DETECTION OPPORTUNITIES
-For each key TTP, suggest a detection approach:
-- [TTP] → Detection method (log source, query concept, EDR rule idea)
-
-DEFENSIVE RECOMMENDATIONS
-Prioritised list of concrete mitigations. Tag each: [IMMEDIATE] [SHORT-TERM] [STRATEGIC]
-
-THREAT HUNTING HYPOTHESES
-2-3 actionable hunt hypotheses a threat hunter can operationalise today. Include suggested data sources.
+HUNT HYPOTHESES
+Max 2. Each: "We believe X used Y — look for Z in [data source]."
 
 INTELLIGENCE GAPS
-What information is missing that would change the assessment?`;
+1-3 specific unknowns that would materially change this assessment.`;
 
 const CTI_HUNT_PROMPT = `Extract ONLY threat actor and TTP information explicitly mentioned or strongly implied in this article. Do not add context from outside the article. Use this format:
 
@@ -2304,47 +2322,40 @@ For each TTP above, one hypothesis:
 🔁 PIVOT POINTS
 2-3 artifacts from this article that could anchor a hunt (hashes, domain patterns, behaviour signatures).`;
 
-const CTI_IOC_PROMPT = `Extract ONLY indicators of compromise explicitly present in this article.
-IOCs are often DEFANGED/SANITIZED for safe sharing. You MUST recognise and extract these patterns:
+const CTI_IOC_PROMPT = `You are extracting IOCs from a cybersecurity article. IOCs are frequently defanged/sanitized — you MUST detect and restore them.
 
-DEFANGING CONVENTIONS TO RECOGNISE:
-- Brackets around dots:  192[.]168[.]1[.]1  →  192.168.1.1
-- Brackets around ://   hxxps[://]  hxxp[://]  →  https://  http://
-- hxxp/hxxps prefix:    hxxps://example[.]com  →  https://example.com
-- DOT substitution:     example DOT com,  example(.)com,  example{.}com
-- AT substitution:      user AT domain DOT com  →  user@domain.com
-- Partial redaction:    198.51.x.x,  10.0.0[.]X
-- Mixed formats:        hxxps[:]//www[.]evil[.]com/path[.]exe
+DEFANGING PATTERNS — recognise ALL of these:
+  hxxps[:]//www[.]evil[.]com  →  https://www.evil.com
+  hxxp[://]domain[.]com       →  http://domain.com
+  192[.]168[.]1[.]1           →  192.168.1.1
+  evil DOT com                →  evil.com
+  evil(.)com  evil{.}com      →  evil.com
+  user AT evil DOT com        →  user@evil.com
+  /path/file[.]exe            →  /path/file.exe
 
-For EACH IOC found (defanged or plain), output the RESTORED/CLEAN form, then note if it was defanged.
+OUTPUT FORMAT — plain numbered lists only, one item per line:
 
-STRICT RULES:
-- ONLY extract IOCs that are EXPLICITLY present — verbatim or defanged — in the article text provided.
-- Do NOT invent, infer, fabricate, or add any examples not literally in the text.
-- Do NOT fill sections with generic placeholders or hypothetical values.
-- If the article contains NO actionable IOCs at all, respond ONLY with:
-  "No IOCs found in this article. The content does not contain extractable IP addresses, domains, URLs, file hashes, or CVEs."
-  Then stop — do not output any section headers.
-- Only output section headers for categories that have actual findings.
+IP ADDRESSES:
+1. <restored value>  [was defanged: yes/no]
 
----
+DOMAINS:
+1. <restored value>  [was defanged: yes/no]
 
-📡 IP ADDRESSES
-Format: <restored IP> [defanged] — context (omit section entirely if none found)
+URLS:
+1. <restored value>  [was defanged: yes/no]
 
-🌐 DOMAINS
-Format: <restored domain> [defanged] — context (omit section entirely if none found)
+FILE HASHES:
+1. <hash value>  [MD5/SHA1/SHA256]
 
-🔗 URLS
-Format: <restored URL> [defanged] — context (omit section entirely if none found)
+CVEs:
+1. <CVE-ID>  <affected product and version>  <patch status>
 
-🔑 FILE HASHES (MD5 / SHA1 / SHA256)
-List exactly as found — hashes are never defanged. (omit section entirely if none found)
-
-📋 CVEs
-CVE ID — affected product — exploitation status (omit section entirely if none found)
-
-⚠️ CONFIDENCE: Only include if at least one IOC was found. [HIGH / MEDIUM / LOW] — one sentence.`;
+RULES:
+- Extract ONLY what is literally present in the article text (verbatim or defanged).
+- Do NOT invent, infer, or fabricate any IOC not explicitly in the text.
+- Omit any section that has zero findings — do not print empty headers.
+- If truly no IOCs exist in the article, output only: "No extractable IOCs found in this article."
+- No emoji, no decorations, no prose — just the numbered lists above.`;
 
 const CTI_DIGEST_PROMPT = `You are preparing the daily Cyber Threat Intelligence briefing for a senior security leadership team and SOC operators. Analyse these headlines and produce a structured intelligence digest.
 
@@ -2421,11 +2432,11 @@ function openArticle(id) {
     const cls = t==='ransomware'?'critical':t==='vuln'?'high':t==='apt'?'medium':t==='malware'?'malware':'info';
     return `<span class="tag ${cls}">${t}</span>`;
   }).join('');
-  document.getElementById('modalAiContent').className = 'modal-ai-text';
-  document.getElementById('modalAiContent').textContent = 'Select an analysis mode below. FULL ANALYSIS produces a structured CTI report. HUNT LEADS generates threat hunting hypotheses and queries. EXTRACT IOCs pulls all indicators and detection concepts.';
+  resetModalTabs();
   ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn'].forEach(id => {
     document.getElementById(id).disabled = !ollamaOnline;
   });
+  resetModalTabs();
   document.getElementById('articleModal').style.display = 'flex';
   // Show hunt count for this article
   updateArticleHuntBadge();
@@ -2444,28 +2455,98 @@ function closeModal() {
   currentArticle = null;
 }
 
-async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, regexSuffix) {
+function resetModalTabs() {
+  // Clear all panel content and reset tab state
+  ['exec','cti','hunt','ioc','brief'].forEach(tabId => {
+    const panel = document.getElementById(`panel-${tabId}`);
+    const tab   = document.querySelector(`[data-tab="${tabId}"]`);
+    if (panel) {
+      panel.textContent = '';
+      panel.className = 'modal-panel empty';
+      const placeholders = {
+        exec:  'Click EXEC BRIEF to generate a concise executive summary.',
+        cti:   'Click FULL ANALYSIS to generate a structured CTI report.',
+        hunt:  'Click HUNT LEADS to extract threat actor TTPs and hunting hypotheses.',
+        ioc:   'Click IOCs to extract and defang indicators of compromise.',
+        brief: 'Click CTI BRIEF for a rapid triage summary.',
+      };
+      panel.textContent = placeholders[tabId] || '';
+    }
+    if (tab) {
+      tab.className = 'modal-tab';
+      if (tabId === 'exec') tab.classList.add('active');
+    }
+  });
+  // Reset first panel to active
+  const firstPanel = document.getElementById('panel-exec');
+  if (firstPanel) firstPanel.classList.add('active');
+}
+
+// ── TAB MANAGEMENT ─────────────────────────────────────────────
+const TAB_BTN_IDS = ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn','modalBriefBtn'];
+
+function switchTab(tabId) {
+  // Deactivate all tabs and panels
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.modal-panel').forEach(p => p.classList.remove('active'));
+  // Activate selected
+  document.querySelector(`[data-tab="${tabId}"]`)?.classList.add('active');
+  const panel = document.getElementById(`panel-${tabId}`);
+  if (panel) panel.classList.add('active');
+}
+
+function getTabForBtn(btnId) {
+  const map = {
+    'modalExecBtn':       'exec',
+    'modalAnalyzeBtn':    'cti',
+    'modalHighlightsBtn': 'hunt',
+    'modalIOCBtn':        'ioc',
+    'modalBriefBtn':      'brief',
+  };
+  return map[btnId] || 'cti';
+}
+
+async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, prefillText) {
   if (!currentArticle) return;
   const canUseAI = ollamaOnline || activeProvider !== 'ollama';
-  if (!canUseAI) return;
-  const contentEl = document.getElementById('modalAiContent');
-  const btn = document.getElementById(btnId);
-  ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn'].forEach(id => document.getElementById(id).disabled = true);
-  btn.textContent = '⬡ PROCESSING…';
-  contentEl.className = 'modal-ai-text typing';
-  contentEl.textContent = '';
+  if (!canUseAI) { toast('No AI provider active', 'error'); return; }
+
+  const tabId = getTabForBtn(btnId);
+  const panel = document.getElementById(`panel-${tabId}`);
+  const tab   = document.querySelector(`[data-tab="${tabId}"]`);
+  const btn   = document.getElementById(btnId);
+
+  // Switch to this tab immediately
+  switchTab(tabId);
+
+  // Disable all AI buttons while processing
+  TAB_BTN_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+  btn.textContent = '⬡ …';
+
+  // Mark tab as loading
+  tab?.classList.add('loading-tab');
+  panel.classList.remove('empty');
+  panel.classList.add('typing');
+
+  // If prefill text provided (e.g. regex IOC scan), show it first
+  const prefix = prefillText ? prefillText + '\n\n--- AI ANALYSIS ---\n' : '';
+  panel.textContent = prefix || '';
+
   try {
     await aiChat(systemPrompt, userPrompt, (_, full) => {
-      contentEl.textContent = (regexSuffix && regexSuffix.trim()) ? full + regexSuffix : full;
+      panel.textContent = prefix + full;
     });
-    contentEl.className = 'modal-ai-text';
+    panel.classList.remove('typing');
+    tab?.classList.remove('loading-tab');
+    tab?.classList.add('has-content');
   } catch(e) {
-    contentEl.className = 'modal-ai-text';
-    contentEl.textContent = `Error: ${e.message}`;
+    panel.classList.remove('typing');
+    tab?.classList.remove('loading-tab');
+    panel.textContent = (prefix || '') + `Error: ${e.message}`;
     toast('AI request failed', 'error');
   } finally {
     const still = ollamaOnline || activeProvider !== 'ollama';
-    ['modalExecBtn','modalAnalyzeBtn','modalHighlightsBtn','modalIOCBtn'].forEach(id => document.getElementById(id).disabled = !still);
+    TAB_BTN_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = !still; });
     btn.textContent = btnLabel;
   }
 }
@@ -2494,6 +2575,15 @@ function highlightsCurrentArticle() {
     CTI_SYSTEM_PROMPT,
     `${CTI_HUNT_PROMPT}\n\nARTICLE TITLE: ${currentArticle.title}\nARTICLE CONTENT: ${currentArticle.desc}`,
     'modalHighlightsBtn', '🎯 HUNT LEADS'
+  );
+}
+
+function quickSummaryFromModal() {
+  if (!currentArticle) return;
+  runModalAI(
+    CTI_SYSTEM_PROMPT,
+    `${CTI_QUICK_SUMMARY_PROMPT}\n\nARTICLE TITLE: ${currentArticle.title}\nARTICLE CONTENT: ${currentArticle.desc}`,
+    'modalBriefBtn', '⬡ CTI BRIEF'
   );
 }
 
@@ -2559,40 +2649,35 @@ function iocResultsToText(iocs) {
   const fmt = (set, label) => {
     const items = [...set];
     if (!items.length) return '';
-    return `\n─── REGEX-EXTRACTED: ${label} ───\n` + items.map(x => `  • ${x}`).join('\n');
+    const numbered = items.map((x, i) => `  ${i+1}. ${x}`).join('\n');
+    return `\n${label}:\n${numbered}`;
   };
   let out = '';
-  out += fmt(iocs.ips, 'IP ADDRESSES');
+  out += fmt(iocs.ips,     'IP ADDRESSES');
   out += fmt(iocs.domains, 'DOMAINS');
-  out += fmt(iocs.urls, 'URLS');
-  out += fmt(iocs.hashes, 'HASHES');
-  out += fmt(iocs.cves, 'CVEs');
-  // Return null if truly nothing found — caller will handle the empty case
-  return out.trim() ? out : null;
+  out += fmt(iocs.urls,    'URLS');
+  out += fmt(iocs.hashes,  'FILE HASHES');
+  out += fmt(iocs.cves,    'CVEs');
+  return out.trim() ? out.trim() : null;
 }
 
 function extractIOCs() {
   if (!currentArticle) return;
   const rawText = (currentArticle.title || '') + '\n' + (currentArticle.desc || '');
-  const decodedText = defangDecode(rawText);
 
-  // Run regex extractor first — fast client-side pass
+  // Run regex extractor immediately — instant results shown as prefill
   const regexIOCs = regexExtractIOCs(rawText);
-  const regexSummary = iocResultsToText(regexIOCs);
-
-  // Pass BOTH raw (with defanged IOCs visible) AND decoded text to AI
-  const combinedText = `RAW ARTICLE TEXT (may contain defanged IOCs):\n${rawText}\n\nDEFANGED-DECODED VERSION:\n${decodedText}`;
-
-  // Append regex findings only if they found something
-  const suffix = regexSummary
-    ? `\n\n━━━ PATTERN-MATCHED IOCs (client-side regex) ━━━${regexSummary}`
+  const regexBlock = iocResultsToText(regexIOCs);
+  const prefill = regexBlock
+    ? 'PATTERN-MATCHED IOCs (regex scan):\n' + regexBlock
     : null;
 
+  // Pass raw text to AI — simple, direct
   runModalAI(
     CTI_SYSTEM_PROMPT,
-    `${CTI_IOC_PROMPT}\n\n${combinedText}`,
-    'modalIOCBtn', '⚑ EXTRACT IOCs',
-    suffix
+    `${CTI_IOC_PROMPT}\n\nARTICLE TEXT:\n${rawText}`,
+    'modalIOCBtn', '⚑ IOCs',
+    prefill
   );
 }
 
