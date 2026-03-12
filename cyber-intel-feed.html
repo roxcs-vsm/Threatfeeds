@@ -1039,33 +1039,33 @@ const SOURCES = [
   { id:'checkpoint',   name:'Check Point',        url:'https://research.checkpoint.com/feed/',                          color:'#00aaff', tag:'malware'  },
   { id:'unit42',       name:'Unit 42',             url:'https://unit42.paloaltonetworks.com/feed/',                      color:'#ff6600', tag:'apt'      },
   { id:'sophos',       name:'Sophos Labs',         url:'https://news.sophos.com/en-us/category/threat-research/feed/',  color:'#ffcc00', tag:'malware'  },
-  { id:'cisa',         name:'CISA Advisories',     url:'https://www.cisa.gov/cybersecurity-advisories/all.xml',          color:'#ff2244', tag:'advisory' },
+  { id:'cisa',         name:'CISA Advisories',     url:'https://www.cisa.gov/cybersecurity-advisories/all.xml',  color:'#ff2244', tag:'advisory' },
   { id:'huntress',     name:'Huntress',            url:'https://www.huntress.com/blog/rss.xml',                          color:'#cc44ff', tag:'malware'  },
   { id:'isc',          name:'SANS ISC',            url:'https://isc.sans.edu/rssfeed_full.xml',                          color:'#00ffcc', tag:'advisory' },
-  { id:'gendigital',   name:'Gen Digital',         url:'https://www.nortonlifelock.com/blogs/security-response/rss/',                          color:'#4488ff', tag:'malware'  },
-  { id:'mandiant',     name:'Mandiant',            url:'https://cloud.google.com/blog/topics/threat-intelligence/rss/',                color:'#ff4444', tag:'apt'      },
+  { id:'gendigital',   name:'Elastic SecLabs',         url:'https://www.elastic.co/security-labs/rss/feed.xml',                          color:'#4488ff', tag:'malware'  },
+  { id:'mandiant',     name:'Google TI Blog',            url:'https://cloud.google.com/blog/products/identity-security/rss/',                color:'#ff4444', tag:'apt'      },
   { id:'msft',         name:'Microsoft SecBlog',   url:'https://www.microsoft.com/en-us/security/blog/feed/',            color:'#00aaff', tag:'advisory' },
-  { id:'rapid7',       name:'Rapid7 Blog',         url:'https://blog.rapid7.com/rss/',                                   color:'#ff8800', tag:'vuln'     },
-  { id:'cisaAlerts',   name:'CISA Alerts',         url:'https://www.cisa.gov/uscert/ncas/alerts.xml',                    color:'#ff2244', tag:'advisory' },
-  { id:'cymru',        name:'Team Cymru',          url:'https://www.team-cymru.com/blog/feed/',                          color:'#00ffcc', tag:'apt'      },
+  { id:'rapid7',       name:'Rapid7 Blog',         url:'https://www.rapid7.com/blog/rss/',                                   color:'#ff8800', tag:'vuln'     },
+  { id:'cisaAlerts',      name:'Securelist',             url:'https://securelist.com/feed/',                    color:'#00aaff', tag:'advisory' },
+  { id:'cymru',        name:'Team Cymru',          url:'https://team-cymru.com/blog/feed/',                          color:'#00ffcc', tag:'apt'      },
   { id:'crowdstrike',  name:'CrowdStrike',         url:'https://www.crowdstrike.com/blog/feed/',                         color:'#ff6600', tag:'apt'      },
   { id:'reddit',       name:'r/blueteamsec',       url:'https://www.reddit.com/r/blueteamsec/.rss',                      color:'#ff6644', tag:'news'     },
-  { id:'zscaler',      name:'Zscaler ThreatLab',  url:'https://www.zscaler.com/blogs/security-research/rss.xml',           color:'#4499ff', tag:'malware'  },
-  { id:'cybereason',   name:'Cybereason',          url:'https://www.recordedfuture.com/feed',                        color:'#cc44ff', tag:'malware'  },
-  { id:'decipher',     name:'Decipher',            url:'https://duo.com/decipher/feed',                                  color:'#88aaff', tag:'news'     },
+  { id:'zscaler',      name:'Zscaler ThreatLab',  url:'https://www.zscaler.com/blogs/security-research/feed',           color:'#4499ff', tag:'malware'  },
+  { id:'cybereason',   name:'Recorded Future',          url:'https://www.recordedfuture.com/blog/feed',                        color:'#cc44ff', tag:'malware'  },
+  { id:'decipher',     name:'Dark Reading',            url:'https://www.darkreading.com/rss.xml',                                  color:'#88aaff', tag:'news'     },
   { id:'projectzero',  name:'Project Zero',        url:'https://googleprojectzero.blogspot.com/feeds/posts/default',     color:'#00ccff', tag:'vuln'     },
-  { id:'fortinet',     name:'Fortinet Threat',     url:'https://www.fortinet.com/blog/threat-research/rss.xml',       color:'#ff4444', tag:'malware'  },
-  { id:'reversinglabs',name:'ReversingLabs',       url:'https://www.reversinglabs.com/blog/feed.xml',                    color:'#ffaa00', tag:'malware'  },
-  { id:'mitreview',    name:'MIT Tech Review',      url:'https://www.technologyreview.com/feed/topic/cybersecurity/',                          color:'#88ccff', tag:'news'     },
+  { id:'fortinet',     name:'Fortinet Threat',     url:'https://feeds.fortinet.com/fortinet/blog/threat-research',       color:'#ff4444', tag:'malware'  },
+  { id:'reversinglabs',name:'ReversingLabs',       url:'https://www.reversinglabs.com/blog/rss.xml',                    color:'#ffaa00', tag:'malware'  },
+  { id:'mitreview',    name:'BleepingComputer',      url:'https://www.bleepingcomputer.com/feed/',                          color:'#88ccff', tag:'news'     },
   { id:'detectfyi',    name:'Detect FYI',           url:'https://medium.com/feed/detect-fyi',                              color:'#00ffcc', tag:'advisory' },
   { id:'trustedsec',   name:'TrustedSec',           url:'https://trustedsec.com/feed.rss',                                 color:'#ff8800', tag:'malware'  },
-  { id:'badsector',    name:'Bad Sector Labs',      url:'https://blog.badsectorlabs.com/feeds/all.atom.xml',               color:'#cc44ff', tag:'malware'  },
+  { id:'badsector',    name:'Bad Sector Labs',      url:'https://badsectorlabs.com/feeds/all.atom.xml',               color:'#cc44ff', tag:'malware'  },
   { id:'dfirreport',   name:'DFIR Report',          url:'https://thedfirreport.com/feed/',                                 color:'#ff4444', tag:'apt'      },
   { id:'kostasmed',    name:'Kostas (Medium)',       url:'https://medium.com/feed/@kostas-ts',                              color:'#00cc99', tag:'apt'      },
   { id:'goblinloot',   name:'Lucy / GoblinLoot',    url:'https://www.goblinloot.net/feeds/posts/default',                  color:'#aa66ff', tag:'advisory' },
-  { id:'sentinel',     name:'MS Sentinel Blog',     url:'https://techcommunity.microsoft.com/plugins/custom/microsoft/o365/custom-blog-rss?tid=1&board=MicrosoftSentinelBlog', color:'#00aaff', tag:'advisory' },
+  { id:'sentinel',     name:'MS Sentinel Blog',     url:'https://techcommunity.microsoft.com/t5/s/gxcuf89792/rss/board?board.id=MicrosoftSentinelBlog', color:'#00aaff', tag:'advisory' },
   { id:'socradar',     name:'SOCRadar',             url:'https://socradar.io/feed/',                                       color:'#ff6600', tag:'news'     },
-  { id:'infostealers',  name:'InfoStealers',          url:'https://www.infostealers.com/feed/',                              color:'#ff2244', tag:'malware'  },
+  { id:'infostealers',  name:'Proofpoint',          url:'https://www.proofpoint.com/us/rss.xml',                              color:'#ff2244', tag:'malware'  },
   { id:'theregister',   name:'The Register',          url:'https://www.theregister.com/security/headlines.atom',             color:'#cc0000', tag:'news'     },
   { id:'thehackernews', name:'The Hacker News',        url:'https://thehackernews.com/feeds/posts/default',                   color:'#00aaff', tag:'news'     },
   { id:'arstechnica',   name:'Ars Technica Sec',       url:'https://feeds.arstechnica.com/arstechnica/security',              color:'#ff6600', tag:'news'     },
@@ -1075,16 +1075,58 @@ const SOURCES = [
   { id:'cryptika',     name:'Cryptika',             url:'https://securityaffairs.com/feed',                                  color:'#00ccaa', tag:'advisory' },
 ];
 
-// Each entry: { url: fn, unwrap: fn|null }
-// unwrap() extracts XML from a proxy that returns JSON
+// RSS proxy chain — each entry specifies how to fetch and parse the response
+// rss2json: dedicated RSS service, fetches server-side, returns clean JSON
+// allorigins/corsproxy: generic CORS proxies returning raw XML
+const RSS2JSON_URL = u => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}&count=25`;
+
 const CORS_PROXIES = [
-  { url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,          unwrap: null },
-  { url: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,                   unwrap: null },
-  { url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,           unwrap: r => { try { return JSON.parse(r).contents; } catch { return r; } } },
-  { url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,     unwrap: null },
-  { url: u => `https://corsproxy.org/?url=${encodeURIComponent(u)}`,                  unwrap: null },
-  { url: u => `https://thingproxy.freeboard.io/fetch/${u}`,                           unwrap: null },
+  {
+    url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    parse: null  // raw XML passthrough
+  },
+  {
+    url: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    parse: null
+  },
+  {
+    url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    parse: text => { try { return { xml: JSON.parse(text).contents }; } catch { return null; } }
+  },
+  {
+    url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    parse: null
+  },
+  {
+    url: u => `https://corsproxy.org/?url=${encodeURIComponent(u)}`,
+    parse: null
+  },
+  {
+    url: u => `https://thingproxy.freeboard.io/fetch/${u}`,
+    parse: null
+  },
 ];
+
+// Parse rss2json JSON response into articles
+function parseRss2Json(json, src) {
+  try {
+    const data = JSON.parse(json);
+    if (data.status !== 'ok' || !Array.isArray(data.items)) return null;
+    return data.items.slice(0, 25).map((item, i) => {
+      let desc = (item.description || item.content || '').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().slice(0,500);
+      const d = item.pubDate ? new Date(item.pubDate) : new Date(Date.now() - i * 3600000);
+      return {
+        id: `${src.id}-${i}-${Date.now()}`,
+        title: item.title || 'Untitled',
+        link: item.link || item.guid || '',
+        desc,
+        date: isNaN(d.getTime()) ? new Date() : d,
+        source: src,
+        tags: detectTags((item.title||'') + ' ' + desc)
+      };
+    });
+  } catch { return null; }
+}
 
 // ============================================================
 // STATE
@@ -2047,9 +2089,25 @@ async function fetchFeed(src) {
     return;
   }
 
-  // Try direct fetch first (works for CORS-enabled feeds like Reddit, CISA, Atom feeds)
+  // ── STEP 1: rss2json.com — dedicated RSS service, server-side fetch, no CORS issues
+  // Works for ~90% of feeds including corporate ones that block generic proxies
   try {
-    const res = await fetch(src.url, { signal: AbortSignal.timeout(8000), mode: 'cors' });
+    const r2jRes = await fetch(RSS2JSON_URL(src.url), { signal: AbortSignal.timeout(15000) });
+    if (r2jRes.ok) {
+      const text = await r2jRes.text();
+      const articles = parseRss2Json(text, src);
+      if (articles && articles.length) {
+        allArticles.push(...articles);
+        sourceStatus[src.id] = 'loaded';
+        updateSourceItem(src.id, articles.length);
+        return;
+      }
+    }
+  } catch { /* fall through */ }
+
+  // ── STEP 2: Direct fetch — works for CORS-enabled feeds (Reddit, SANS ISC, Blogspot, etc.)
+  try {
+    const res = await fetch(src.url, { signal: AbortSignal.timeout(8000) });
     if (res.ok) {
       const text = await res.text();
       const articles = parseRSS(text, src);
@@ -2060,22 +2118,26 @@ async function fetchFeed(src) {
         return;
       }
     }
-  } catch { /* fall through to proxies */ }
+  } catch { /* fall through */ }
 
-  // Try each proxy in order
+  // ── STEP 3: Generic CORS XML proxies — fallback chain
   for (const proxy of CORS_PROXIES) {
     try {
       const proxyUrl = proxy.url(src.url);
-      const res = await fetch(proxyUrl, {
-        signal: AbortSignal.timeout(18000),
-        headers: { 'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
-      });
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
       if (!res.ok) continue;
       let text = await res.text();
-      // Unwrap JSON envelope if proxy wraps content
-      if (proxy.unwrap) text = proxy.unwrap(text) || text;
-      // If response looks like JSON (proxy error page or wrong format), skip
-      if (text.trim().startsWith('{') && !text.includes('<')) continue;
+      // Unwrap JSON envelope if this proxy wraps content
+      if (proxy.parse) {
+        const parsed = proxy.parse(text);
+        if (parsed?.xml) text = parsed.xml;
+        else if (!parsed) continue;
+      }
+      // Skip if response is a JSON error page rather than XML
+      const trimmed = text.trim();
+      if (trimmed.startsWith('{') && !trimmed.includes('<rss') && !trimmed.includes('<feed') && !trimmed.includes('<item')) continue;
+      // Skip obvious HTML error pages
+      if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) continue;
       const articles = parseRSS(text, src);
       if (!articles.length) continue;
       allArticles.push(...articles);
