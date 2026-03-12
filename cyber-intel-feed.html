@@ -626,7 +626,7 @@
   </div>
   <div class="header-stats">
     <span>ARTICLES: <span class="val" id="totalCount">0</span></span>
-    <span>SOURCES: <span class="val" id="sourceCount">0</span>/39</span>
+    <span>SOURCES: <span class="val" id="sourceCount">0</span>/<span id="totalSources">0</span></span>
     <span>UPDATED: <span class="val" id="lastUpdate">—</span></span>
     <span id="cacheAge" style="display:none">CACHE: <span class="val" id="cacheAgeVal">—</span></span>
   </div>
@@ -757,7 +757,7 @@
       <div class="feed-loading">
         <div style="font-family:var(--display);font-size:12px;letter-spacing:4px;color:var(--accent2)">INITIALIZING FEEDS</div>
         <div class="loader-bar"></div>
-        <div>Fetching intelligence from 23 sources…</div>
+        <div id="initSourceCount">Fetching intelligence feeds…</div>
       </div>
     </div>
   </main>
@@ -1043,9 +1043,10 @@ const SOURCES = [
   { id:'huntress',     name:'Huntress',            url:'https://www.huntress.com/blog/rss.xml',                          color:'#cc44ff', tag:'malware'  },
   { id:'isc',          name:'SANS ISC',            url:'https://isc.sans.edu/rssfeed_full.xml',                          color:'#00ffcc', tag:'advisory' },
   { id:'gendigital',   name:'Elastic SecLabs',         url:'https://www.elastic.co/security-labs/rss/feed.xml',                          color:'#4488ff', tag:'malware'  },
-  { id:'mandiant',     name:'Google TI Blog',            url:'https://cloud.google.com/blog/products/identity-security/rss/',                color:'#ff4444', tag:'apt'      },
+  { id:'mandiant',     name:'Mandiant',            url:'https://www.mandiant.com/resources/blog/rss.xml',                color:'#ff4444', tag:'apt'      },
   { id:'msft',         name:'Microsoft SecBlog',   url:'https://www.microsoft.com/en-us/security/blog/feed/',            color:'#00aaff', tag:'advisory' },
-  { id:'rapid7',       name:'Rapid7 Blog',         url:'https://www.rapid7.com/blog/rss/',                                   color:'#ff8800', tag:'vuln'     },
+  { id:'rapid7',       name:'Rapid7 Threat',         url:'https://blog.rapid7.com/tag/emergent-threat-response/rss/',                                   color:'#ff8800', tag:'vuln'     },
+  { id:'rapid7dr',      name:'Rapid7 Detection', url:'https://blog.rapid7.com/tag/detection-and-response/rss/', color:'#ff8800', tag:'research' },
   { id:'cisaAlerts',      name:'Securelist',             url:'https://securelist.com/feed/',                    color:'#00aaff', tag:'advisory' },
   { id:'cymru',        name:'Team Cymru',          url:'https://team-cymru.com/blog/feed/',                          color:'#00ffcc', tag:'apt'      },
   { id:'crowdstrike',  name:'CrowdStrike',         url:'https://www.crowdstrike.com/blog/feed/',                         color:'#ff6600', tag:'apt'      },
@@ -1111,7 +1112,9 @@ const CORS_PROXIES = [
 function parseRss2Json(json, src) {
   try {
     const data = JSON.parse(json);
-    if (data.status !== 'ok' || !Array.isArray(data.items)) return null;
+    // Rate-limited or error response
+    if (data.status !== 'ok') return null;
+    if (!Array.isArray(data.items) || !data.items.length) return null;
     return data.items.slice(0, 25).map((item, i) => {
       let desc = (item.description || item.content || '').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().slice(0,500);
       const d = item.pubDate ? new Date(item.pubDate) : new Date(Date.now() - i * 3600000);
@@ -1148,6 +1151,10 @@ let disabledSources = new Set(JSON.parse(localStorage.getItem('tf_disabled') || 
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
+  const initEl = document.getElementById('initSourceCount');
+  if (initEl) initEl.textContent = `Fetching intelligence from ${SOURCES.length} sources…`;
+  const totalEl = document.getElementById('totalSources');
+  if (totalEl) totalEl.textContent = SOURCES.length;
   renderSourceList();
   checkOllama();
   initCache().then(() => {
@@ -2089,8 +2096,50 @@ async function fetchFeed(src) {
     return;
   }
 
-  // ── STEP 1: rss2json.com — dedicated RSS service, server-side fetch, no CORS issues
-  // Works for ~90% of feeds including corporate ones that block generic proxies
+  // ── STEP 1: Direct fetch — fastest, works for CORS-enabled feeds
+  try {
+    const res = await fetch(src.url, { signal: AbortSignal.timeout(10000) });
+    if (res.ok) {
+      const text = await res.text();
+      const trimmed = text.trim();
+      if (!trimmed.toLowerCase().startsWith('<html') && !trimmed.toLowerCase().startsWith('<!doctype')) {
+        const articles = parseRSS(text, src);
+        if (articles.length) {
+          allArticles.push(...articles);
+          sourceStatus[src.id] = 'loaded';
+          updateSourceItem(src.id, articles.length);
+          return;
+        }
+      }
+    }
+  } catch { /* fall through */ }
+
+  // ── STEP 2: CORS proxy chain — try each proxy with the raw XML approach
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = proxy.url(src.url);
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) continue;
+      let text = await res.text();
+      if (proxy.parse) {
+        const parsed = proxy.parse(text);
+        if (parsed?.xml) text = parsed.xml;
+        else if (!parsed) continue;
+      }
+      const trimmed = text.trim();
+      if (trimmed.startsWith('{') && !trimmed.includes('<rss') && !trimmed.includes('<feed') && !trimmed.includes('<item')) continue;
+      if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) continue;
+      const articles = parseRSS(text, src);
+      if (!articles.length) continue;
+      allArticles.push(...articles);
+      sourceStatus[src.id] = 'loaded';
+      updateSourceItem(src.id, articles.length);
+      return;
+    } catch { continue; }
+  }
+
+  // ── STEP 3: rss2json.com — server-side fetcher, last resort
+  // Free tier limited to ~10 req/day without API key, so save for hard cases
   try {
     const r2jRes = await fetch(RSS2JSON_URL(src.url), { signal: AbortSignal.timeout(15000) });
     if (r2jRes.ok) {
@@ -2104,48 +2153,6 @@ async function fetchFeed(src) {
       }
     }
   } catch { /* fall through */ }
-
-  // ── STEP 2: Direct fetch — works for CORS-enabled feeds (Reddit, SANS ISC, Blogspot, etc.)
-  try {
-    const res = await fetch(src.url, { signal: AbortSignal.timeout(8000) });
-    if (res.ok) {
-      const text = await res.text();
-      const articles = parseRSS(text, src);
-      if (articles.length) {
-        allArticles.push(...articles);
-        sourceStatus[src.id] = 'loaded';
-        updateSourceItem(src.id, articles.length);
-        return;
-      }
-    }
-  } catch { /* fall through */ }
-
-  // ── STEP 3: Generic CORS XML proxies — fallback chain
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const proxyUrl = proxy.url(src.url);
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-      if (!res.ok) continue;
-      let text = await res.text();
-      // Unwrap JSON envelope if this proxy wraps content
-      if (proxy.parse) {
-        const parsed = proxy.parse(text);
-        if (parsed?.xml) text = parsed.xml;
-        else if (!parsed) continue;
-      }
-      // Skip if response is a JSON error page rather than XML
-      const trimmed = text.trim();
-      if (trimmed.startsWith('{') && !trimmed.includes('<rss') && !trimmed.includes('<feed') && !trimmed.includes('<item')) continue;
-      // Skip obvious HTML error pages
-      if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) continue;
-      const articles = parseRSS(text, src);
-      if (!articles.length) continue;
-      allArticles.push(...articles);
-      sourceStatus[src.id] = 'loaded';
-      updateSourceItem(src.id, articles.length);
-      return;
-    } catch { continue; }
-  }
 
   sourceStatus[src.id] = 'error';
   updateSourceItem(src.id, 0);
