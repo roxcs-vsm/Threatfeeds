@@ -769,6 +769,186 @@
     font-family:var(--mono); font-size:8px; color:var(--text3); letter-spacing:0.5px;
   }
 
+
+  /* ── qbot reference links ── */
+  .qbot-refs {
+    margin-top:10px; padding-top:9px;
+    border-top:1px solid #00aaff22;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .qbot-refs-label {
+    font-family:var(--mono); font-size:8px; color:#00aaff88;
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:3px;
+  }
+  .qbot-ref-item {
+    display:flex; gap:6px; align-items:baseline;
+  }
+  .qbot-ref-num {
+    font-family:var(--mono); font-size:9px; color:#00aaff99;
+    flex-shrink:0; min-width:20px;
+  }
+  .qbot-ref-link {
+    font-family:var(--mono); font-size:10px; color:#00aaff;
+    text-decoration:none; word-break:break-all; line-height:1.5;
+    border-bottom:1px solid #00aaff33; transition:all 0.15s;
+  }
+  .qbot-ref-link:hover { color:var(--accent); border-bottom-color:var(--accent); }
+  .qbot-ref-source {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    flex-shrink:0; white-space:nowrap;
+  }
+  /* inline citation badges in bot bubble text */
+  .qbot-cite {
+    display:inline-block; font-family:var(--mono); font-size:9px;
+    color:#00aaff; background:rgba(0,170,255,0.12);
+    border:1px solid #00aaff33; padding:0 4px; margin:0 1px;
+    vertical-align:middle; cursor:pointer; transition:all 0.15s;
+    text-decoration:none;
+  }
+  .qbot-cite:hover { background:rgba(0,170,255,0.25); border-color:#00aaff77; }
+
+
+  /* ═══ DIGEST EXPAND OVERLAY ═══ */
+  .digest-expand-overlay {
+    position:fixed; inset:0; z-index:1300;
+    background:rgba(0,0,0,0.65); backdrop-filter:blur(2px);
+    display:flex; align-items:flex-end; justify-content:flex-end;
+  }
+  .digest-expand-panel {
+    width:520px; max-width:100vw; height:100vh;
+    background:var(--bg2); border-left:1px solid var(--border);
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:-8px 0 40px rgba(0,255,65,0.06);
+    animation:slideInRight 0.2s ease;
+  }
+  .digest-expand-header {
+    padding:14px 16px 10px; border-bottom:1px solid var(--border);
+    background:var(--bg3); display:flex; align-items:center; gap:10px; flex-shrink:0;
+  }
+  .digest-expand-title {
+    flex:1; font-family:var(--display); font-size:12px;
+    color:var(--accent); letter-spacing:3px;
+  }
+  .digest-expand-body {
+    flex:1; overflow-y:auto; padding:20px;
+    font-size:13px; color:var(--text2); line-height:1.75;
+  }
+  .digest-expand-body::-webkit-scrollbar { width:4px; }
+  .digest-expand-body::-webkit-scrollbar-thumb { background:var(--border2); }
+
+  /* Make the digest area look clickable when content is present */
+  .digest-area.has-content {
+    cursor:pointer; transition:background 0.15s;
+  }
+  .digest-area.has-content:hover { background:rgba(0,255,65,0.03); }
+  .digest-expand-hint {
+    font-family:var(--mono); font-size:8px; color:var(--text3);
+    letter-spacing:1px; padding:4px 14px 10px; text-align:right;
+    display:none;
+  }
+  .digest-area.has-content + .digest-expand-hint { display:block; }
+
+
+  /* ═══ DIGEST RICH TYPOGRAPHY ═══ */
+  .dg-chapter {
+    font-family:var(--display); font-size:11px; font-weight:700;
+    color:var(--accent); letter-spacing:4px; text-transform:uppercase;
+    margin:22px 0 10px; padding:10px 14px 10px;
+    border-top:2px solid var(--accent3);
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(90deg,rgba(0,255,65,0.07) 0%,transparent 100%);
+    display:flex; align-items:center; gap:10px;
+  }
+  .dg-chapter::before {
+    content:''; display:inline-block; width:6px; height:6px;
+    background:var(--accent); flex-shrink:0;
+  }
+  .dg-subchapter {
+    font-family:var(--mono); font-size:10px; font-weight:700;
+    color:var(--accent2); letter-spacing:2.5px; text-transform:uppercase;
+    margin:16px 0 7px; padding-left:12px;
+    border-left:3px solid var(--accent2);
+  }
+  .dg-section-rule {
+    border:none; margin:6px 0 14px;
+    border-top:1px solid var(--border);
+    opacity:0.6;
+  }
+  .dg-threat-block {
+    margin:8px 0 14px; padding:12px 14px;
+    background:rgba(0,0,0,0.3);
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent3);
+  }
+  .dg-threat-block.sev-critical { border-left-color:#ff2244; background:rgba(255,34,68,0.06); }
+  .dg-threat-block.sev-high     { border-left-color:#ff8800; background:rgba(255,136,0,0.05); }
+  .dg-threat-block.sev-medium   { border-left-color:#ffcc00; background:rgba(255,204,0,0.04); }
+  .dg-threat-name {
+    font-family:var(--mono); font-size:12px; font-weight:700;
+    color:#e8f8ea; letter-spacing:1px; text-transform:uppercase;
+    margin-bottom:8px; padding-bottom:6px;
+    border-bottom:1px solid var(--border2);
+  }
+  .dg-label {
+    font-family:var(--mono); font-size:10px; font-weight:700;
+    color:#4cdd6e; letter-spacing:1.5px; text-transform:uppercase;
+    min-width:110px; display:inline-block; flex-shrink:0;
+    opacity:1;
+  }
+  .dg-label-line {
+    display:flex; gap:10px; align-items:baseline;
+    margin:5px 0; font-size:13px; color:var(--text); line-height:1.6;
+    border-bottom:1px solid rgba(255,255,255,0.04); padding-bottom:4px;
+  }
+  .dg-label-line:last-child { border-bottom:none; }
+  .dg-p {
+    font-size:13px; color:var(--text2); line-height:1.8; margin:4px 0 8px;
+  }
+  .dg-li {
+    display:flex; gap:8px; margin:4px 0;
+    font-size:12.5px; color:var(--text2); line-height:1.6;
+  }
+  .dg-li::before { content:'▸'; color:var(--accent3); flex-shrink:0; margin-top:1px; }
+  .dg-priority-block {
+    display:flex; gap:10px; align-items:flex-start;
+    margin:6px 0; padding:8px 12px;
+    background:rgba(0,0,0,0.2); border:1px solid var(--border);
+  }
+  .dg-priority-tag {
+    font-family:var(--mono); font-size:10px; font-weight:700;
+    letter-spacing:1px; padding:2px 6px; flex-shrink:0; margin-top:1px;
+  }
+  .dg-priority-tag.p1 { background:rgba(255,34,68,0.15); color:#ff2244; border:1px solid #ff224444; }
+  .dg-priority-tag.p2 { background:rgba(255,136,0,0.12); color:#ff8800; border:1px solid #ff880044; }
+  .dg-priority-tag.p3 { background:rgba(255,204,0,0.10); color:#ffcc00; border:1px solid #ffcc0044; }
+  .dg-priority-text { font-size:12.5px; color:var(--text2); line-height:1.6; }
+  .dg-hunt-box {
+    margin:8px 0 12px; padding:14px 16px;
+    background:rgba(0,170,255,0.04);
+    border:1px solid #00aaff22; border-left:4px solid #00aaff;
+  }
+  .dg-hunt-box .dg-label { color:#4dc8ff; }
+  .dg-detection-box {
+    margin:8px 0 12px; padding:14px 16px;
+    background:rgba(170,102,255,0.04);
+    border:1px solid #aa66ff22; border-left:4px solid #aa66ff;
+  }
+  .dg-detection-box .dg-label { color:#cc88ff; }
+  .dg-bold { color:var(--text); font-weight:700; }
+  .dg-code {
+    font-family:var(--mono); font-size:11px; color:var(--accent2);
+    background:rgba(0,0,0,0.35); padding:1px 6px; border-radius:2px;
+  }
+  .dg-overview-box {
+    margin:6px 0 14px; padding:14px 16px;
+    background:rgba(0,255,65,0.03);
+    border:1px solid var(--border); border-left:4px solid var(--accent3);
+    font-size:13px; color:var(--text2); line-height:1.8;
+  }
+
+  /* override digest-text/expand-body to remove pre-wrap now that we have structured HTML */
+  #digestText, .digest-expand-body { white-space:normal !important; }
+
 </style>
 </head>
 <body>
@@ -942,7 +1122,7 @@
         <span>AI THREAT DIGEST</span>
         <button class="btn" style="padding:3px 8px;font-size:9px" onclick="generateDigest()">GENERATE</button>
       </div>
-      <div class="digest-area">
+      <div class="digest-area" id="digestArea" onclick="expandDigest()">
         <div class="digest-placeholder" id="digestPlaceholder">
           <span class="cmd">$</span> cti-analyst --mode digest<br>
           <span class="cmd">&gt;</span> Awaiting feed data…<br>
@@ -952,6 +1132,7 @@
         </div>
         <div class="digest-text" id="digestText"></div>
       </div>
+      <div class="digest-expand-hint" id="digestExpandHint">↗ CLICK TO EXPAND</div>
     </div>
 
     <div class="rp-section" id="ransomwareStatsPanel" style="display:none">
@@ -2776,37 +2957,54 @@ RULES:
 
 const CTI_DIGEST_PROMPT = `You are preparing the daily Cyber Threat Intelligence briefing for a senior security leadership team and SOC operators. Analyse these headlines and produce a structured intelligence digest.
 
-═══ DAILY CTI BRIEFING ═══
+Use this EXACT structure and formatting — do not deviate:
 
-DATE CONTEXT: Today's feed.
+# DAILY CTI BRIEFING
 
-THREAT LANDSCAPE OVERVIEW
-3-4 sentences summarising the overall threat environment visible in today's feed. Highlight any patterns, escalation, or novel activity.
+# THREAT LANDSCAPE OVERVIEW
+Write 3-4 sentences summarising the overall threat environment visible in today's feed. Highlight any patterns, escalation, or novel activity.
 
-TOP THREATS (ranked by defender priority)
-For each major threat (max 5):
+---
+
+# TOP THREATS
+For each major threat (max 5), use this block format:
 ▸ THREAT NAME / CAMPAIGN
-  Severity: [CRITICAL/HIGH/MEDIUM]
+  Severity: CRITICAL or HIGH or MEDIUM
   Summary: what it is and who is targeted
   Defender Action: one concrete immediate action
 
-ACTIVE THREAT ACTORS
-Note any named APT groups, ransomware operators, or cybercriminal clusters active in today's feed.
+---
 
-VULNERABILITY WATCH
-List critical CVEs or exploited vulnerabilities mentioned. Flag if actively exploited in the wild.
+# ACTIVE THREAT ACTORS
+Note any named APT groups, ransomware operators, or cybercriminal clusters active in today's feed. Use bullet points.
 
-HUNT OF THE DAY
+---
+
+# VULNERABILITY WATCH
+List critical CVEs or exploited vulnerabilities mentioned. Use bullet points. Flag if actively exploited in the wild.
+
+---
+
+# HUNT OF THE DAY
 One high-value threat hunting hypothesis derived from today's intelligence that any SOC can act on immediately. Include suggested data sources and what to look for.
 
-DETECTION ENGINEERING SIGNAL
-One new detection opportunity from today's feed — describe a Sigma rule concept or detection logic.
+---
 
-EMERGING TRENDS
-What patterns are building across multiple sources? What might this signal for the next 7-30 days?
+# DETECTION ENGINEERING SIGNAL
+One new detection opportunity from today's feed — describe a Sigma rule concept or detection logic in plain language.
 
-RECOMMENDED ACTIONS FOR TODAY
-3 prioritised actions for blue teams, ranked [P1] [P2] [P3].`;
+---
+
+# EMERGING TRENDS
+What patterns are building across multiple sources? What might this signal for the next 7-30 days? Use bullet points.
+
+---
+
+# RECOMMENDED ACTIONS FOR TODAY
+3 prioritised actions for blue teams:
+[P1] First priority action
+[P2] Second priority action
+[P3] Third priority action`;
 
 // ============================================================
 // AI ACTIONS
@@ -2897,6 +3095,236 @@ function resetModalTabs() {
   // Reset first panel to active
   const firstPanel = document.getElementById('panel-exec');
   if (firstPanel) firstPanel.classList.add('active');
+}
+
+
+// ── DIGEST MARKDOWN RENDERER ───────────────────────────────────
+// Richer typography specifically for the AI Threat Digest output.
+// Handles chapters (ALL CAPS lines / === / # headings), subchapters
+// (## / WORD WORD: patterns), threat blocks, priority items, hunt/
+// detection boxes, bold, lists, and severity badges.
+function renderDigestMd(text) {
+  if (!text) return '';
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Inline formatting pass (bold, code, severity badges, labels)
+  function inlineFmt(raw) {
+    let s = esc(raw);
+    // Severity badges
+    s = s.replace(/\bCRITICAL\b/g, '<span class="md-risk-critical">CRITICAL</span>');
+    s = s.replace(/\bHIGH\b/g,     '<span class="md-risk-high">HIGH</span>');
+    s = s.replace(/\bMEDIUM\b/g,   '<span class="md-risk-medium">MEDIUM</span>');
+    s = s.replace(/\bLOW\b/g,      '<span class="md-risk-low">LOW</span>');
+    // **label:** → styled label
+    s = s.replace(/\*\*([^*]+):\*\*/g, '<span class="dg-label">$1:</span>');
+    // **bold**
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<span class="dg-bold">$1</span>');
+    // `code`
+    s = s.replace(/`([^`]+)`/g, '<span class="dg-code">$1</span>');
+    return s;
+  }
+
+  // Known digest chapter keywords (from CTI_DIGEST_PROMPT structure)
+  const CHAPTER_PATTERNS = [
+    /^═{3,}/,
+    /^#{1}\s/,
+    /^THREAT LANDSCAPE/i,
+    /^TOP THREATS/i,
+    /^ACTIVE THREAT ACTORS/i,
+    /^VULNERABILITY WATCH/i,
+    /^HUNT OF THE DAY/i,
+    /^DETECTION ENGINEERING/i,
+    /^EMERGING TRENDS/i,
+    /^RECOMMENDED ACTIONS/i,
+    /^DAILY CTI BRIEFING/i,
+    /^DATE CONTEXT/i,
+  ];
+
+  const SUBCHAPTER_PATTERNS = [
+    /^##\s/,
+    /^###\s/,
+    /^[A-Z][A-Z\s\/]{4,}:$/,           // ALL CAPS LABEL:
+    /^▸\s*[A-Z][A-Z\s\-\/]{2,}/,       // ▸ THREAT NAME
+  ];
+
+  // Priority line [P1] / [P2] / [P3]
+  const PRIORITY_RE = /^\[P([123])\]\s*(.*)/;
+
+  // Hunt / Detection box trigger lines
+  const HUNT_TRIGGER     = /^HUNT OF THE DAY/i;
+  const DETECTION_TRIGGER = /^DETECTION ENGINEERING/i;
+
+  const lines = text.split('\n');
+  let html = '';
+  let inHuntBox = false;
+  let inDetectionBox = false;
+  let inThreatBlock = false;
+  let threatSev = '';
+  let overviewBuffer = [];
+  let inOverview = false;
+
+  function flushOverview() {
+    if (!overviewBuffer.length) return;
+    html += '<div class="dg-overview-box">' + overviewBuffer.join(' ') + '</div>';
+    overviewBuffer = [];
+    inOverview = false;
+  }
+
+  function closeBoxes() {
+    if (inHuntBox)      { html += '</div>'; inHuntBox = false; }
+    if (inDetectionBox) { html += '</div>'; inDetectionBox = false; }
+    if (inThreatBlock)  { html += '</div>'; inThreatBlock = false; }
+    flushOverview();
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw  = lines[i];
+    const line = raw.trimEnd();
+    const trim = line.trim();
+
+    // ── Blank line ──
+    if (trim === '') {
+      if (inOverview && overviewBuffer.length) {
+        flushOverview();
+      } else if (inHuntBox || inDetectionBox || inThreatBlock) {
+        html += '<div style="height:4px"></div>';
+      } else {
+        html += '<div style="height:8px"></div>';
+      }
+      continue;
+    }
+
+    // ── Horizontal rule ──
+    if (/^[-═─]{3,}$/.test(trim)) {
+      closeBoxes();
+      html += '<hr class="dg-section-rule">';
+      continue;
+    }
+
+    // ── CHAPTER detection ──
+    const isChapter = CHAPTER_PATTERNS.some(p => p.test(trim));
+    if (isChapter) {
+      closeBoxes();
+      const label = trim
+        .replace(/^#+\s*/,'')
+        .replace(/^[═\s]+|[═\s]+$/g,'')
+        .trim();
+      if (!label) continue;
+
+      // Start special boxes for hunt/detection chapters
+      if (HUNT_TRIGGER.test(label)) {
+        html += `<div class="dg-chapter">${esc(label)}</div>`;
+        html += '<div class="dg-hunt-box">';
+        inHuntBox = true;
+        continue;
+      }
+      if (DETECTION_TRIGGER.test(label)) {
+        html += `<div class="dg-chapter">${esc(label)}</div>`;
+        html += '<div class="dg-detection-box">';
+        inDetectionBox = true;
+        continue;
+      }
+
+      // Overview chapter — next paragraph goes into a styled box
+      if (/THREAT LANDSCAPE/i.test(label) || /DAILY CTI BRIEFING/i.test(label)) {
+        html += `<div class="dg-chapter">${esc(label)}</div>`;
+        inOverview = true;
+        continue;
+      }
+
+      html += `<div class="dg-chapter">${esc(label)}</div>`;
+      continue;
+    }
+
+    // ── SUBCHAPTER detection ──
+    const isSubchapter = SUBCHAPTER_PATTERNS.some(p => p.test(trim));
+    if (isSubchapter) {
+      flushOverview();
+      // ▸ THREAT NAME lines open a threat block
+      if (/^▸/.test(trim)) {
+        if (inThreatBlock) { html += '</div>'; inThreatBlock = false; }
+        const name = trim.replace(/^▸\s*/,'');
+        html += `<div class="dg-threat-block sev-unknown">`;
+        html += `<div class="dg-threat-name">▸ ${esc(name)}</div>`;
+        inThreatBlock = true;
+        continue;
+      }
+      const label = trim.replace(/^#+\s*/,'').replace(/:$/,'');
+      html += `<div class="dg-subchapter">${esc(label)}</div>`;
+      continue;
+    }
+
+    // ── Priority lines [P1]/[P2]/[P3] ──
+    const priMatch = trim.match(PRIORITY_RE);
+    if (priMatch) {
+      flushOverview();
+      const lvl  = priMatch[1];
+      const rest = priMatch[2];
+      html += `<div class="dg-priority-block">
+        <span class="dg-priority-tag p${lvl}">[P${lvl}]</span>
+        <span class="dg-priority-text">${inlineFmt(rest)}</span>
+      </div>`;
+      continue;
+    }
+
+    // ── Inside threat block: Severity: / Summary: / Defender Action: lines ──
+    if (inThreatBlock) {
+      const lm = trim.match(/^(Severity|Summary|Defender Action|Action|Target|Actor)\s*[:：]\s*(.*)/i);
+      if (lm) {
+        const key = lm[1];
+        let val = inlineFmt(lm[2]);
+        // Patch severity class on parent block
+        if (/severity/i.test(key)) {
+          const parent = html.lastIndexOf('dg-threat-block');
+          if (/CRITICAL/.test(lm[2])) {
+            html = html.slice(0, parent + 16) + ' sev-critical' + html.slice(parent + 16);
+          } else if (/HIGH/.test(lm[2])) {
+            html = html.slice(0, parent + 16) + ' sev-high' + html.slice(parent + 16);
+          } else if (/MEDIUM/.test(lm[2])) {
+            html = html.slice(0, parent + 16) + ' sev-medium' + html.slice(parent + 16);
+          }
+          val = val.replace(/sev-unknown/g,'');
+        }
+        html += `<div class="dg-label-line"><span class="dg-label">${esc(key)}:</span><span>${val}</span></div>`;
+        continue;
+      }
+    }
+
+    // ── Overview paragraph collection ──
+    if (inOverview) {
+      overviewBuffer.push('<p class="dg-p" style="margin:0 0 6px">' + inlineFmt(trim) + '</p>');
+      continue;
+    }
+
+    // ── List items ──
+    if (/^\s*[-*•▸]\s/.test(line)) {
+      html += `<div class="dg-li">${inlineFmt(trim.replace(/^[-*•▸]\s*/,''))}</div>`;
+      continue;
+    }
+    if (/^\s*\d+\.\s/.test(line)) {
+      html += `<div class="dg-li">${inlineFmt(trim.replace(/^\d+\.\s*/,''))}</div>`;
+      continue;
+    }
+
+    // ── ALL-CAPS standalone lines (section sub-labels, e.g. "THREAT NAME / CAMPAIGN") ──
+    if (/^[A-Z][A-Z\s\/\-\(\)]{5,}$/.test(trim) && trim.length < 60) {
+      closeBoxes();
+      html += `<div class="dg-chapter" style="font-size:10px;margin-top:14px">${esc(trim)}</div>`;
+      continue;
+    }
+
+    // ── Plain paragraph ──
+    if (inHuntBox || inDetectionBox) {
+      html += `<div class="dg-p">${inlineFmt(trim)}</div>`;
+    } else if (inThreatBlock) {
+      html += `<div class="dg-p" style="margin-left:4px">${inlineFmt(trim)}</div>`;
+    } else {
+      html += `<div class="dg-p">${inlineFmt(trim)}</div>`;
+    }
+  }
+
+  closeBoxes();
+  return html;
 }
 
 // ── MARKDOWN RENDERER ──────────────────────────────────────────
@@ -3225,10 +3653,11 @@ async function generateDigest() {
   if (!allArticles.length) { toast('Load feeds first', 'info'); return; }
   const placeholder = document.getElementById('digestPlaceholder');
   const digestEl = document.getElementById('digestText');
+  const expandBody = document.getElementById('digestExpandBody');
   placeholder.style.display = 'none';
   digestEl.style.display = 'block';
   digestEl.className = 'digest-text typing';
-  digestEl.textContent = '';
+  digestEl.innerHTML = '';
   const headlines = allArticles.slice(0, 25).map(a =>
     `[${a.source.name}] ${a.title}${a.desc ? ' — ' + a.desc.slice(0,120) : ''}`
   ).join('\n');
@@ -3236,9 +3665,20 @@ async function generateDigest() {
     await aiChat(
       CTI_SYSTEM_PROMPT,
       `${CTI_DIGEST_PROMPT}\n\nFEED HEADLINES (last 25 articles):\n${headlines}`,
-      (_, full) => { digestEl.textContent = full; }
+      (_, full) => {
+        digestEl.innerHTML = renderDigestMd(full);
+        // Live-sync to expanded panel if it's open
+        if (document.getElementById('digestExpandOverlay').style.display !== 'none') {
+          expandBody.innerHTML = digestEl.innerHTML;
+        }
+      }
     );
     digestEl.className = 'digest-text';
+  markDigestHasContent();
+  // Final sync to expanded panel
+  if (document.getElementById('digestExpandOverlay').style.display !== 'none') {
+    document.getElementById('digestExpandBody').innerHTML = digestEl.innerHTML;
+  }
     toast('CTI digest generated');
   } catch(e) {
     digestEl.textContent = `Error: ${e.message}`;
@@ -3307,7 +3747,7 @@ ${headlines}`;
     await aiChat(
       CTI_SYSTEM_PROMPT,
       prompt,
-      (_, full) => { body.textContent = full; }
+      (_, full) => { body.innerHTML = renderDigestMd(full); }
     );
     body.className = 'focus-digest-body';
   } catch(e) {
@@ -3480,7 +3920,8 @@ function toast(msg, type='') {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    if (qbotOpen) closeQueryBot();
+    if (document.getElementById('digestExpandOverlay').style.display !== 'none') collapseDigest();
+    else if (qbotOpen) closeQueryBot();
     else closeModal();
   }
 });
@@ -3493,27 +3934,33 @@ let qbotChatHistory = [];   // [{role:'user'|'assistant', content:'...'}]
 let qbotCtx = { feed: true, digest: false, history: true };
 let qbotStreaming = false;
 
-const QBOT_SYSTEM_PROMPT = `You are THREATFEED QueryBot — a senior CTI analyst assistant embedded in a live cybersecurity intelligence platform.
+const QBOT_SYSTEM_PROMPT = `You are THREATFEED QueryBot — a CTI analyst assistant grounded strictly in the threat intelligence feed provided to you.
 
-You have access to the user's current threat intelligence feed (article titles and summaries from sources like Talos, SentinelOne, CrowdStrike, CISA, and others) and optionally their AI digest.
+GROUNDING RULES (highest priority — never violate these):
+1. Your answers MUST be based solely on the articles present in the === CURRENT FEED === context provided.
+2. Do NOT add information, threat actor details, CVE details, IOCs, or claims that are not explicitly stated in the provided articles.
+3. If a topic is not covered in the current feed, say exactly: "This topic is not covered in your current feed." Do not supplement with general knowledge.
+4. Do NOT infer, extrapolate, or assume facts beyond what the article titles and summaries state.
+5. Do NOT name threat actors, malware families, CVE IDs, or campaigns unless they appear word-for-word in the feed context.
+6. If you are uncertain whether something came from the feed or your training data, omit it.
 
 YOUR ROLE:
-- Answer questions about threats, threat actors, CVEs, malware campaigns, and security topics based on the provided feed context
-- Cross-reference topics across multiple feed sources when relevant
-- Provide actionable, analyst-grade answers — not generic advice
-- Flag when something in the feed requires urgent attention
-- Help pivot from one threat to related actors, techniques, or infrastructure
-- Be direct and concise — analysts don't have time for filler
+- Answer questions about what is present in the user's current feed
+- Identify patterns, correlations, and priorities across the provided articles
+- Flag articles that warrant urgent attention based on their content
+- Help the analyst understand what the feed is telling them right now
 
 RESPONSE STYLE:
-- Use markdown formatting: **bold** for key terms, bullet points for lists
-- For CVEs: always include affected products, CVSS if known, patch status
-- For threat actors: include aliases, motivation, known TTPs
-- For IOCs: present in defanged format
-- Keep answers focused on what's actually in the feed context provided
-- If something is not in the current feed, say so and answer from general knowledge
+- Use markdown: **bold** for key terms, bullet points for lists
+- Be concise and direct — lead with the answer, then evidence from the feed
+- When a claim comes from the feed, say so: "According to the [source] article…"
+- Never pad answers with generic security advice not grounded in the feed
 
-When feed context is provided, always ground your answer in that data first.`;
+CITATIONS:
+- Each article in the feed is labelled [N] (e.g. [1], [2], [3]).
+- Cite inline at the end of every sentence that uses information from an article: "LockBit activity has increased [4][12]."
+- Only cite numbers that appear in the provided feed context. Never fabricate a citation number.
+- If no article supports a claim, do not make the claim.`;
 
 const QBOT_SUGGESTIONS_DEFAULT = [
   "What are the top threats in today's feed?",
@@ -3526,15 +3973,23 @@ const QBOT_SUGGESTIONS_DEFAULT = [
   "What should my SOC prioritise today?",
 ];
 
+// Returns { contextText, articleIndex }
+// articleIndex maps [N] → { title, link, source }
 function qbotGetContext() {
   const parts = [];
+  const articleIndex = {};   // maps "1" → { title, link, source }
 
   if (qbotCtx.feed && allArticles.length) {
     const articles = filteredArticles.length ? filteredArticles : allArticles;
     const sample = articles.slice(0, 40);
-    const feedCtx = sample.map((a, i) =>
-      `[${i+1}] [${a.source.name}] ${a.title}${a.desc ? ' — ' + a.desc.slice(0,200) : ''}`
-    ).join('\n');
+    sample.forEach((a, i) => {
+      const n = i + 1;
+      articleIndex[n] = { title: a.title, link: a.link, source: a.source.name };
+    });
+    const feedCtx = sample.map((a, i) => {
+      const n = i + 1;
+      return `[${n}] [${a.source.name}] ${a.title}${a.desc ? ' — ' + a.desc.slice(0,200) : ''}${a.link ? ' (URL: ' + a.link + ')' : ''}`;
+    }).join('\n');
     parts.push(`=== CURRENT FEED (${sample.length} of ${allArticles.length} articles) ===\n${feedCtx}`);
   }
 
@@ -3546,35 +4001,25 @@ function qbotGetContext() {
     }
   }
 
-  return parts.join('\n\n');
+  return { contextText: parts.join('\n\n'), articleIndex };
 }
 
 function qbotBuildMessages(userMessage) {
   const msgs = [];
-
-  // Inject context into the first user message or as a system note
-  const ctx = qbotGetContext();
+  const { contextText, articleIndex } = qbotGetContext();
 
   if (qbotCtx.history && qbotChatHistory.length > 0) {
-    // Include prior turns (last 10 to avoid token overflow)
     const recent = qbotChatHistory.slice(-10);
     msgs.push(...recent);
   }
 
-  // Build the actual user message with context prepended on first message or if context changed
   let content = userMessage;
-  if (ctx) {
-    content = (qbotChatHistory.length === 0 || !qbotCtx.history)
-      ? `${ctx}\n\n=== ANALYST QUESTION ===\n${userMessage}`
-      : userMessage;
-    // Always inject fresh context on every message if feed context enabled
-    if (qbotCtx.feed) {
-      content = `${ctx}\n\n=== ANALYST QUESTION ===\n${userMessage}`;
-    }
+  if (contextText) {
+    content = `${contextText}\n\n=== ANALYST QUESTION ===\n${userMessage}`;
   }
 
   msgs.push({ role: 'user', content });
-  return msgs;
+  return { msgs, articleIndex };
 }
 
 function qbotNow() {
@@ -3630,6 +4075,62 @@ function qbotUpdateBubble(bubbleEl, text, done = false) {
   container.scrollTop = container.scrollHeight;
 }
 
+
+function qbotRenderFinalBubble(bubbleEl, text, articleIndex) {
+  bubbleEl.classList.remove('typing');
+
+  // Find all unique [N] citations in the response
+  const citedNums = [...new Set(
+    [...text.matchAll(/\[(\d+)\]/g)].map(m => parseInt(m[1]))
+  )].filter(n => articleIndex[n]).sort((a,b) => a - b);
+
+  // Replace [N] in markdown text with placeholder tokens before renderMd
+  // (so renderMd doesn't accidentally mangle them)
+  let mdText = text.replace(/\[(\d+)\]/g, (_, n) => {
+    if (!articleIndex[parseInt(n)]) return `[${n}]`;  // not a real article ref
+    return `%%CITE_${n}%%`;
+  });
+
+  // Render markdown
+  let html = renderMd(mdText);
+
+  // Replace %%CITE_N%% tokens with clickable badge anchors
+  html = html.replace(/%%CITE_(\d+)%%/g, (_, n) => {
+    const art = articleIndex[parseInt(n)];
+    if (!art) return `[${n}]`;
+    const title = esc(art.title.slice(0, 60) + (art.title.length > 60 ? '…' : ''));
+    const href = esc(art.link || '#');
+    return `<a class="qbot-cite" href="${href}" target="_blank" rel="noopener" title="${title}">[${n}]</a>`;
+  });
+
+  bubbleEl.innerHTML = html;
+
+  // Append REFERENCES block if we have cited articles with links
+  const refsWithLinks = citedNums.filter(n => articleIndex[n]?.link);
+  if (refsWithLinks.length > 0) {
+    const refsEl = document.createElement('div');
+    refsEl.className = 'qbot-refs';
+    refsEl.innerHTML = '<div class="qbot-refs-label">References</div>' +
+      refsWithLinks.map(n => {
+        const art = articleIndex[n];
+        const title = esc(art.title.slice(0, 80) + (art.title.length > 80 ? '…' : ''));
+        const href  = esc(art.link);
+        const src   = esc(art.source);
+        return `<div class="qbot-ref-item">
+          <span class="qbot-ref-num">[${n}]</span>
+          <div style="min-width:0">
+            <a class="qbot-ref-link" href="${href}" target="_blank" rel="noopener">${title}</a>
+            <span class="qbot-ref-source"> · ${src}</span>
+          </div>
+        </div>`;
+      }).join('');
+    bubbleEl.appendChild(refsEl);
+  }
+
+  const container = document.getElementById('qbotMessages');
+  if (container) container.scrollTop = container.scrollHeight;
+}
+
 async function qbotSend() {
   if (qbotStreaming) return;
   if (!aiReady()) { toast(aiReadyLabel(), 'error'); return; }
@@ -3657,25 +4158,24 @@ async function qbotSend() {
   sendBtn.disabled = true;
   sendBtn.textContent = '…';
 
-  // Build message list
-  const messages = qbotBuildMessages(userText);
+  // Build message list with article index for link resolution
+  const { msgs, articleIndex } = qbotBuildMessages(userText);
 
   let fullResponse = '';
   try {
     await aiChat(
       QBOT_SYSTEM_PROMPT,
-      // For multi-turn, we pass the last user message but aiChat is single-turn
-      // So we encode the full history into the user prompt
-      messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n---\n\n'),
+      msgs.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n---\n\n'),
       (chunk, full) => {
         fullResponse = full;
         qbotUpdateBubble(bubbleEl, full, false);
       }
     );
 
-    qbotUpdateBubble(bubbleEl, fullResponse, true);
+    // Render final response with clickable inline citations
+    qbotRenderFinalBubble(bubbleEl, fullResponse, articleIndex);
 
-    // Save to history (without the context prefix — just the bare question)
+    // Save to history
     qbotChatHistory.push({ role: 'user', content: userText });
     qbotChatHistory.push({ role: 'assistant', content: fullResponse });
 
@@ -3781,6 +4281,33 @@ function closeQueryBot() {
   qbotOpen = false;
 }
 
+
+// ============================================================
+// DIGEST EXPAND / COLLAPSE
+// ============================================================
+function expandDigest() {
+  const digestText = document.getElementById('digestText');
+  if (!digestText || digestText.style.display === 'none' || !digestText.innerHTML.trim()) return;
+
+  const expandBody = document.getElementById('digestExpandBody');
+  // Mirror the rendered content (innerHTML already has renderMd output)
+  expandBody.innerHTML = digestText.innerHTML;
+
+  document.getElementById('digestExpandOverlay').style.display = 'flex';
+  expandBody.scrollTop = 0;
+}
+
+function collapseDigest() {
+  document.getElementById('digestExpandOverlay').style.display = 'none';
+}
+
+function markDigestHasContent() {
+  const area = document.getElementById('digestArea');
+  const hint = document.getElementById('digestExpandHint');
+  if (area) area.classList.add('has-content');
+  if (hint) hint.style.display = 'block';
+}
+
 </script>
 
 <!-- ═══ QUERY BOT PANEL ═══ -->
@@ -3833,6 +4360,18 @@ function closeQueryBot() {
       </div>
     </div>
 
+  </div>
+</div>
+
+
+<!-- ═══ DIGEST EXPAND OVERLAY ═══ -->
+<div class="digest-expand-overlay" id="digestExpandOverlay" style="display:none" onclick="if(event.target===this)collapseDigest()">
+  <div class="digest-expand-panel">
+    <div class="digest-expand-header">
+      <div class="digest-expand-title">AI THREAT DIGEST</div>
+      <button class="modal-close" onclick="collapseDigest()">✕</button>
+    </div>
+    <div class="digest-expand-body" id="digestExpandBody"></div>
   </div>
 </div>
 
