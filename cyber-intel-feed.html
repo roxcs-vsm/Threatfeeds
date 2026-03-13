@@ -1768,6 +1768,109 @@ async function aiChat(systemPrompt, userPrompt, onChunk) {
   return ollamaChat(systemPrompt, userPrompt, onChunk);
 }
 
+// Multi-turn: msgs = [{role:'user'|'assistant', content:'...'}]
+// Each provider receives a proper role-separated messages array.
+async function aiChatMulti(systemPrompt, msgs, onChunk) {
+  if (activeProvider === 'claude') return claudeChatMulti(systemPrompt, msgs, onChunk);
+  if (activeProvider === 'gemini') return geminiChatMulti(systemPrompt, msgs, onChunk);
+  return ollamaChatMulti(systemPrompt, msgs, onChunk);
+}
+
+async function claudeChatMulti(systemPrompt, msgs, onChunk) {
+  const key = document.getElementById('claudeKey').value.trim();
+  if (!key) throw new Error('No Claude API key set.');
+  const model = document.getElementById('claudeModel').value;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'x-api-key':key,
+      'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+    body: JSON.stringify({ model, max_tokens:4096, system:systemPrompt, stream:true, messages:msgs }),
+    signal: AbortSignal.timeout(300000)
+  });
+  if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error('Claude: '+(e.error?.message||res.status)); }
+  const reader=res.body.getReader(), dec=new TextDecoder();
+  let full='', buf='';
+  while (true) {
+    const {done,value}=await reader.read(); if (done) break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n'); buf=lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const d=line.slice(6).trim(); if (d==='[DONE]') continue;
+      try { const j=JSON.parse(d); const ch=j.delta?.text||''; if(ch){full+=ch;onChunk&&onChunk(ch,full);} } catch {}
+    }
+  }
+  if (!full) throw new Error('Claude returned empty response.');
+  return full;
+}
+
+async function geminiChatMulti(systemPrompt, msgs, onChunk) {
+  const key=document.getElementById('geminiKey').value.trim();
+  if (!key) throw new Error('No Gemini API key set.');
+  const model=document.getElementById('geminiModel').value;
+  const contents=msgs.map(m=>({ role:m.role==='assistant'?'model':'user', parts:[{text:m.content}] }));
+  const res=await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/'+model+':streamGenerateContent?alt=sse&key='+key,
+    { method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ system_instruction:{parts:[{text:systemPrompt}]}, contents, generationConfig:{maxOutputTokens:4096} }),
+      signal:AbortSignal.timeout(300000) }
+  );
+  if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error('Gemini: '+(e.error?.message||res.status)); }
+  const reader=res.body.getReader(), dec=new TextDecoder();
+  let full='', buf='';
+  while (true) {
+    const {done,value}=await reader.read(); if (done) break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n'); buf=lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const d=line.slice(6).trim(); if (!d||d==='[DONE]') continue;
+      try { const j=JSON.parse(d); const ch=j.candidates?.[0]?.content?.parts?.[0]?.text||''; if(ch){full+=ch;onChunk&&onChunk(ch,full);} } catch {}
+    }
+  }
+  if (!full) throw new Error('Gemini returned empty response.');
+  return full;
+}
+
+async function ollamaChatMulti(systemPrompt, msgs, onChunk) {
+  const baseUrl=document.getElementById('ollamaUrl').value.trim().replace(/\/$/, '');
+  const model=document.getElementById('modelSelect').value;
+  const messages=[{role:'system',content:systemPrompt}, ...msgs];
+  let res;
+  try {
+    res=await fetch(baseUrl+'/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model, stream:true, messages}),
+      signal:AbortSignal.timeout(300000)
+    });
+  } catch(e) {
+    if (e.name==='TimeoutError'||e.name==='AbortError') throw new Error('Request timed out.');
+    const isCORS=e.name==='TypeError'||e.message?.includes('Failed to fetch');
+    if (isCORS) throw new Error('CORS blocked — restart Ollama with: OLLAMA_ORIGINS="*" ollama serve');
+    throw new Error('Connection error: '+e.message);
+  }
+  if (!res.ok) { const t=await res.text().catch(()=>''); throw new Error('Ollama HTTP '+res.status+(t?': '+t.slice(0,200):'')); }
+  const reader=res.body.getReader(), dec=new TextDecoder();
+  let full='', buf='';
+  while (true) {
+    let done,value;
+    try { ({done,value}=await reader.read()); } catch(e) { throw new Error('Stream error: '+e.message); }
+    if (done) break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n'); buf=lines.pop();
+    for (const line of lines) {
+      const t=line.trim(); if (!t) continue;
+      try {
+        const j=JSON.parse(t);
+        if (j.error) throw new Error('Ollama error: '+j.error);
+        const ch=(j.message?.content)||j.response||''; if(ch){full+=ch;onChunk&&onChunk(ch,full);}
+      } catch(pe) { if(pe.message?.startsWith('Ollama')) throw pe; }
+    }
+  }
+  if (!full) throw new Error('Model returned empty response — it may still be loading.');
+  return full;
+}
+
 async function claudeChat(systemPrompt, userPrompt, onChunk) {
   const key = document.getElementById('claudeKey').value.trim();
   if (!key) throw new Error('No Claude API key set. Enter your key in the AI panel.');
@@ -4005,20 +4108,24 @@ function qbotGetContext() {
 }
 
 function qbotBuildMessages(userMessage) {
-  const msgs = [];
   const { contextText, articleIndex } = qbotGetContext();
+  const msgs = [];
 
+  // Include prior turns for conversational memory (history toggle)
   if (qbotCtx.history && qbotChatHistory.length > 0) {
-    const recent = qbotChatHistory.slice(-10);
+    // Keep last 8 turns (4 exchanges) so we don't blow context windows
+    const recent = qbotChatHistory.slice(-8);
     msgs.push(...recent);
   }
 
-  let content = userMessage;
+  // Build the user content: always inject fresh feed context so the model
+  // can cite articles correctly, even mid-conversation.
+  let userContent = userMessage;
   if (contextText) {
-    content = `${contextText}\n\n=== ANALYST QUESTION ===\n${userMessage}`;
+    userContent = contextText + '\n\n=== ANALYST QUESTION ===\n' + userMessage;
   }
 
-  msgs.push({ role: 'user', content });
+  msgs.push({ role: 'user', content: userContent });
   return { msgs, articleIndex };
 }
 
@@ -4158,29 +4265,31 @@ async function qbotSend() {
   sendBtn.disabled = true;
   sendBtn.textContent = '…';
 
-  // Build message list with article index for link resolution
+  // Build proper multi-turn messages array with article index for citations
   const { msgs, articleIndex } = qbotBuildMessages(userText);
 
   let fullResponse = '';
   try {
-    await aiChat(
+    // Use aiChatMulti so each provider gets a proper roles-separated message array,
+    // not a flattened text blob. This is the single biggest fix for response quality.
+    await aiChatMulti(
       QBOT_SYSTEM_PROMPT,
-      msgs.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n---\n\n'),
+      msgs,
       (chunk, full) => {
         fullResponse = full;
         qbotUpdateBubble(bubbleEl, full, false);
       }
     );
 
-    // Render final response with clickable inline citations
+    // Render final response with clickable inline citation badges + references list
     qbotRenderFinalBubble(bubbleEl, fullResponse, articleIndex);
 
-    // Save to history
+    // Save bare question + answer to history (no context prefix — that's re-injected fresh each turn)
     qbotChatHistory.push({ role: 'user', content: userText });
     qbotChatHistory.push({ role: 'assistant', content: fullResponse });
 
   } catch(e) {
-    qbotUpdateBubble(bubbleEl, `**Error:** ${e.message}`, true);
+    qbotUpdateBubble(bubbleEl, '**Error:** ' + e.message, true);
   }
 
   qbotStreaming = false;
