@@ -1627,12 +1627,15 @@ async function checkOllama() {
 }
 
 function enableAIButtons(on) {
+  // Modal and header buttons — hard disable when no provider available
   document.querySelectorAll('#modalExecBtn, #modalAnalyzeBtn, #modalHighlightsBtn, #modalIOCBtn, #modalBriefBtn, #btnDigest').forEach(b => {
     if (b) b.disabled = !on;
   });
-  // Card AI buttons use aiReady() at render time; refresh their state live
+  // Card CTI BRIEF buttons — always clickable; summarizeCard() guards with aiReady()
+  // so they show a helpful toast instead of silently doing nothing.
+  // Only visually dim them when offline so user knows AI isn't ready.
   document.querySelectorAll('.card-ai-btn').forEach(b => {
-    b.disabled = !on;
+    b.style.opacity = on ? '' : '0.45';
   });
 }
 
@@ -2925,7 +2928,7 @@ function articleCardHtml(a) {
     ${a.desc ? `<div class="card-summary">${esc(a.desc)}</div>` : ''}
     <div class="card-footer">
       <a class="card-link" href="${a.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">[ READ ORIGINAL → ]</a>
-      <button class="card-ai-btn" id="aibtn-${a.id}" onclick="event.stopPropagation();summarizeCard('${a.id}')" ${!aiReady()?'disabled':''}>⬡ CTI BRIEF</button>
+      <button class="card-ai-btn" id="aibtn-${a.id}" onclick="event.stopPropagation();summarizeCard('${a.id}')">⬡ CTI BRIEF</button>
     </div>
     <div class="ai-summary-box" id="aibox-${a.id}">
       <div class="analyst-byline">⬡ analyst brief · 25yr CTI</div>
@@ -3159,7 +3162,7 @@ async function summarizeCard(id) {
     textEl.className = '';
     textEl.textContent = `Error: ${e.message}`;
     btn.disabled = false; btn.className = 'card-ai-btn'; btn.textContent = '⬡ RETRY';
-    toast('Ollama request failed', 'error');
+    toast(activeProvider.toUpperCase() + ' request failed: ' + e.message, 'error');
   }
 }
 
