@@ -313,11 +313,20 @@
   .card-ai-btn:disabled { opacity:0.3; cursor:not-allowed; }
   .card-ai-btn.summarizing { color:var(--yellow); border-color:var(--yellow); animation:blink 0.8s infinite; }
   .ai-summary-box {
-    margin-top:10px; padding:10px 14px;
-    background:rgba(0,255,65,0.04); border:1px solid var(--accent3); border-left:3px solid var(--accent);
-    font-size:13px; color:var(--text); line-height:1.8;
-    white-space:pre-wrap; word-break:break-word;
+    margin-top:10px; padding:12px 16px;
+    background:rgba(0,255,65,0.03); border:1px solid var(--border2); border-left:3px solid var(--accent2);
     display:none;
+  }
+  .ai-summary-box .analyst-byline {
+    font-family:var(--mono); font-size:8px; color:var(--accent3);
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
+  }
+  .ai-summary-box .analyst-prose {
+    font-family:var(--body); font-size:13.5px; color:var(--text);
+    line-height:1.85; font-style:italic; word-break:break-word;
+  }
+  .ai-summary-box .analyst-prose.typing::after {
+    content:'▌'; animation:blink 0.7s infinite; color:var(--accent); font-style:normal;
   }
   .ai-summary-box.visible { display:block; animation:fadeIn 0.3s ease; }
   .ai-summary-label {
@@ -2919,8 +2928,8 @@ function articleCardHtml(a) {
       <button class="card-ai-btn" id="aibtn-${a.id}" onclick="event.stopPropagation();summarizeCard('${a.id}')" ${!aiReady()?'disabled':''}>⬡ CTI BRIEF</button>
     </div>
     <div class="ai-summary-box" id="aibox-${a.id}">
-      <div class="ai-summary-label">▶ CTI BRIEF</div>
-      <div id="aitext-${a.id}"></div>
+      <div class="analyst-byline">⬡ analyst brief · 25yr CTI</div>
+      <div class="analyst-prose" id="aitext-${a.id}"></div>
     </div>
   </div>`;
 }
@@ -2941,34 +2950,50 @@ Your core principles:
 - For threat actors: always map to MITRE ATT&CK where evidence supports it.
 - Format cleanly. Use plain text with clear section headers. No markdown decorations.`;
 
-const CTI_QUICK_SUMMARY_PROMPT = `Summarise this cybersecurity article for a blue team analyst. Be brief and direct — no jargon, no padding. Use this exact format:
+const CTI_QUICK_SUMMARY_PROMPT = `You are writing a personal CTI brief — the kind a 25-year veteran analyst scribbles after reading a morning feed article. This is NOT a structured report. It is a short, opinionated, direct read written in first person as someone who has seen every version of this threat before.
 
-🔍 WHAT HAPPENED
-One plain sentence.
+Write 3-5 sentences MAXIMUM. No headers, no bullets, no labels, no template. Just the analyst's take in flowing prose.
 
-⚠️ PRIORITY: [CRITICAL / HIGH / MEDIUM / LOW]
-One sentence why.
+Cover what the article actually warrants — in natural order, not a checklist:
+- What this actually is, cut through any vendor spin or hype
+- Whether it matters and why — place it in the broader threat landscape
+- What an experienced defender should do first, as a direct recommendation
+- Any pattern, technique, or indicator worth flagging from years of similar cases
+- Confidence level if attribution or severity is genuinely uncertain
 
-✅ ACT NOW (max 2 bullets)
-- Most important immediate action.
-- Second action if needed.
+Tone: direct, dry, occasionally sardonic. Like a senior analyst's Slack message, not a press release. Never say "it is important to note", "defenders should be aware", "in conclusion", or any other filler. Say the thing.
 
-🎯 HUNT LEAD
-One sentence: what to hunt for and where to look.`;
+Write only the brief. No preamble, no label, no sign-off.`;
 
-const CTI_EXEC_SUMMARY_PROMPT = `Write a tight executive briefing for a CISO or senior leadership. Maximum 200 words total. No padding. Lead with the threat, not the context. Use this EXACT structure with the labels in bold:
+const CTI_EXEC_SUMMARY_PROMPT = `You are the Director of Security Operations presenting to executive leadership: CEO, CFO, board-level stakeholders. Your audience is intelligent but non-technical. They do not know what CVEs, TTPs, or exploit chains are. They care about business risk, financial exposure, operational continuity, reputational damage, and what decisions they need to make now.
 
-**THREAT:** [One sentence — what it is, who is behind it if known]
-**RISK:** [CRITICAL / HIGH / MEDIUM / LOW] — one sentence on real-world impact potential
-**AFFECTED:** [Who/what is exposed — specific platforms, sectors, versions if relevant]
-**WORST CASE:** [One sentence — what happens if this is exploited and unmitigated]
-**ACTION:**
-- [First concrete directive — patch X, disable Y, verify Z]
-- [Second directive if needed]
-- [Third directive if needed]
-**BOTTOM LINE:** [One sentence — the single most important thing to act on now]
+GROUNDING RULES — HIGHEST PRIORITY:
+- Base your briefing SOLELY on the article content provided. Do not supplement with outside knowledge.
+- If the article does not name a threat actor, do not name one.
+- If the article does not specify affected systems or versions, do not invent them.
+- If details are unclear, write "details are still emerging" — never fill gaps with assumptions.
 
-Write only these labelled sections. Use the ** markers exactly as shown. No extra commentary.`;
+Use this EXACT format with ** markers as shown — no deviations, no extra sections:
+
+**SITUATION:** One or two plain-English sentences describing what happened as a business event, not a technical incident. Example: "A global law enforcement operation has disrupted criminal networks that were actively targeting businesses in our sector."
+
+**BUSINESS RISK:** CRITICAL or HIGH or MEDIUM or LOW — then one sentence in plain terms: what does this mean for revenue, operations, customer data, or regulatory standing. No jargon.
+
+**WHO IS AFFECTED:** Plain English description of which types of organisations, sectors, or geographies are exposed — based only on what the article states. If the article is unclear, say so honestly.
+
+**IF WE DO NOTHING:** One sentence. The realistic worst-case business outcome stated plainly — financial loss, data breach, operational outage, regulatory fine, or reputational harm. Only state what the article supports.
+
+**WHAT WE NEED FROM LEADERSHIP:**
+- First item: a decision or resource needed from executives — budget approval, external communications sign-off, policy exception, board notification. Only include if genuinely warranted.
+- Second item if needed. Do not pad.
+
+**WHAT THE SECURITY TEAM IS DOING:**
+- First concrete action underway or being initiated based on this intelligence.
+- Second action if relevant.
+
+**BOTTOM LINE:** One sentence. The single most important message for a CEO to carry out of this briefing — in plain English, zero acronyms.
+
+Write nothing outside these labelled sections. No preamble, no commentary, no sign-off.`;
 
 const CTI_DEEP_ANALYSIS_PROMPT = `Produce a full CTI analysis. Be precise and direct — write only what the source material supports. Skip any section where the article provides no evidence.
 
@@ -3121,14 +3146,14 @@ async function summarizeCard(id) {
   const textEl = document.getElementById(`aitext-${id}`);
   btn.disabled = true; btn.className = 'card-ai-btn summarizing'; btn.textContent = '⬡ ANALYZING…';
   box.className = 'ai-summary-box visible';
-  textEl.className = 'typing'; textEl.textContent = '';
+  textEl.className = 'analyst-prose typing'; textEl.textContent = '';
   try {
     await aiChat(
       CTI_SYSTEM_PROMPT,
       `${CTI_QUICK_SUMMARY_PROMPT}\n\nARTICLE TITLE: ${a.title}\nARTICLE CONTENT: ${a.desc}`,
       (_, full) => { textEl.textContent = full; }
     );
-    textEl.className = '';
+    textEl.className = 'analyst-prose';
     btn.disabled = false; btn.className = 'card-ai-btn'; btn.textContent = '⬡ CTI BRIEF ✓';
   } catch(e) {
     textEl.className = '';
@@ -3536,12 +3561,13 @@ function renderMd(text) {
     }
 
     // Detect exec brief label lines for block styling
-    const labelMatch = line.match(/^\*\*?(THREAT|RISK|AFFECTED|WORST CASE|ACTION|BOTTOM LINE):\*\*?/i);
+    const labelMatch = line.match(/^\*\*?(SITUATION|THREAT|BUSINESS RISK|RISK|WHO IS AFFECTED|AFFECTED|IF WE DO NOTHING|WORST CASE|WHAT WE NEED FROM LEADERSHIP|WHAT THE SECURITY TEAM IS DOING|ACTION|BOTTOM LINE):\*\*?/i);
     if (labelMatch) {
       const key = labelMatch[1].toUpperCase();
-      const blockClass = key === 'THREAT' ? 'md-block-threat'
-        : (key === 'RISK' ? 'md-block-risk'
-        : (key === 'ACTION' || key === 'BOTTOM LINE' ? 'md-block-action' : 'md-block-vuln'));
+      const blockClass = (key === 'THREAT' || key === 'SITUATION') ? 'md-block-threat'
+        : (key === 'RISK' || key === 'BUSINESS RISK') ? 'md-block-risk'
+        : (key === 'ACTION' || key === 'BOTTOM LINE' || key === 'WHAT WE NEED FROM LEADERSHIP' || key === 'WHAT THE SECURITY TEAM IS DOING') ? 'md-block-action'
+        : 'md-block-vuln';
       html += `<div class="md-block ${blockClass}">${out}</div>`;
       continue;
     }
