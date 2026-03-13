@@ -614,6 +614,161 @@
   }
   .hunt-action-btn:hover { border-color:var(--accent2); color:var(--text2); }
   .hunt-action-btn.delete:hover { border-color:var(--red); color:var(--red); }
+
+  /* ═══ QUERY BOT ═══ */
+  .qbot-btn {
+    background:none; border:1px solid #00aaff; color:#00aaff;
+    font-family:var(--display); font-size:10px; letter-spacing:2px;
+    padding:5px 12px; cursor:pointer; transition:all 0.15s;
+  }
+  .qbot-btn:hover { background:rgba(0,170,255,0.1); }
+
+  .qbot-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(2px); z-index:1500;
+    display:flex; justify-content:flex-end;
+  }
+  .qbot-panel {
+    width:min(700px,95vw); height:100vh;
+    background:var(--bg2); border-left:1px solid #00aaff44;
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:-8px 0 40px rgba(0,170,255,0.08);
+    animation:slideInRight 0.2s ease;
+  }
+  @keyframes slideInRight { from { transform:translateX(100%); } to { transform:translateX(0); } }
+
+  .qbot-header {
+    padding:16px 20px; border-bottom:1px solid var(--border);
+    background:var(--bg3); display:flex; align-items:center; gap:12px; flex-shrink:0;
+  }
+  .qbot-header-icon {
+    width:32px; height:32px; border:1px solid #00aaff55;
+    background:rgba(0,170,255,0.08); display:flex; align-items:center;
+    justify-content:center; font-size:15px; flex-shrink:0;
+  }
+  .qbot-header-title {
+    flex:1;
+    font-family:var(--display); font-size:13px; color:#00aaff; letter-spacing:3px;
+  }
+  .qbot-header-sub {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    letter-spacing:1px; margin-top:3px;
+  }
+  .qbot-context-bar {
+    padding:8px 16px; background:rgba(0,170,255,0.04);
+    border-bottom:1px solid var(--border);
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap; flex-shrink:0;
+  }
+  .qbot-ctx-label {
+    font-family:var(--mono); font-size:8px; color:var(--text3); letter-spacing:1px;
+  }
+  .qbot-ctx-chip {
+    font-family:var(--mono); font-size:9px; color:#00aaff;
+    border:1px solid #00aaff33; padding:2px 7px; background:rgba(0,170,255,0.06);
+  }
+  .qbot-ctx-chip.active { background:rgba(0,170,255,0.15); border-color:#00aaff88; }
+
+  .qbot-messages {
+    flex:1; overflow-y:auto; padding:16px; display:flex;
+    flex-direction:column; gap:14px; scroll-behavior:smooth;
+  }
+  .qbot-messages::-webkit-scrollbar { width:4px; }
+  .qbot-messages::-webkit-scrollbar-track { background:transparent; }
+  .qbot-messages::-webkit-scrollbar-thumb { background:var(--border2); }
+
+  .qbot-msg {
+    display:flex; gap:10px; align-items:flex-start;
+  }
+  .qbot-msg.user { flex-direction:row-reverse; }
+  .qbot-msg-avatar {
+    width:26px; height:26px; border-radius:0; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:9px; font-weight:700;
+    letter-spacing:1px;
+  }
+  .qbot-msg.user .qbot-msg-avatar {
+    background:rgba(0,255,65,0.1); border:1px solid var(--accent3); color:var(--accent);
+  }
+  .qbot-msg.bot .qbot-msg-avatar {
+    background:rgba(0,170,255,0.1); border:1px solid #00aaff44; color:#00aaff;
+  }
+  .qbot-msg-bubble {
+    max-width:88%; padding:10px 14px;
+    font-size:12.5px; line-height:1.7; color:var(--text2);
+  }
+  .qbot-msg.user .qbot-msg-bubble {
+    background:rgba(0,255,65,0.06); border:1px solid var(--border2);
+    border-radius:0; color:var(--text); font-family:var(--mono); font-size:12px;
+  }
+  .qbot-msg.bot .qbot-msg-bubble {
+    background:rgba(0,170,255,0.04); border:1px solid #00aaff22;
+  }
+  .qbot-msg-time {
+    font-family:var(--mono); font-size:8px; color:var(--text3);
+    margin-top:4px; letter-spacing:0.5px;
+  }
+  .qbot-msg.bot .qbot-msg-time { text-align:left; }
+  .qbot-msg.user .qbot-msg-time { text-align:right; }
+
+  .qbot-thinking {
+    display:flex; gap:4px; align-items:center; padding:6px 0;
+  }
+  .qbot-thinking span {
+    width:5px; height:5px; background:#00aaff; border-radius:50%;
+    animation:qbotPulse 1.2s infinite;
+  }
+  .qbot-thinking span:nth-child(2) { animation-delay:0.2s; }
+  .qbot-thinking span:nth-child(3) { animation-delay:0.4s; }
+  @keyframes qbotPulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+
+  .qbot-suggestions {
+    padding:8px 16px 0; display:flex; flex-wrap:wrap; gap:6px; flex-shrink:0;
+  }
+  .qbot-suggestion {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    border:1px solid var(--border); padding:4px 9px; cursor:pointer;
+    background:none; transition:all 0.15s; letter-spacing:0.5px; text-align:left;
+  }
+  .qbot-suggestion:hover { color:#00aaff; border-color:#00aaff55; background:rgba(0,170,255,0.05); }
+
+  .qbot-input-area {
+    padding:12px 16px; border-top:1px solid var(--border);
+    background:var(--bg3); flex-shrink:0;
+  }
+  .qbot-input-row {
+    display:flex; gap:8px; align-items:flex-end;
+  }
+  .qbot-input {
+    flex:1; background:var(--bg); border:1px solid var(--border2);
+    color:var(--text); font-family:var(--body); font-size:13px;
+    padding:10px 12px; outline:none; resize:none; min-height:40px;
+    max-height:120px; line-height:1.5; transition:border-color 0.15s;
+    overflow-y:auto;
+  }
+  .qbot-input:focus { border-color:#00aaff66; }
+  .qbot-input::placeholder { color:var(--text3); font-family:var(--mono); font-size:11px; }
+  .qbot-send {
+    background:#00aaff22; border:1px solid #00aaff55; color:#00aaff;
+    font-family:var(--mono); font-size:11px; letter-spacing:1px;
+    padding:10px 16px; cursor:pointer; transition:all 0.15s; flex-shrink:0;
+    align-self:flex-end;
+  }
+  .qbot-send:hover:not(:disabled) { background:#00aaff33; border-color:#00aaff; }
+  .qbot-send:disabled { opacity:0.35; cursor:not-allowed; }
+  .qbot-clear {
+    background:none; border:1px solid var(--border); color:var(--text3);
+    font-family:var(--mono); font-size:9px; padding:4px 8px;
+    cursor:pointer; transition:all 0.15s; letter-spacing:1px;
+  }
+  .qbot-clear:hover { border-color:var(--red); color:var(--red); }
+  .qbot-input-meta {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:6px; padding:0 2px;
+  }
+  .qbot-input-hint {
+    font-family:var(--mono); font-size:8px; color:var(--text3); letter-spacing:0.5px;
+  }
+
 </style>
 </head>
 <body>
@@ -642,6 +797,7 @@
     <button class="btn" id="btnRefresh" onclick="fetchAllFeeds()">↻ REFRESH</button>
     <button class="btn" onclick="generateDigest()" id="btnDigest">AI DIGEST</button>
     <button class="btn" id="btnHunts" onclick="openHuntsList()" style="border-color:#aa66ff;color:#aa66ff">🎯 HUNTS</button>
+    <button class="qbot-btn" id="btnQueryBot" onclick="openQueryBot()">⬡ QUERY BOT</button>
   </div>
 </header>
 
@@ -3323,8 +3479,362 @@ function toast(msg, type='') {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') {
+    if (qbotOpen) closeQueryBot();
+    else closeModal();
+  }
 });
+
+// ============================================================
+// QUERY BOT
+// ============================================================
+let qbotOpen = false;
+let qbotChatHistory = [];   // [{role:'user'|'assistant', content:'...'}]
+let qbotCtx = { feed: true, digest: false, history: true };
+let qbotStreaming = false;
+
+const QBOT_SYSTEM_PROMPT = `You are THREATFEED QueryBot — a senior CTI analyst assistant embedded in a live cybersecurity intelligence platform.
+
+You have access to the user's current threat intelligence feed (article titles and summaries from sources like Talos, SentinelOne, CrowdStrike, CISA, and others) and optionally their AI digest.
+
+YOUR ROLE:
+- Answer questions about threats, threat actors, CVEs, malware campaigns, and security topics based on the provided feed context
+- Cross-reference topics across multiple feed sources when relevant
+- Provide actionable, analyst-grade answers — not generic advice
+- Flag when something in the feed requires urgent attention
+- Help pivot from one threat to related actors, techniques, or infrastructure
+- Be direct and concise — analysts don't have time for filler
+
+RESPONSE STYLE:
+- Use markdown formatting: **bold** for key terms, bullet points for lists
+- For CVEs: always include affected products, CVSS if known, patch status
+- For threat actors: include aliases, motivation, known TTPs
+- For IOCs: present in defanged format
+- Keep answers focused on what's actually in the feed context provided
+- If something is not in the current feed, say so and answer from general knowledge
+
+When feed context is provided, always ground your answer in that data first.`;
+
+const QBOT_SUGGESTIONS_DEFAULT = [
+  "What are the top threats in today's feed?",
+  "Any critical CVEs I should patch urgently?",
+  "Which threat actors are most active right now?",
+  "Summarise ransomware activity this week",
+  "What detection opportunities exist in this feed?",
+  "Any supply chain or zero-day threats?",
+  "Compare threat severity across sources",
+  "What should my SOC prioritise today?",
+];
+
+function qbotGetContext() {
+  const parts = [];
+
+  if (qbotCtx.feed && allArticles.length) {
+    const articles = filteredArticles.length ? filteredArticles : allArticles;
+    const sample = articles.slice(0, 40);
+    const feedCtx = sample.map((a, i) =>
+      `[${i+1}] [${a.source.name}] ${a.title}${a.desc ? ' — ' + a.desc.slice(0,200) : ''}`
+    ).join('\n');
+    parts.push(`=== CURRENT FEED (${sample.length} of ${allArticles.length} articles) ===\n${feedCtx}`);
+  }
+
+  if (qbotCtx.digest) {
+    const digestEl = document.getElementById('digestText');
+    const digestText = digestEl?.textContent?.trim();
+    if (digestText && digestText.length > 50) {
+      parts.push(`=== AI THREAT DIGEST ===\n${digestText.slice(0, 3000)}`);
+    }
+  }
+
+  return parts.join('\n\n');
+}
+
+function qbotBuildMessages(userMessage) {
+  const msgs = [];
+
+  // Inject context into the first user message or as a system note
+  const ctx = qbotGetContext();
+
+  if (qbotCtx.history && qbotChatHistory.length > 0) {
+    // Include prior turns (last 10 to avoid token overflow)
+    const recent = qbotChatHistory.slice(-10);
+    msgs.push(...recent);
+  }
+
+  // Build the actual user message with context prepended on first message or if context changed
+  let content = userMessage;
+  if (ctx) {
+    content = (qbotChatHistory.length === 0 || !qbotCtx.history)
+      ? `${ctx}\n\n=== ANALYST QUESTION ===\n${userMessage}`
+      : userMessage;
+    // Always inject fresh context on every message if feed context enabled
+    if (qbotCtx.feed) {
+      content = `${ctx}\n\n=== ANALYST QUESTION ===\n${userMessage}`;
+    }
+  }
+
+  msgs.push({ role: 'user', content });
+  return msgs;
+}
+
+function qbotNow() {
+  return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+
+function qbotAddMessage(role, text, isStreaming = false) {
+  const container = document.getElementById('qbotMessages');
+  const isUser = role === 'user';
+
+  const msgEl = document.createElement('div');
+  msgEl.className = `qbot-msg ${isUser ? 'user' : 'bot'}`;
+
+  const avatarEl = document.createElement('div');
+  avatarEl.className = 'qbot-msg-avatar';
+  avatarEl.textContent = isUser ? 'YOU' : 'AI';
+
+  const bodyEl = document.createElement('div');
+
+  const bubbleEl = document.createElement('div');
+  bubbleEl.className = 'qbot-msg-bubble';
+  if (isStreaming) bubbleEl.classList.add('typing');
+
+  if (isUser) {
+    bubbleEl.textContent = text;
+  } else {
+    bubbleEl.innerHTML = isStreaming
+      ? '<div class="qbot-thinking"><span></span><span></span><span></span></div>'
+      : renderMd(text);
+  }
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'qbot-msg-time';
+  timeEl.textContent = qbotNow();
+
+  bodyEl.appendChild(bubbleEl);
+  bodyEl.appendChild(timeEl);
+  msgEl.appendChild(avatarEl);
+  msgEl.appendChild(bodyEl);
+  container.appendChild(msgEl);
+
+  // Scroll to bottom
+  container.scrollTop = container.scrollHeight;
+
+  return { msgEl, bubbleEl, bodyEl };
+}
+
+function qbotUpdateBubble(bubbleEl, text, done = false) {
+  bubbleEl.classList.remove('typing');
+  bubbleEl.innerHTML = renderMd(text);
+  if (!done) bubbleEl.classList.add('typing');
+  const container = document.getElementById('qbotMessages');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function qbotSend() {
+  if (qbotStreaming) return;
+  if (!aiReady()) { toast(aiReadyLabel(), 'error'); return; }
+
+  const input = document.getElementById('qbotInput');
+  const sendBtn = document.getElementById('qbotSendBtn');
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  // Clear input
+  input.value = '';
+  input.style.height = 'auto';
+
+  // Hide suggestions
+  document.getElementById('qbotSuggestions').style.display = 'none';
+
+  // Add user message to UI
+  qbotAddMessage('user', userText);
+
+  // Add bot streaming bubble
+  const { bubbleEl } = qbotAddMessage('bot', '', true);
+
+  // Lock UI
+  qbotStreaming = true;
+  sendBtn.disabled = true;
+  sendBtn.textContent = '…';
+
+  // Build message list
+  const messages = qbotBuildMessages(userText);
+
+  let fullResponse = '';
+  try {
+    await aiChat(
+      QBOT_SYSTEM_PROMPT,
+      // For multi-turn, we pass the last user message but aiChat is single-turn
+      // So we encode the full history into the user prompt
+      messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n---\n\n'),
+      (chunk, full) => {
+        fullResponse = full;
+        qbotUpdateBubble(bubbleEl, full, false);
+      }
+    );
+
+    qbotUpdateBubble(bubbleEl, fullResponse, true);
+
+    // Save to history (without the context prefix — just the bare question)
+    qbotChatHistory.push({ role: 'user', content: userText });
+    qbotChatHistory.push({ role: 'assistant', content: fullResponse });
+
+  } catch(e) {
+    qbotUpdateBubble(bubbleEl, `**Error:** ${e.message}`, true);
+  }
+
+  qbotStreaming = false;
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'SEND ↵';
+}
+
+function qbotKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    qbotSend();
+  }
+}
+
+function qbotClear() {
+  qbotChatHistory = [];
+  const container = document.getElementById('qbotMessages');
+  container.innerHTML = '';
+  qbotShowWelcome();
+  qbotShowSuggestions();
+}
+
+function qbotShowWelcome() {
+  const container = document.getElementById('qbotMessages');
+  const articleCount = allArticles.length;
+  const sourceCount  = [...new Set(allArticles.map(a => a.source.id))].length;
+  const digestReady  = (document.getElementById('digestText')?.textContent?.trim()?.length || 0) > 50;
+
+  const welcomeText = articleCount > 0
+    ? `**THREATFEED QueryBot online.**\n\nI have access to **${articleCount} articles** from **${sourceCount} sources** in your current feed.${digestReady ? ' An AI digest is also available — enable it above for richer context.' : ''}\n\nAsk me anything about the threats, actors, CVEs, or trends in your feed. I can cross-reference across sources and give you analyst-grade answers.`
+    : `**THREATFEED QueryBot online.**\n\nNo feed data loaded yet — load your feeds first for full context. I can still answer general CTI questions from my training knowledge.`;
+
+  const msgEl = document.createElement('div');
+  msgEl.className = 'qbot-msg bot';
+  msgEl.innerHTML = [
+    '<div class="qbot-msg-avatar">AI</div>',
+    '<div>',
+    '<div class="qbot-msg-bubble">' + renderMd(welcomeText) + '</div>',
+    '<div class="qbot-msg-time">' + qbotNow() + '</div>',
+    '</div>'
+  ].join('');
+  container.appendChild(msgEl);
+  container.scrollTop = container.scrollHeight;
+}
+
+function qbotShowSuggestions() {
+  const el = document.getElementById('qbotSuggestions');
+  // Generate context-aware suggestions
+  const digestReady = (document.getElementById('digestText')?.textContent?.trim()?.length || 0) > 50;
+  const suggestions = [...QBOT_SUGGESTIONS_DEFAULT];
+  if (digestReady) suggestions.unshift('Expand on the Hunt of the Day from the digest');
+
+  el.innerHTML = suggestions.slice(0, 6).map(s =>
+    `<button class="qbot-suggestion" onclick="qbotUseSuggestion(this)">${s}</button>`
+  ).join('');
+  el.style.display = 'flex';
+}
+
+function qbotUseSuggestion(btn) {
+  const input = document.getElementById('qbotInput');
+  input.value = btn.textContent;
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  document.getElementById('qbotSuggestions').style.display = 'none';
+  qbotSend();
+}
+
+function toggleQBotCtx(key) {
+  qbotCtx[key] = !qbotCtx[key];
+  const chip = document.getElementById('qctx' + key.charAt(0).toUpperCase() + key.slice(1));
+  if (chip) chip.classList.toggle('active', qbotCtx[key]);
+}
+
+function openQueryBot() {
+  document.getElementById('qbotOverlay').style.display = 'flex';
+  qbotOpen = true;
+
+  // Update context bar counts
+  document.getElementById('qctxFeedCount').textContent = allArticles.length;
+
+  // Update provider label
+  const provLabel = document.getElementById('qbotProviderLabel');
+  if (provLabel) provLabel.textContent = 'PROVIDER: ' + activeProvider.toUpperCase();
+
+  // Render welcome if first open
+  const container = document.getElementById('qbotMessages');
+  if (container.children.length === 0) {
+    qbotShowWelcome();
+    qbotShowSuggestions();
+  }
+
+  // Focus input
+  setTimeout(() => document.getElementById('qbotInput')?.focus(), 100);
+}
+
+function closeQueryBot() {
+  document.getElementById('qbotOverlay').style.display = 'none';
+  qbotOpen = false;
+}
+
 </script>
+
+<!-- ═══ QUERY BOT PANEL ═══ -->
+<div class="qbot-overlay" id="qbotOverlay" style="display:none" onclick="if(event.target===this)closeQueryBot()">
+  <div class="qbot-panel" id="qbotPanel">
+
+    <div class="qbot-header">
+      <div class="qbot-header-icon">⬡</div>
+      <div>
+        <div class="qbot-header-title">THREATFEED QUERY BOT</div>
+        <div class="qbot-header-sub" id="qbotContextSub">CTI ANALYST · AWARE OF YOUR CURRENT FEED</div>
+      </div>
+      <button class="modal-close" onclick="closeQueryBot()" style="margin-left:auto">✕</button>
+    </div>
+
+    <div class="qbot-context-bar">
+      <span class="qbot-ctx-label">CONTEXT:</span>
+      <span class="qbot-ctx-chip active" id="qctxFeed" onclick="toggleQBotCtx('feed')" title="Include article headlines from current feed">📰 FEED (<span id="qctxFeedCount">0</span>)</span>
+      <span class="qbot-ctx-chip" id="qctxDigest" onclick="toggleQBotCtx('digest')" title="Include the current AI digest">⬡ DIGEST</span>
+      <span class="qbot-ctx-chip" id="qctxHistory" onclick="toggleQBotCtx('history')" title="Include this conversation history">💬 HISTORY</span>
+      <span style="margin-left:auto;font-family:var(--mono);font-size:8px;color:var(--text3)" id="qbotProviderLabel">PROVIDER: —</span>
+    </div>
+
+    <div class="qbot-messages" id="qbotMessages">
+      <div class="qbot-msg bot" id="qbotWelcome">
+        <div class="qbot-msg-avatar">AI</div>
+        <div>
+          <div class="qbot-msg-bubble" id="qbotWelcomeBubble">
+            Initialising…
+          </div>
+          <div class="qbot-msg-time" id="qbotWelcomeTime"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qbot-suggestions" id="qbotSuggestions"></div>
+
+    <div class="qbot-input-area">
+      <div class="qbot-input-row">
+        <textarea class="qbot-input" id="qbotInput"
+          placeholder="Ask about threats, actors, CVEs, trends in your feed…"
+          rows="1"
+          onkeydown="qbotKeyDown(event)"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+        <button class="qbot-send" id="qbotSendBtn" onclick="qbotSend()">SEND ↵</button>
+      </div>
+      <div class="qbot-input-meta">
+        <span class="qbot-input-hint">ENTER to send · SHIFT+ENTER for new line</span>
+        <button class="qbot-clear" onclick="qbotClear()">✕ CLEAR CHAT</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
