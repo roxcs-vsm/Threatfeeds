@@ -985,6 +985,137 @@
   /* override digest-text/expand-body to remove pre-wrap now that we have structured HTML */
   #digestText, .digest-expand-body { white-space:normal !important; }
 
+
+  /* ═══ WEEKLY BRIEF ═══ */
+  .wb-btn {
+    background:none; border:1px solid #ffcc00; color:#ffcc00;
+    font-family:var(--mono); font-size:9px; letter-spacing:1px;
+    padding:3px 8px; cursor:pointer; transition:all 0.15s;
+    flex-shrink:0;
+  }
+  .wb-btn:hover { background:rgba(255,204,0,0.12); }
+  .wb-btn.added { border-color:#00ff41; color:#00ff41; background:rgba(0,255,65,0.08); }
+
+  .wb-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.65);
+    backdrop-filter:blur(2px); z-index:1500;
+    display:flex; justify-content:flex-end;
+  }
+  .wb-panel {
+    width:min(680px,96vw); height:100vh;
+    background:var(--bg2); border-left:1px solid #ffcc0044;
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:-8px 0 40px rgba(255,204,0,0.07);
+    animation:slideInRight 0.2s ease;
+  }
+  .wb-header {
+    padding:14px 18px 12px; border-bottom:1px solid var(--border);
+    background:var(--bg3); display:flex; align-items:center; gap:12px; flex-shrink:0;
+  }
+  .wb-header-icon {
+    width:32px; height:32px; border:1px solid #ffcc0055;
+    background:rgba(255,204,0,0.07); display:flex; align-items:center;
+    justify-content:center; font-size:15px; flex-shrink:0;
+  }
+  .wb-header-title {
+    flex:1; font-family:var(--display); font-size:12px;
+    color:#ffcc00; letter-spacing:3px;
+  }
+  .wb-header-sub {
+    font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:1px; margin-top:3px;
+  }
+  .wb-toolbar {
+    padding:8px 16px; border-bottom:1px solid var(--border);
+    background:rgba(255,204,0,0.03);
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap; flex-shrink:0;
+  }
+  .wb-toolbar-label {
+    font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:1px; margin-right:4px;
+  }
+  .wb-count-badge {
+    font-family:var(--mono); font-size:10px; color:#ffcc00;
+    background:rgba(255,204,0,0.12); border:1px solid #ffcc0033;
+    padding:2px 8px; letter-spacing:1px;
+  }
+  .wb-articles {
+    flex:1; overflow-y:auto; padding:0;
+  }
+  .wb-articles::-webkit-scrollbar { width:4px; }
+  .wb-articles::-webkit-scrollbar-thumb { background:var(--border2); }
+  .wb-article-row {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 16px; border-bottom:1px solid var(--border);
+    transition:background 0.12s;
+  }
+  .wb-article-row:hover { background:rgba(255,204,0,0.03); }
+  .wb-article-num {
+    font-family:var(--mono); font-size:10px; color:var(--text3);
+    flex-shrink:0; width:20px; padding-top:2px; text-align:right;
+  }
+  .wb-article-body { flex:1; min-width:0; }
+  .wb-article-title {
+    font-size:13px; color:var(--text); font-weight:600; line-height:1.4;
+    margin-bottom:3px; cursor:pointer;
+  }
+  .wb-article-title:hover { color:#ffcc00; }
+  .wb-article-meta {
+    font-family:var(--mono); font-size:9px; color:var(--text3);
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:4px;
+  }
+  .wb-article-source { color:var(--accent3); }
+  .wb-article-link {
+    font-family:var(--mono); font-size:9px; color:#00aaff;
+    text-decoration:none; letter-spacing:0.5px;
+  }
+  .wb-article-link:hover { color:var(--accent); }
+  .wb-article-note {
+    font-size:11.5px; color:var(--text3); font-style:italic;
+    margin-top:3px; line-height:1.5;
+  }
+  .wb-note-input {
+    width:100%; background:transparent; border:none;
+    border-bottom:1px dashed var(--border2); color:var(--text2);
+    font-family:var(--body); font-size:11.5px; font-style:italic;
+    padding:2px 0; outline:none; margin-top:4px;
+    transition:border-color 0.15s;
+  }
+  .wb-note-input:focus { border-bottom-color:#ffcc0066; }
+  .wb-note-input::placeholder { color:var(--text3); }
+  .wb-remove-btn {
+    background:none; border:none; color:var(--text3);
+    font-size:14px; cursor:pointer; flex-shrink:0; padding:2px 4px;
+    transition:color 0.15s; margin-top:1px;
+  }
+  .wb-remove-btn:hover { color:var(--red); }
+  .wb-empty {
+    padding:40px 20px; text-align:center;
+    font-family:var(--mono); font-size:11px; color:var(--text3); line-height:2;
+  }
+  .wb-empty .cmd { color:var(--accent2); }
+
+  /* AI narrative area */
+  .wb-narrative-section {
+    border-top:2px solid #ffcc0033; flex-shrink:0;
+    max-height:40vh; display:flex; flex-direction:column;
+  }
+  .wb-narrative-header {
+    padding:8px 16px; background:rgba(255,204,0,0.04);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+  }
+  .wb-narrative-title {
+    flex:1; font-family:var(--mono); font-size:9px;
+    color:#ffcc00; letter-spacing:2px; text-transform:uppercase;
+  }
+  .wb-narrative-body {
+    flex:1; overflow-y:auto; padding:14px 18px;
+    font-size:13px; color:var(--text2); line-height:1.75;
+  }
+  .wb-narrative-body::-webkit-scrollbar { width:3px; }
+  .wb-narrative-placeholder {
+    font-family:var(--mono); font-size:10px; color:var(--text3); line-height:1.9;
+  }
+
 </style>
 </head>
 <body>
@@ -1009,9 +1140,9 @@
     <button class="btn active" id="btnAll" onclick="setFilter('all')">ALL</button>
     <button class="btn" id="btnToday" onclick="setFilter('today')">TODAY</button>
     <button class="btn" id="btnWeek" onclick="setFilter('week')">WEEK</button>
-    <button class="btn" id="btnLoadCache" onclick="loadFromCache()" style="display:none">⬡ LOAD CACHE</button>
     <button class="btn" id="btnRefresh" onclick="fetchAllFeeds()">↻ REFRESH</button>
     <button class="btn" onclick="generateDigest()" id="btnDigest">AI DIGEST</button>
+    <button class="wb-btn" id="btnWeeklyBrief" onclick="openWeeklyBrief()" title="Weekly CTI Debrief">📋 WEEKLY BRIEF <span id="wbHeaderCount" style="display:none"></span></button>
     <button class="btn" id="btnHunts" onclick="openHuntsList()" style="border-color:#aa66ff;color:#aa66ff">🎯 HUNTS</button>
     <button class="qbot-btn" id="btnQueryBot" onclick="openQueryBot()">⬡ QUERY BOT</button>
   </div>
@@ -1403,6 +1534,15 @@
 </div>
 
 <script>
+// AbortSignal.timeout polyfill for older browsers
+if (!AbortSignal.timeout) {
+  AbortSignal.timeout = function(ms) {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(new DOMException('TimeoutError', 'TimeoutError')), ms);
+    return ctrl.signal;
+  };
+}
+
 // ============================================================
 // DATA SOURCES
 // ============================================================
@@ -1572,6 +1712,20 @@ const CORS_PROXIES = [
 
 // Parse rss2json JSON response];
 
+
+// Deterministic article ID — same article always gets the same ID across page loads.
+// Uses URL when available (most unique), falls back to source+title hash.
+function stableId(src, link, title) {
+  const key = link && link.length > 10 ? link : (src.id + '|' + title);
+  // Simple but collision-resistant djb2-style hash → hex string
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) + h) ^ key.charCodeAt(i);
+    h = h >>> 0; // keep 32-bit unsigned
+  }
+  return src.id + '-' + h.toString(36);
+}
+
 // Parse rss2json JSON response into articles
 function parseRss2Json(json, src) {
   try {
@@ -1583,7 +1737,7 @@ function parseRss2Json(json, src) {
       let desc = (item.description || item.content || '').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().slice(0,500);
       const d = item.pubDate ? new Date(item.pubDate) : new Date(Date.now() - i * 3600000);
       return {
-        id: `${src.id}-${i}-${Date.now()}`,
+        id: stableId(src, item.link || item.guid || '', item.title || ''),
         title: item.title || 'Untitled',
         link: item.link || item.guid || '',
         desc,
@@ -1654,6 +1808,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initCache().then(() => {
     checkCacheAndInit();
     updateHuntsHeaderBtn();
+    wbInit();
   });
 });
 
@@ -2195,17 +2350,26 @@ async function ollamaChat(systemPrompt, userPrompt, onChunk) {
 // CACHE (IndexedDB)
 // ============================================================
 const DB_NAME = 'threatfeed_cache';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const STORE_NAME = 'feeds';
 const CACHE_KEY = 'articles';
 const HUNT_STORE = 'hunts';
+const BRIEF_STORE = 'weeklybrief';
 const CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 let db = null;
 
 async function initCache() {
   return new Promise((resolve) => {
+    // Safety timeout — if IndexedDB is blocked (another tab open with old version),
+    // fall through after 3s so feeds still load without cache.
+    const timeout = setTimeout(() => {
+      console.warn('IndexedDB open timed out — running without cache');
+      resolve();
+    }, 3000);
+
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+
     req.onupgradeneeded = e => {
       const d = e.target.result;
       if (!d.objectStoreNames.contains(STORE_NAME)) {
@@ -2216,9 +2380,30 @@ async function initCache() {
         hs.createIndex('status', 'status', { unique: false });
         hs.createIndex('priority', 'priority', { unique: false });
       }
+      if (!d.objectStoreNames.contains(BRIEF_STORE)) {
+        d.createObjectStore(BRIEF_STORE, { keyPath: 'id' });
+      }
     };
-    req.onsuccess = e => { db = e.target.result; resolve(); };
-    req.onerror = e => { console.warn('IndexedDB init failed:', e); resolve(); };
+
+    req.onsuccess = e => {
+      clearTimeout(timeout);
+      db = e.target.result;
+      // Handle version change from another tab — close gracefully
+      db.onversionchange = () => { db.close(); db = null; };
+      resolve();
+    };
+
+    req.onerror = e => {
+      clearTimeout(timeout);
+      console.warn('IndexedDB init failed:', e);
+      resolve();
+    };
+
+    // Another tab is blocking the upgrade — notify user
+    req.onblocked = () => {
+      console.warn('IndexedDB upgrade blocked by another tab');
+      toast('Close other THFeeds tabs to complete DB upgrade', 'info');
+    };
   });
 }
 
@@ -2296,6 +2481,7 @@ function updateCacheAgeDisplay(savedAt) {
 }
 
 async function checkCacheAndInit() {
+  if (!db) { fetchAllFeeds(); return; }  // DB unavailable — fetch live directly
   const cached = await readFromCache();
   const cacheBtn = document.getElementById('btnLoadCache');
 
@@ -2304,9 +2490,7 @@ async function checkCacheAndInit() {
     const isStale = age > CACHE_TTL_MS;
     const ageStr = formatCacheAge(cached.savedAt);
 
-    // Show the cache button with age info
-    cacheBtn.style.display = 'inline-block';
-    cacheBtn.textContent = `⬡ CACHE (${ageStr})`;
+    if (cacheBtn) { cacheBtn.style.display = 'inline-block'; cacheBtn.textContent = `⬡ CACHE (${ageStr})`; }
 
     if (!isStale) {
       // Fresh cache — load it automatically
@@ -2319,7 +2503,7 @@ async function checkCacheAndInit() {
     }
   } else {
     // No cache — fetch live
-    cacheBtn.style.display = 'none';
+    if (cacheBtn) cacheBtn.style.display = 'none';
     fetchAllFeeds();
   }
 }
@@ -2715,8 +2899,7 @@ async function fetchAllFeeds() {
   await saveToCache(allArticles);
   updateCacheAgeDisplay(now);
   const cacheBtn = document.getElementById('btnLoadCache');
-  cacheBtn.style.display = 'inline-block';
-  cacheBtn.textContent = `⬡ CACHE (just now)`;
+  if (cacheBtn) { cacheBtn.style.display = 'inline-block'; cacheBtn.textContent = '⬡ CACHE (just now)'; }
 }
 
 async function fetchFeed(src) {
@@ -2804,7 +2987,7 @@ async function fetchFeed(src) {
             const content = item.summary?.content || item.content?.content || '';
             const desc = content.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,500);
             return {
-              id: src.id + '_' + (item.id||Math.random()).toString().replace(/[^a-z0-9]/gi,'').slice(0,12),
+              id: stableId(src, item.link || item.url || '', item.title || ''),  
               title: item.title || 'Untitled',
               desc,
               link: item.canonicalUrl || item.alternate?.[0]?.href || '',
@@ -2850,7 +3033,7 @@ async function fetchRansomwareLive(src) {
         v.description ? v.description.slice(0, 300) : ''
       ].filter(Boolean).join(' | ');
       return {
-        id: `rlive-${i}-${Date.now()}`,
+        id: stableId(src, url || '', group + '|' + name),
         title: `[${group}] ${name}`,
         link: url,
         desc,
@@ -2919,7 +3102,7 @@ function parseRSS(xmlText, src) {
           const date  = item.pubDate || item.published || item.updated || '';
           const d     = date ? new Date(date) : new Date(Date.now() - i * 3600000);
           return {
-            id: `${src.id}-${i}-${Date.now()}`,
+            id: stableId(src, link, title),
             title, link, desc,
             date: isNaN(d) ? new Date() : d,
             source: src,
@@ -2991,7 +3174,7 @@ function parseRSS(xmlText, src) {
       const d = pubDate ? new Date(pubDate) : new Date(Date.now() - i * 3600000);
 
       articles.push({
-        id: `${src.id}-${i}-${Date.now()}`,
+        id: stableId(src, link, title),
         title, link, desc,
         date: isNaN(d.getTime()) ? new Date() : d,
         source: src,
@@ -3113,6 +3296,7 @@ function articleCardHtml(a) {
     <div class="card-footer">
       <a class="card-link" href="${a.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">[ READ ORIGINAL → ]</a>
       <button class="card-ai-btn" id="aibtn-${a.id}" onclick="event.stopPropagation();summarizeCard('${a.id}')">⬡ CTI BRIEF</button>
+      <button class="wb-btn" id="wbbtn-${a.id}" onclick="event.stopPropagation();toggleWeeklyBriefArticle('${a.id}')" title="Add to Weekly Brief">+ BRIEF</button>
     </div>
     <div class="ai-summary-box" id="aibox-${a.id}">
       <div class="analyst-byline">⬡ analyst brief · 25yr CTI</div>
@@ -4409,6 +4593,7 @@ function toast(msg, type='') {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('digestExpandOverlay').style.display !== 'none') collapseDigest();
+    else if (document.getElementById('wbOverlay').style.display !== 'none') closeWeeklyBrief();
     else if (qbotOpen) closeQueryBot();
     else closeModal();
   }
@@ -4802,6 +4987,422 @@ function markDigestHasContent() {
   if (hint) hint.style.display = 'block';
 }
 
+
+// ============================================================
+// WEEKLY BRIEF
+// ============================================================
+let wbOpen = false;
+
+// ── IndexedDB helpers ────────────────────────────────────────
+// ── Weekly Brief storage via localStorage (reliable, no upgrade issues) ──
+const WB_LS_KEY = 'tf_weekly_brief';
+
+function wbGetAll() {
+  try {
+    const raw = localStorage.getItem(WB_LS_KEY);
+    return Promise.resolve(raw ? JSON.parse(raw) : []);
+  } catch { return Promise.resolve([]); }
+}
+
+function wbSave(entry) {
+  try {
+    const all = JSON.parse(localStorage.getItem(WB_LS_KEY) || '[]');
+    const idx = all.findIndex(e => e.id === entry.id);
+    if (idx >= 0) all[idx] = entry; else all.push(entry);
+    localStorage.setItem(WB_LS_KEY, JSON.stringify(all));
+  } catch(e) { console.warn('wbSave error:', e); }
+  return Promise.resolve();
+}
+
+function wbDelete(id) {
+  try {
+    const all = JSON.parse(localStorage.getItem(WB_LS_KEY) || '[]');
+    localStorage.setItem(WB_LS_KEY, JSON.stringify(all.filter(e => e.id !== id)));
+  } catch(e) { console.warn('wbDelete error:', e); }
+  return Promise.resolve();
+}
+
+function wbIsAdded(id) {
+  try {
+    const all = JSON.parse(localStorage.getItem(WB_LS_KEY) || '[]');
+    return Promise.resolve(all.some(e => e.id === id));
+  } catch { return Promise.resolve(false); }
+}
+
+// ── Toggle article in/out of brief ──────────────────────────
+async function toggleWeeklyBriefArticle(id) {
+  const btn = document.getElementById('wbbtn-' + id);
+  const already = await wbIsAdded(id);
+  if (already) {
+    await wbDelete(id);
+    if (btn) { btn.textContent = '+ BRIEF'; btn.classList.remove('added'); }
+    toast('Removed from Weekly Brief', 'info');
+  } else {
+    const a = allArticles.find(x => x.id === id);
+    if (!a) { toast('Article not found — reload feeds', 'error'); return; }
+    await wbSave({
+      id:      a.id,
+      title:   a.title,
+      link:    a.link || '',
+      source:  a.source.name,
+      date:    a.date instanceof Date ? a.date.getTime() : (a.date || Date.now()),
+      tags:    a.tags || [],
+      note:    '',
+      addedAt: Date.now()
+    });
+    if (btn) { btn.textContent = '✓ BRIEF'; btn.classList.add('added'); }
+    toast('Added to Weekly Brief', 'info');
+  }
+  wbUpdateHeaderCount();
+  if (wbOpen) wbRender();
+}
+
+// ── Refresh card buttons state on render ────────────────────
+async function wbRefreshCardButtons() {
+  const all = await wbGetAll();
+  const ids = new Set(all.map(e => e.id));
+  document.querySelectorAll('[id^="wbbtn-"]').forEach(btn => {
+    const id = btn.id.replace('wbbtn-','');
+    if (ids.has(id)) { btn.textContent = '✓ BRIEF'; btn.classList.add('added'); }
+    else             { btn.textContent = '+ BRIEF'; btn.classList.remove('added'); }
+  });
+}
+
+async function wbUpdateHeaderCount() {
+  const all = await wbGetAll();
+  const n = all.length;
+  const badge = document.getElementById('wbHeaderCount');
+  const mainBtn = document.getElementById('btnWeeklyBrief');
+  if (badge) {
+    badge.textContent = n > 0 ? `(${n})` : '';
+    badge.style.display = n > 0 ? 'inline' : 'none';
+  }
+  if (mainBtn) mainBtn.style.borderColor = n > 0 ? '#ffcc00' : '';
+}
+
+// ── Open / close ─────────────────────────────────────────────
+async function openWeeklyBrief() {
+  document.getElementById('wbOverlay').style.display = 'flex';
+  wbOpen = true;
+  await wbRender();
+  setTimeout(() => document.getElementById('wbArticleList')?.focus?.(), 100);
+}
+
+function closeWeeklyBrief() {
+  document.getElementById('wbOverlay').style.display = 'none';
+  wbOpen = false;
+}
+
+// ── Render article list ──────────────────────────────────────
+async function wbRender() {
+  const entries = await wbGetAll();
+  entries.sort((a,b) => a.addedAt - b.addedAt);
+
+  const countEl = document.getElementById('wbCount');
+  if (countEl) countEl.textContent = entries.length;
+
+  const subEl = document.getElementById('wbHeaderSub');
+  if (subEl) {
+    const week = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    subEl.textContent = `Week of ${week} · ${entries.length} article${entries.length !== 1 ? 's' : ''} curated`;
+  }
+
+  const list = document.getElementById('wbArticleList');
+  if (!list) return;
+
+  if (!entries.length) {
+    list.innerHTML = `<div class="wb-empty">
+      <span class="cmd">$</span> weekly-brief --list<br>
+      <span style="color:var(--text3)">&gt;</span> No articles added yet.<br>
+      <span style="color:var(--text3)">&gt;</span> Click <span style="color:#ffcc00">+ BRIEF</span> on any card<br>
+      <span style="color:var(--text3)">&gt;</span> to add it to your weekly debrief.
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = entries.map((e, i) => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const tagHtml = (e.tags||[]).map(t => {
+      const cls = t==='ransomware'?'critical':t==='vuln'?'high':t==='apt'?'medium':t==='malware'?'malware':'info';
+      return `<span class="tag ${cls}" style="font-size:8px;padding:1px 5px">${t}</span>`;
+    }).join('');
+    return `<div class="wb-article-row" id="wbrow-${e.id}">
+      <div class="wb-article-num">${i+1}</div>
+      <div class="wb-article-body">
+        <div class="wb-article-title" onclick="wbOpenArticle('${e.id}')">${esc(e.title)}</div>
+        <div class="wb-article-meta">
+          <span class="wb-article-source">${esc(e.source)}</span>
+          <span>${dateStr}</span>
+          ${tagHtml}
+          ${e.link ? `<a class="wb-article-link" href="${esc(e.link)}" target="_blank" rel="noopener">[ ORIGINAL → ]</a>` : ''}
+        </div>
+        <input class="wb-note-input" id="wbnote-${e.id}" placeholder="Add analyst note…"
+          value="${esc(e.note||'')}"
+          onchange="wbSaveNote('${e.id}', this.value)"
+          onblur="wbSaveNote('${e.id}', this.value)">
+      </div>
+      <button class="wb-remove-btn" onclick="wbRemoveEntry('${e.id}')" title="Remove">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function wbOpenArticle(id) {
+  const a = allArticles.find(x => x.id === id);
+  if (a) { closeWeeklyBrief(); openArticle(id); }
+}
+
+async function wbSaveNote(id, note) {
+  const all = await wbGetAll();
+  const entry = all.find(e => e.id === id);
+  if (!entry) return;
+  entry.note = note;
+  await wbSave(entry);
+}
+
+async function wbRemoveEntry(id) {
+  await wbDelete(id);
+  document.getElementById('wbrow-' + id)?.remove();
+  const countEl = document.getElementById('wbCount');
+  const entries = await wbGetAll();
+  if (countEl) countEl.textContent = entries.length;
+  // update card button
+  const btn = document.getElementById('wbbtn-' + id);
+  if (btn) { btn.textContent = '+ BRIEF'; btn.classList.remove('added'); }
+  wbUpdateHeaderCount();
+  if (!entries.length) wbRender();
+}
+
+async function wbClearAll() {
+  if (!confirm('Clear all articles from Weekly Brief?')) return;
+  const all = await wbGetAll();
+  for (const e of all) await wbDelete(e.id);
+  await wbRender();
+  wbUpdateHeaderCount();
+  wbRefreshCardButtons();
+  document.getElementById('wbNarrativeBody').innerHTML =
+    '<div class="wb-narrative-placeholder"><span style="color:var(--accent2)">$</span> Cleared.</div>';
+}
+
+// ── Copy as Markdown ─────────────────────────────────────────
+async function wbCopyMarkdown() {
+  const entries = await wbGetAll();
+  if (!entries.length) { toast('No articles in brief', 'info'); return; }
+  entries.sort((a,b) => a.addedAt - b.addedAt);
+  const week = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const narrative = document.getElementById('wbNarrativeBody')?.innerText?.trim();
+  let md = `# Weekly CTI Debrief — ${week}\n\n`;
+  if (narrative && !narrative.includes('cti-weekly')) {
+    md += `## Executive Summary\n\n${narrative}\n\n---\n\n`;
+  }
+  md += `## Curated Articles (${entries.length})\n\n`;
+  entries.forEach((e,i) => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    md += `${i+1}. **[${e.title}](${e.link||'#'})**\n`;
+    md += `   *${e.source} · ${dateStr}*`;
+    if (e.note) md += `\n   > ${e.note}`;
+    md += '\n\n';
+  });
+  try {
+    await navigator.clipboard.writeText(md);
+    toast('Copied as Markdown!', 'info');
+  } catch { toast('Copy failed — try EXPORT instead', 'error'); }
+}
+
+// ── Export as standalone HTML ────────────────────────────────
+async function wbExportHTML() {
+  const entries = await wbGetAll();
+  if (!entries.length) { toast('No articles in brief', 'info'); return; }
+  entries.sort((a,b) => a.addedAt - b.addedAt);
+  const week = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const narrative = document.getElementById('wbNarrativeBody')?.innerHTML || '';
+  const hasNarrative = narrative && !narrative.includes('cti-weekly');
+
+  const rows = entries.map((e,i) => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    const tags = (e.tags||[]).map(t => `<span style="background:#1a3a1a;color:#00cc33;font-size:10px;padding:1px 6px;border-radius:2px;font-family:monospace">${t}</span>`).join(' ');
+    const note = e.note ? `<div style="margin-top:6px;color:#7aaa80;font-style:italic;font-size:12px">&gt; ${e.note}</div>` : '';
+    const link = e.link ? `<a href="${e.link}" style="color:#00aaff;font-size:11px;font-family:monospace">[ SOURCE → ]</a>` : '';
+    return `<tr style="border-bottom:1px solid #1a3d20">
+      <td style="padding:10px 8px;color:#4a7050;font-family:monospace;font-size:11px;white-space:nowrap;vertical-align:top">${i+1}</td>
+      <td style="padding:10px 12px;vertical-align:top">
+        <div style="font-weight:600;color:#c8e8cb;margin-bottom:4px;font-size:14px">${e.title}</div>
+        <div style="color:#4a7050;font-family:monospace;font-size:10px;margin-bottom:4px">${e.source} &middot; ${dateStr} &nbsp; ${tags}</div>
+        ${link}${note}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Weekly CTI Debrief — ${week}</title>
+<style>body{background:#030a06;color:#c8e8cb;font-family:'Rajdhani',sans-serif;margin:0;padding:30px}
+h1{font-family:monospace;color:#00ff41;letter-spacing:3px;border-bottom:2px solid #1a3d20;padding-bottom:10px}
+h2{font-family:monospace;color:#00cc33;letter-spacing:2px;font-size:14px;margin-top:28px}
+table{width:100%;border-collapse:collapse}
+.narrative{background:#060f09;border:1px solid #1a3d20;border-left:3px solid #00cc33;padding:16px 20px;margin-bottom:24px;line-height:1.75;font-size:13px;color:#7aaa80}
+</style></head><body>
+<h1>📋 WEEKLY CTI DEBRIEF</h1>
+<p style="font-family:monospace;font-size:11px;color:#4a7050">Week of ${week} &nbsp;·&nbsp; ${entries.length} articles curated</p>
+${hasNarrative ? `<h2>EXECUTIVE NARRATIVE</h2><div class="narrative">${narrative}</div>` : ''}
+<h2>CURATED ARTICLES</h2>
+<table>${rows}</table>
+<p style="font-family:monospace;font-size:9px;color:#1a5c26;margin-top:30px;border-top:1px solid #1a3d20;padding-top:10px">Generated by THFeeds · ${new Date().toISOString()}</p>
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cti-weekly-brief-${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported!', 'info');
+}
+
+
+// ── AI TOP 3 PICKER ──────────────────────────────────────────────
+// Sends current feed headlines to AI, asks it to pick 3 most critical
+// articles from CTI perspective, then auto-adds them to the brief.
+const WEEKLY_TOP3_PROMPT = `You are a senior CTI analyst selecting the three most operationally important articles from a feed for a weekly security debrief.
+
+Given the article list below, select EXACTLY 3 articles that are:
+1. Highest priority for defenders to act on this week
+2. Most likely to be directly relevant to enterprise blue teams
+3. Represent distinct threat categories (don't pick 3 of the same type)
+
+Respond ONLY with a JSON array of exactly 3 objects. No other text, no markdown, no explanation.
+Format: [{"index": 1, "reason": "one sentence why this is top priority"}, ...]
+
+Index numbers correspond to the numbered list provided.`;
+
+async function wbPickTop3() {
+  if (!aiReady()) { toast(aiReadyLabel(), 'error'); return; }
+  if (!allArticles.length) { toast('Load feeds first', 'info'); return; }
+
+  const btn = document.getElementById('wbTop3Btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⬡ PICKING…'; }
+
+  // Use filtered articles if filter active, otherwise top 50 newest
+  const pool = (filteredArticles.length ? filteredArticles : allArticles)
+    .slice(0, 50);
+
+  const list = pool.map((a, i) => {
+    const dateStr = new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    return `${i+1}. [${a.source.name}] [${(a.tags||[]).join(',')}] "${a.title}" (${dateStr})`;
+  }).join('\n');
+
+  const prompt = `${WEEKLY_TOP3_PROMPT}\n\nARTICLE LIST:\n${list}`;
+
+  try {
+    const raw = await aiChat(CTI_SYSTEM_PROMPT, prompt, () => {});
+
+    // Parse JSON — strip markdown fences and extract first [...] array
+    let clean = raw.replace(/```json|```/g,'').trim();
+    // Find first JSON array in response in case AI adds explanation text
+    const arrMatch = clean.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+    if (arrMatch) clean = arrMatch[0];
+    let picks;
+    try {
+      picks = JSON.parse(clean);
+    } catch(parseErr) {
+      toast('AI response could not be parsed — try again', 'error');
+      console.warn('wbPickTop3 parse error:', parseErr, 'raw:', raw.slice(0,200));
+      return;
+    }
+    if (!Array.isArray(picks) || !picks.length) {
+      toast('AI returned no picks — try again', 'error'); return;
+    }
+
+    // Add picked articles to brief
+    let added = 0;
+    for (const pick of picks.slice(0, 3)) {
+      const idx = parseInt(pick.index) - 1;
+      const a = pool[idx];
+      if (!a) continue;
+      const already = await wbIsAdded(a.id);
+      if (!already) {
+        await wbSave({
+          id:      a.id,
+          title:   a.title,
+          link:    a.link,
+          source:  a.source.name,
+          date:    a.date instanceof Date ? a.date.getTime() : a.date,
+          tags:    a.tags,
+          note:    pick.reason || '',   // AI reason becomes the analyst note
+          addedAt: Date.now()
+        });
+        // Update card button if visible
+        const cardBtn = document.getElementById('wbbtn-' + a.id);
+        if (cardBtn) { cardBtn.textContent = '✓ BRIEF'; cardBtn.classList.add('added'); }
+        added++;
+      }
+    }
+
+    await wbUpdateHeaderCount();
+    if (wbOpen) await wbRender();
+
+    if (added > 0) {
+      toast(`AI added ${added} top article${added>1?'s':''} to your brief`, 'info');
+      if (!wbOpen) openWeeklyBrief();
+    } else {
+      toast('Top articles already in brief', 'info');
+    }
+  } catch(e) {
+    toast('AI TOP 3 failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⬡ AI TOP 3'; }
+  }
+}
+
+// ── AI Narrative ─────────────────────────────────────────────
+const WEEKLY_BRIEF_PROMPT = `You are a senior CTI analyst preparing a weekly intelligence debrief for a security leadership team and SOC operators.
+
+Based on the curated article list provided, write a concise weekly narrative (max 250 words) covering:
+1. The dominant threat themes this week across all sources
+2. The two or three most critical items that demand immediate attention
+3. One forward-looking observation — what these trends suggest for the coming week
+
+RULES: Only reference what is explicitly present in the article titles and notes provided. No fabrication. Be direct, professional, and actionable. No headers — flowing prose only.`;
+
+async function wbGenerateSummary() {
+  if (!aiReady()) { toast(aiReadyLabel(), 'error'); return; }
+  const entries = await wbGetAll();
+  if (!entries.length) { toast('Add articles first', 'info'); return; }
+
+  const body = document.getElementById('wbNarrativeBody');
+  const btn  = document.getElementById('wbGenBtn');
+  const regenBtn = document.getElementById('wbRegenBtn');
+  body.innerHTML = '<div class="typing" style="font-family:var(--mono);font-size:11px;color:var(--text3)">Generating narrative…</div>';
+  btn.disabled = true;
+  if (regenBtn) regenBtn.disabled = true;
+
+  entries.sort((a,b) => a.addedAt - b.addedAt);
+  const articleList = entries.map((e,i) => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    return `${i+1}. [${e.source}] "${e.title}" (${dateStr})${e.note ? ' — Note: '+e.note : ''}`;
+  }).join('\n');
+
+  const prompt = `${WEEKLY_BRIEF_PROMPT}\n\nCURATED ARTICLES THIS WEEK:\n${articleList}`;
+
+  try {
+    let full = '';
+    await aiChat(CTI_SYSTEM_PROMPT, prompt, (_, f) => {
+      full = f;
+      body.innerHTML = renderMd(f);
+    });
+    body.innerHTML = renderMd(full);
+  } catch(e) {
+    body.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  btn.disabled = false;
+  if (regenBtn) regenBtn.disabled = false;
+}
+
+// ── Init: restore card button states + count on load ────────
+async function wbInit() {
+  await wbUpdateHeaderCount();
+  await wbRefreshCardButtons();
+}
+
 </script>
 
 <!-- ═══ QUERY BOT PANEL ═══ -->
@@ -4866,6 +5467,50 @@ function markDigestHasContent() {
       <button class="modal-close" onclick="collapseDigest()">✕</button>
     </div>
     <div class="digest-expand-body" id="digestExpandBody"></div>
+  </div>
+</div>
+
+
+<!-- ═══ WEEKLY BRIEF PANEL ═══ -->
+<div class="wb-overlay" id="wbOverlay" style="display:none" onclick="if(event.target===this)closeWeeklyBrief()">
+  <div class="wb-panel">
+
+    <div class="wb-header">
+      <div class="wb-header-icon">📋</div>
+      <div>
+        <div class="wb-header-title">WEEKLY CTI DEBRIEF</div>
+        <div class="wb-header-sub" id="wbHeaderSub">Curated intelligence for weekly security briefing</div>
+      </div>
+      <button class="modal-close" onclick="closeWeeklyBrief()" style="margin-left:auto">✕</button>
+    </div>
+
+    <div class="wb-toolbar">
+      <span class="wb-toolbar-label">ARTICLES:</span>
+      <span class="wb-count-badge" id="wbCount">0</span>
+      <button class="btn" style="padding:3px 10px;font-size:9px;border-color:#ff8800;color:#ff8800" onclick="wbPickTop3()" id="wbTop3Btn" title="Let AI pick the 3 most critical articles from your feed">⬡ AI TOP 3</button>
+      <button class="btn" style="padding:3px 10px;font-size:9px;border-color:#ffcc00;color:#ffcc00" onclick="wbGenerateSummary()" id="wbGenBtn">⬡ AI NARRATIVE</button>
+      <button class="btn" style="padding:3px 10px;font-size:9px" onclick="wbCopyMarkdown()" id="wbCopyBtn">⎘ COPY</button>
+      <button class="btn" style="padding:3px 10px;font-size:9px" onclick="wbExportHTML()" id="wbExportBtn">↓ EXPORT</button>
+      <button class="btn" style="padding:3px 10px;font-size:9px;border-color:var(--red);color:var(--red);margin-left:auto" onclick="wbClearAll()">✕ CLEAR ALL</button>
+    </div>
+
+    <div class="wb-articles" id="wbArticleList"></div>
+
+    <div class="wb-narrative-section" id="wbNarrativeSection">
+      <div class="wb-narrative-header">
+        <div class="wb-narrative-title">⬡ AI WEEKLY NARRATIVE</div>
+        <button class="btn" style="padding:2px 8px;font-size:8px;border-color:#ffcc0066;color:#ffcc00" onclick="wbGenerateSummary()" id="wbRegenBtn">↻ REGEN</button>
+      </div>
+      <div class="wb-narrative-body" id="wbNarrativeBody">
+        <div class="wb-narrative-placeholder">
+          <span style="color:var(--accent2)">$</span> cti-weekly --generate-narrative<br>
+          <span style="color:var(--text3)">&gt;</span> Add articles to your brief first,<br>
+          <span style="color:var(--text3)">&gt;</span> then click AI NARRATIVE to generate<br>
+          <span style="color:var(--text3)">&gt;</span> a weekly debrief summary
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
