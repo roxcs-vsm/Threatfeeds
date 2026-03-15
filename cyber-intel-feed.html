@@ -1475,9 +1475,7 @@ const SOURCES = [
   { id:'trustedsec',   name:'TrustedSec',          color:'#ff8800', tag:'malware',
     url:'https://trustedsec.com/feed.rss',
     altUrls:['https://trustedsec.com/feed','https://trustedsec.com/blog/feed/'] },
-  { id:'badsector',    name:'Bad Sector Labs',     color:'#cc44ff', tag:'malware',
-    url:'https://badsectorlabs.com/feeds/all.atom.xml',
-    altUrls:['https://badsectorlabs.com/rss.xml','https://badsectorlabs.com/atom.xml','https://badsectorlabs.com/feed'] },
+
   { id:'dfirreport',   name:'DFIR Report',         color:'#ff4444', tag:'apt',
     url:'https://thedfirreport.com/feed/',
     altUrls:['https://feeds.feedburner.com/TheDFIRReport'] },
@@ -1636,23 +1634,47 @@ window.addEventListener('DOMContentLoaded', () => {
   const totalEl = document.getElementById('totalSources');
   if (totalEl) totalEl.textContent = SOURCES.length;
   renderSourceList();
-  checkOllama();
+
+  // ── Restore persisted provider + API keys ──
+  const savedProvider = localStorage.getItem('tf_provider') || 'ollama';
+  const savedClaude   = localStorage.getItem('tf_key_claude') || '';
+  const savedGemini   = localStorage.getItem('tf_key_gemini') || '';
+  if (savedClaude) document.getElementById('claudeKey').value  = savedClaude;
+  if (savedGemini) document.getElementById('geminiKey').value  = savedGemini;
+
+  // switchProvider handles UI tabs, status dot, and button states
+  switchProvider(savedProvider);
+  // Only poll Ollama if it's the active (or saved) provider
+  if (savedProvider !== 'ollama') {
+    // Still check Ollama silently in background but don't let it override UI
+    // (checkOllama already early-exits if activeProvider !== 'ollama')
+  }
+  setInterval(() => { if (activeProvider === 'ollama') checkOllama(); }, 30000);
+
   initCache().then(() => {
     checkCacheAndInit();
     updateHuntsHeaderBtn();
   });
-  setInterval(checkOllama, 30000);
 });
 
 // ============================================================
 // OLLAMA
 // ============================================================
 async function checkOllama() {
+  // Don't let Ollama polling overwrite the UI when another provider is active
   const dot = document.getElementById('aiDot');
   const statusEl = document.getElementById('aiStatus');
   const diagEl = document.getElementById('ollamaDiag');
   const url = document.getElementById('ollamaUrl').value.trim().replace(/\/$/, '');
   document.getElementById('ollamaUrl').value = url;
+  if (activeProvider !== 'ollama') {
+    // Run silently to keep ollamaOnline flag accurate but don't touch UI
+    try {
+      const r = await fetch(url + '/api/tags', { signal: AbortSignal.timeout(3000) });
+      ollamaOnline = r.ok;
+    } catch { ollamaOnline = false; }
+    return;
+  }
   dot.className = 'ai-dot checking';
   statusEl.textContent = 'OLLAMA: CHECKING';
   diagEl.style.display = 'none';
@@ -1771,8 +1793,11 @@ function updateModelSelect(models) {
 // PROVIDER SWITCHING
 // ============================================================
 function onApiKeyInput(provider) {
+  const inputId = provider === 'claude' ? 'claudeKey' : 'geminiKey';
+  const key = document.getElementById(inputId).value.trim();
+  // Persist key to localStorage so it survives refresh
+  localStorage.setItem('tf_key_' + provider, key);
   if (activeProvider !== provider) return;
-  const key = document.getElementById(provider === 'claude' ? 'claudeKey' : 'geminiKey').value.trim();
   const dot = document.getElementById('aiDot');
   const status = document.getElementById('aiStatus');
   if (key) {
@@ -1788,11 +1813,11 @@ function onApiKeyInput(provider) {
 
 function switchProvider(p) {
   activeProvider = p;
+  localStorage.setItem('tf_provider', p);   // persist selection
   ['ollama','claude','gemini'].forEach(name => {
     document.getElementById('cfg-' + name).style.display = (name === p) ? 'block' : 'none';
     document.getElementById('tab-' + name).classList.toggle('active', name === p);
   });
-  // Update status dot & label based on provider
   const dot = document.getElementById('aiDot');
   const status = document.getElementById('aiStatus');
   if (p === 'ollama') {
