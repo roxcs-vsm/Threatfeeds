@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>THREAT INTEL // FEED AGGREGATOR</title>
+<title>THFeeds</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23030a06'/><rect x='2' y='2' width='28' height='28' rx='3' fill='none' stroke='%2300ff41' stroke-width='1.5'/><text x='5' y='22' font-family='monospace' font-size='16' font-weight='900' fill='%2300ff41'>TH</text><line x1='5' y1='25' x2='27' y2='25' stroke='%2300cc33' stroke-width='1'/><rect x='5' y='27' width='8' height='2' rx='1' fill='%2300ff41'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
@@ -313,21 +314,47 @@
   .card-ai-btn:disabled { opacity:0.3; cursor:not-allowed; }
   .card-ai-btn.summarizing { color:var(--yellow); border-color:var(--yellow); animation:blink 0.8s infinite; }
   .ai-summary-box {
-    margin-top:10px; padding:12px 16px;
-    background:rgba(0,255,65,0.03); border:1px solid var(--border2); border-left:3px solid var(--accent2);
-    display:none;
+    margin-top:10px;
+    background:rgba(0,255,65,0.025); border:1px solid var(--border2); border-left:3px solid var(--accent2);
+    display:none; overflow:hidden;
   }
   .ai-summary-box .analyst-byline {
     font-family:var(--mono); font-size:8px; color:var(--accent3);
-    letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
+    letter-spacing:2px; text-transform:uppercase;
+    padding:7px 14px 6px; border-bottom:1px solid var(--border);
+    background:rgba(0,0,0,0.15);
   }
   .ai-summary-box .analyst-prose {
-    font-family:var(--body); font-size:13.5px; color:var(--text);
-    line-height:1.85; font-style:italic; word-break:break-word;
+    padding:0; font-style:normal; word-break:break-word;
   }
   .ai-summary-box .analyst-prose.typing::after {
     content:'▌'; animation:blink 0.7s infinite; color:var(--accent); font-style:normal;
   }
+  /* section headers inside brief */
+  .ai-summary-box .brief-section {
+    border-top:1px solid var(--border);
+  }
+  .ai-summary-box .brief-section:first-child { border-top:none; }
+  .ai-summary-box .brief-section-label {
+    font-family:var(--mono); font-size:9px; font-weight:700;
+    color:var(--accent2); letter-spacing:2px; text-transform:uppercase;
+    padding:8px 14px 4px; display:flex; align-items:center; gap:6px;
+  }
+  .ai-summary-box .brief-section-label::before {
+    content:''; display:inline-block; width:4px; height:4px;
+    background:var(--accent2); flex-shrink:0;
+  }
+  .ai-summary-box .brief-section-body {
+    padding:0 14px 10px;
+    font-family:var(--body); font-size:13px; color:var(--text2);
+    line-height:1.75;
+  }
+  .ai-summary-box .brief-li {
+    display:flex; gap:7px; margin:3px 0;
+    font-family:var(--body); font-size:13px; color:var(--text2); line-height:1.7;
+  }
+  .ai-summary-box .brief-li::before { content:'▸'; color:var(--accent3); flex-shrink:0; margin-top:1px; }
+  .ai-summary-box .brief-bold { color:var(--text); font-weight:600; }
   .ai-summary-box.visible { display:block; animation:fadeIn 0.3s ease; }
   .ai-summary-label {
     font-family:var(--mono); font-size:9px; color:var(--accent2);
@@ -1385,74 +1412,167 @@ const SOURCES = [
   { id:'checkpoint',   name:'Check Point',        url:'https://research.checkpoint.com/feed/',                          color:'#00aaff', tag:'malware'  },
   { id:'unit42',       name:'Unit 42',             url:'https://unit42.paloaltonetworks.com/feed/',                      color:'#ff6600', tag:'apt'      },
   { id:'sophos',       name:'Sophos Labs',         url:'https://news.sophos.com/en-us/category/threat-research/feed/',  color:'#ffcc00', tag:'malware'  },
-  { id:'cisa',         name:'CISA Advisories',     url:'https://www.cisa.gov/cybersecurity-advisories/all.xml',  color:'#ff2244', tag:'advisory' },
-  { id:'huntress',     name:'Huntress',            url:'https://www.huntress.com/blog/rss.xml',                          color:'#cc44ff', tag:'malware'  },
-  { id:'isc',          name:'SANS ISC',            url:'https://isc.sans.edu/rssfeed_full.xml',                          color:'#00ffcc', tag:'advisory' },
-  { id:'gendigital',   name:'Elastic SecLabs',         url:'https://www.elastic.co/security-labs/rss/feed.xml',                          color:'#4488ff', tag:'malware'  },
-  { id:'mandiant',     name:'Mandiant',            url:'https://www.mandiant.com/resources/blog/rss.xml',                color:'#ff4444', tag:'apt'      },
-  { id:'msft',         name:'Microsoft SecBlog',   url:'https://www.microsoft.com/en-us/security/blog/feed/',            color:'#00aaff', tag:'advisory' },
-  { id:'rapid7',       name:'Rapid7 Threat',         url:'https://blog.rapid7.com/tag/emergent-threat-response/rss/',                                   color:'#ff8800', tag:'vuln'     },
-  { id:'rapid7dr',      name:'Rapid7 Detection', url:'https://blog.rapid7.com/tag/detection-and-response/rss/', color:'#ff8800', tag:'research' },
-  { id:'cisaAlerts',      name:'Securelist',             url:'https://securelist.com/feed/',                    color:'#00aaff', tag:'advisory' },
-  { id:'cymru',        name:'Team Cymru',          url:'https://team-cymru.com/blog/feed/',                          color:'#00ffcc', tag:'apt'      },
-  { id:'crowdstrike',  name:'CrowdStrike',         url:'https://www.crowdstrike.com/blog/feed/',                         color:'#ff6600', tag:'apt'      },
-  { id:'reddit',       name:'r/blueteamsec',       url:'https://www.reddit.com/r/blueteamsec/.rss',                      color:'#ff6644', tag:'news'     },
-  { id:'zscaler',      name:'Zscaler ThreatLab',  url:'https://www.zscaler.com/blogs/security-research/feed',           color:'#4499ff', tag:'malware'  },
-  { id:'cybereason',   name:'Recorded Future',          url:'https://www.recordedfuture.com/blog/feed',                        color:'#cc44ff', tag:'malware'  },
-  { id:'decipher',     name:'Dark Reading',            url:'https://www.darkreading.com/rss.xml',                                  color:'#88aaff', tag:'news'     },
-  { id:'projectzero',  name:'Project Zero',        url:'https://googleprojectzero.blogspot.com/feeds/posts/default',     color:'#00ccff', tag:'vuln'     },
-  { id:'fortinet',     name:'Fortinet Threat',     url:'https://feeds.fortinet.com/fortinet/blog/threat-research',       color:'#ff4444', tag:'malware'  },
-  { id:'reversinglabs',name:'ReversingLabs',       url:'https://www.reversinglabs.com/blog/rss.xml',                    color:'#ffaa00', tag:'malware'  },
-  { id:'mitreview',    name:'BleepingComputer',      url:'https://www.bleepingcomputer.com/feed/',                          color:'#88ccff', tag:'news'     },
-  { id:'detectfyi',    name:'Detect FYI',           url:'https://medium.com/feed/detect-fyi',                              color:'#00ffcc', tag:'advisory' },
-  { id:'trustedsec',   name:'TrustedSec',           url:'https://trustedsec.com/feed.rss',                                 color:'#ff8800', tag:'malware'  },
-  { id:'badsector',    name:'Bad Sector Labs',      url:'https://badsectorlabs.com/feeds/all.atom.xml',               color:'#cc44ff', tag:'malware'  },
-  { id:'dfirreport',   name:'DFIR Report',          url:'https://thedfirreport.com/feed/',                                 color:'#ff4444', tag:'apt'      },
-  { id:'kostasmed',    name:'Kostas (Medium)',       url:'https://medium.com/feed/@kostas-ts',                              color:'#00cc99', tag:'apt'      },
-  { id:'goblinloot',   name:'Lucy / GoblinLoot',    url:'https://www.goblinloot.net/feeds/posts/default',                  color:'#aa66ff', tag:'advisory' },
-  { id:'sentinel',     name:'MS Sentinel Blog',     url:'https://techcommunity.microsoft.com/t5/s/gxcuf89792/rss/board?board.id=MicrosoftSentinelBlog', color:'#00aaff', tag:'advisory' },
-  { id:'socradar',     name:'SOCRadar',             url:'https://socradar.io/feed/',                                       color:'#ff6600', tag:'news'     },
-  { id:'infostealers',  name:'Proofpoint',          url:'https://www.proofpoint.com/us/rss.xml',                              color:'#ff2244', tag:'malware'  },
-  { id:'theregister',   name:'The Register',          url:'https://www.theregister.com/security/headlines.atom',             color:'#cc0000', tag:'news'     },
-  { id:'thehackernews', name:'The Hacker News',        url:'https://thehackernews.com/feeds/posts/default',                   color:'#00aaff', tag:'news'     },
-  { id:'arstechnica',   name:'Ars Technica Sec',       url:'https://feeds.arstechnica.com/arstechnica/security',              color:'#ff6600', tag:'news'     },
-  { id:'helpnetsec',    name:'Help Net Security',      url:'https://www.helpnetsecurity.com/feed',                            color:'#00cc88', tag:'news'     },
-  { id:'infosecmag',    name:'Infosecurity Magazine',  url:'https://www.infosecurity-magazine.com/rss/news',                 color:'#8844ff', tag:'news'     },
-  { id:'malwarebytes', name:'Malwarebytes',         url:'https://www.malwarebytes.com/blog/feed/',                          color:'#0077cc', tag:'malware'  },
-  { id:'cryptika',     name:'Cryptika',             url:'https://securityaffairs.com/feed',                                  color:'#00ccaa', tag:'advisory' },
+  { id:'cisa',         name:'CISA Advisories',  color:'#ff2244', tag:'advisory',
+    url:'https://www.cisa.gov/cybersecurity-advisories/all.xml',
+    altUrls:['https://feeds.feedburner.com/US-CERT-NCAS-Current-Activity','https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'] },
+  { id:'huntress',     name:'Huntress',          color:'#cc44ff', tag:'malware',
+    url:'https://www.huntress.com/blog/rss.xml',
+    altUrls:['https://www.huntress.com/blog/feed','https://www.huntress.com/feed/blog'] },
+  { id:'isc',          name:'SANS ISC',           color:'#00ffcc', tag:'advisory',
+    url:'https://isc.sans.edu/rssfeed_full.xml',
+    altUrls:['https://isc.sans.edu/rssfeed.xml','https://isc.sans.edu/index.xml'] },
+  { id:'gendigital',   name:'Elastic SecLabs',    color:'#4488ff', tag:'malware',
+    url:'https://www.elastic.co/security-labs/rss/feed.xml',
+    altUrls:['https://feeds.feedburner.com/ElasticSecurityLabs'] },
+  { id:'mandiant',     name:'Mandiant / Google',  color:'#ff4444', tag:'apt',
+    url:'https://cloud.google.com/blog/topics/threat-intelligence/rss',
+    altUrls:['https://www.mandiant.com/resources/blog/rss.xml','https://feeds.feedburner.com/MandiantBlog'] },
+  { id:'msft',         name:'Microsoft SecBlog',  color:'#00aaff', tag:'advisory',
+    url:'https://www.microsoft.com/en-us/security/blog/feed/',
+    altUrls:['https://techcommunity.microsoft.com/t5/s/gxcuf89792/rss/board?board.id=MicrosoftSecurityBlog','https://feeds.feedburner.com/MicrosoftSecurityBlog'] },
+  { id:'rapid7',       name:'Rapid7 Threat',      color:'#ff8800', tag:'vuln',
+    url:'https://blog.rapid7.com/rss/',
+    altUrls:['https://www.rapid7.com/blog/feed/','https://blog.rapid7.com/tag/emergent-threat-response/rss/'] },
+  { id:'rapid7dr',     name:'Rapid7 Detection',   color:'#ff8800', tag:'research',
+    url:'https://blog.rapid7.com/rss/',
+    altUrls:['https://blog.rapid7.com/tag/detection-and-response/rss/','https://www.rapid7.com/blog/feed/'] },
+  { id:'cisaAlerts',   name:'Securelist',          color:'#00aaff', tag:'advisory',
+    url:'https://securelist.com/feed/',
+    altUrls:['https://feeds.feedburner.com/Securelist','https://www.kaspersky.com/blog/feed/'] },
+  { id:'cymru',        name:'Team Cymru',          color:'#00ffcc', tag:'apt',
+    url:'https://team-cymru.com/blog/feed/',
+    altUrls:['https://www.team-cymru.com/feed','https://team-cymru.com/feed/'] },
+  { id:'crowdstrike',  name:'CrowdStrike',         color:'#ff6600', tag:'apt',
+    url:'https://www.crowdstrike.com/blog/feed/',
+    altUrls:['https://feeds.feedburner.com/crowdstrike-blog'] },
+  { id:'reddit',       name:'r/blueteamsec',       color:'#ff6644', tag:'news',
+    url:'https://www.reddit.com/r/blueteamsec/.rss',
+    altUrls:['https://www.reddit.com/r/blueteamsec/new/.rss'] },
+  { id:'zscaler',      name:'Zscaler ThreatLab',  color:'#4499ff', tag:'malware',
+    url:'https://www.zscaler.com/blogs/security-research/feed',
+    altUrls:['https://www.zscaler.com/rss.xml','https://www.zscaler.com/feeds/blog'] },
+  { id:'cybereason',   name:'Recorded Future',    color:'#cc44ff', tag:'malware',
+    url:'https://www.recordedfuture.com/blog/feed',
+    altUrls:['https://www.recordedfuture.com/news/feed','https://feeds.feedburner.com/RecordedFuture','https://www.recordedfuture.com/feed'] },
+  { id:'decipher',     name:'Dark Reading',        color:'#88aaff', tag:'news',
+    url:'https://www.darkreading.com/rss.xml',
+    altUrls:['https://feeds.feedburner.com/darkreading','https://www.darkreading.com/rss/all.xml'] },
+  { id:'projectzero',  name:'Project Zero',        color:'#00ccff', tag:'vuln',
+    url:'https://googleprojectzero.blogspot.com/feeds/posts/default',
+    altUrls:['https://googleprojectzero.blogspot.com/feeds/posts/default?alt=rss'] },
+  { id:'fortinet',     name:'Fortinet Threat',     color:'#ff4444', tag:'malware',
+    url:'https://feeds.fortinet.com/fortinet/blog/threat-research',
+    altUrls:['https://www.fortinet.com/blog/threat-research/rss','https://feeds.feedburner.com/fortinet/blog/threat-research'] },
+  { id:'reversinglabs',name:'ReversingLabs',       color:'#ffaa00', tag:'malware',
+    url:'https://www.reversinglabs.com/blog/rss.xml',
+    altUrls:['https://blog.reversinglabs.com/feed','https://www.reversinglabs.com/feed'] },
+  { id:'mitreview',    name:'BleepingComputer',    color:'#88ccff', tag:'news',
+    url:'https://www.bleepingcomputer.com/feed/',
+    altUrls:['https://feeds.feedburner.com/BleepingComputer'] },
+  { id:'detectfyi',    name:'Detect FYI',          color:'#00ffcc', tag:'advisory',
+    url:'https://medium.com/feed/detect-fyi',
+    altUrls:['https://detectfyi.medium.com/feed'] },
+  { id:'trustedsec',   name:'TrustedSec',          color:'#ff8800', tag:'malware',
+    url:'https://trustedsec.com/feed.rss',
+    altUrls:['https://trustedsec.com/feed','https://trustedsec.com/blog/feed/'] },
+  { id:'badsector',    name:'Bad Sector Labs',     color:'#cc44ff', tag:'malware',
+    url:'https://badsectorlabs.com/feeds/all.atom.xml',
+    altUrls:['https://badsectorlabs.com/rss.xml','https://badsectorlabs.com/atom.xml','https://badsectorlabs.com/feed'] },
+  { id:'dfirreport',   name:'DFIR Report',         color:'#ff4444', tag:'apt',
+    url:'https://thedfirreport.com/feed/',
+    altUrls:['https://feeds.feedburner.com/TheDFIRReport'] },
+  { id:'kostasmed',    name:'Kostas (Medium)',      color:'#00cc99', tag:'apt',
+    url:'https://medium.com/feed/@kostas-ts',
+    altUrls:['https://kostas-ts.medium.com/feed'] },
+  { id:'goblinloot',   name:'Lucy / GoblinLoot',   color:'#aa66ff', tag:'advisory',
+    url:'https://www.goblinloot.net/feeds/posts/default',
+    altUrls:['https://www.goblinloot.net/rss.xml'] },
+  { id:'sentinel',     name:'MS Sentinel Blog',    color:'#00aaff', tag:'advisory',
+    url:'https://techcommunity.microsoft.com/t5/s/gxcuf89792/rss/board?board.id=MicrosoftSentinelBlog',
+    altUrls:['https://techcommunity.microsoft.com/t5/s/gxcuf89792/rss/board?board.id=Azure-Sentinel'] },
+  { id:'socradar',     name:'SOCRadar',            color:'#ff6600', tag:'news',
+    url:'https://socradar.io/feed/',
+    altUrls:['https://feeds.feedburner.com/socradar'] },
+  { id:'infostealers', name:'Proofpoint',          color:'#ff2244', tag:'malware',
+    url:'https://www.proofpoint.com/us/rss.xml',
+    altUrls:['https://www.proofpoint.com/us/blog/rss','https://feeds.feedburner.com/ProofpointBlog'] },
+  { id:'theregister',  name:'The Register',        color:'#cc0000', tag:'news',
+    url:'https://www.theregister.com/security/headlines.atom',
+    altUrls:['https://www.theregister.co.uk/security/headlines.atom','https://feeds.feedburner.com/TheRegister-Security'] },
+  { id:'thehackernews',name:'The Hacker News',     color:'#00aaff', tag:'news',
+    url:'https://thehackernews.com/feeds/posts/default',
+    altUrls:['https://feeds.feedburner.com/TheHackersNews'] },
+  { id:'arstechnica',  name:'Ars Technica Sec',    color:'#ff6600', tag:'news',
+    url:'https://feeds.arstechnica.com/arstechnica/security',
+    altUrls:['https://arstechnica.com/security/feed/','https://feeds.feedburner.com/arstechnica/security'] },
+  { id:'helpnetsec',   name:'Help Net Security',   color:'#00cc88', tag:'news',
+    url:'https://www.helpnetsecurity.com/feed',
+    altUrls:['https://feeds.feedburner.com/HelpNetSecurity','https://www.helpnetsecurity.com/feed/'] },
+  { id:'infosecmag',   name:'Infosecurity Magazine',color:'#8844ff', tag:'news',
+    url:'https://www.infosecurity-magazine.com/rss/news',
+    altUrls:['https://feeds.feedburner.com/InfosecurityMagazine'] },
+  { id:'malwarebytes', name:'Malwarebytes',        color:'#0077cc', tag:'malware',
+    url:'https://www.malwarebytes.com/blog/feed/',
+    altUrls:['https://feeds.feedburner.com/MalwarebytesUnpacked','https://blog.malwarebytes.com/feed/'] },
+  { id:'cryptika',     name:'Cryptika',            color:'#00ccaa', tag:'advisory',
+    url:'https://securityaffairs.com/feed',
+    altUrls:['https://securityaffairs.co/wordpress/feed','https://feeds.feedburner.com/securityaffairs'] },
 ];
 
 // RSS proxy chain — each entry specifies how to fetch and parse the response
-// rss2json: dedicated RSS service, fetches server-side, returns clean JSON
-// allorigins/corsproxy: generic CORS proxies returning raw XML
+// ── FETCH HELPERS ───────────────────────────────────────────────
+// RSS2JSON: server-side feed fetcher
 const RSS2JSON_URL = u => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}&count=25`;
 
+// Feedly Cloud public API (no auth needed for public feeds, good fallback)
+const FEEDLY_URL = u => `https://cloud.feedly.com/v3/streams/contents?streamId=feed%2F${encodeURIComponent(u)}&count=20`;
+
+// CORS proxy chain — tried in order, each with an appropriate parser
 const CORS_PROXIES = [
   {
+    // allorigins /raw — direct XML passthrough, fastest
     url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    parse: null  // raw XML passthrough
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    parse: null
   },
   {
+    // corsproxy.io
     url: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
     parse: null
   },
   {
+    // allorigins /get — returns JSON envelope with .contents
     url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
     parse: text => { try { return { xml: JSON.parse(text).contents }; } catch { return null; } }
   },
   {
+    // codetabs proxy
     url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
     parse: null
   },
   {
+    // corsproxy.org
     url: u => `https://corsproxy.org/?url=${encodeURIComponent(u)}`,
     parse: null
   },
   {
+    // thingproxy
     url: u => `https://thingproxy.freeboard.io/fetch/${u}`,
     parse: null
   },
+  {
+    // htmldriven CORS proxy
+    url: u => `https://cors.eu.org/${u}`,
+    parse: null
+  },
+  {
+    // worker-based proxy
+    url: u => `https://api.cors.lol/?url=${encodeURIComponent(u)}`,
+    parse: null
+  },
 ];
+
+// Parse rss2json JSON response];
 
 // Parse rss2json JSON response into articles
 function parseRss2Json(json, src) {
@@ -2577,68 +2697,107 @@ async function fetchAllFeeds() {
 async function fetchFeed(src) {
   sourceStatus[src.id] = 'loading';
   updateSourceItem(src.id);
-  if (src.apiType === 'rlive') {
-    await fetchRansomwareLive(src);
-    return;
-  }
+  if (src.apiType === 'rlive') { await fetchRansomwareLive(src); return; }
 
-  // ── STEP 1: Direct fetch — fastest, works for CORS-enabled feeds
-  try {
-    const res = await fetch(src.url, { signal: AbortSignal.timeout(10000) });
-    if (res.ok) {
-      const text = await res.text();
-      const trimmed = text.trim();
-      if (!trimmed.toLowerCase().startsWith('<html') && !trimmed.toLowerCase().startsWith('<!doctype')) {
+  // All URLs to attempt: primary first, then altUrls
+  const urlsToTry = [src.url, ...(src.altUrls || [])].filter(Boolean);
+
+  for (const candidateUrl of urlsToTry) {
+    // ── STEP 1: Direct fetch (CORS-permissive feeds: Reddit, SANS, Blogspot, Medium)
+    try {
+      const res = await fetch(candidateUrl, {
+        signal: AbortSignal.timeout(8000),
+        headers: { 'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
+      });
+      if (res.ok) {
+        const text = await res.text();
+        const trimmed = text.trim();
+        if (!trimmed.toLowerCase().startsWith('<html') && !trimmed.toLowerCase().startsWith('<!doctype')) {
+          const articles = parseRSS(text, src);
+          if (articles.length) {
+            allArticles.push(...articles);
+            sourceStatus[src.id] = 'loaded';
+            updateSourceItem(src.id, articles.length);
+            return;
+          }
+        }
+      }
+    } catch { /* try proxies */ }
+
+    // ── STEP 2: CORS proxy chain
+    for (const proxy of CORS_PROXIES) {
+      try {
+        const proxyUrl = proxy.url(candidateUrl);
+        const fetchOpts = { signal: AbortSignal.timeout(12000) };
+        if (proxy.headers) fetchOpts.headers = proxy.headers;
+        const res = await fetch(proxyUrl, fetchOpts);
+        if (!res.ok) continue;
+        let text = await res.text();
+        if (proxy.parse) {
+          const parsed = proxy.parse(text);
+          if (parsed?.xml) text = parsed.xml;
+          else if (!parsed) continue;
+        }
+        const trimmed = text.trim();
+        if (trimmed.startsWith('{') && !trimmed.includes('<rss') && !trimmed.includes('<feed') && !trimmed.includes('<item')) continue;
+        if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) continue;
         const articles = parseRSS(text, src);
-        if (articles.length) {
+        if (!articles.length) continue;
+        allArticles.push(...articles);
+        sourceStatus[src.id] = 'loaded';
+        updateSourceItem(src.id, articles.length);
+        return;
+      } catch { continue; }
+    }
+
+    // ── STEP 3: rss2json (server-side fetcher) — try for each URL candidate
+    try {
+      const r2jRes = await fetch(RSS2JSON_URL(candidateUrl), { signal: AbortSignal.timeout(12000) });
+      if (r2jRes.ok) {
+        const text = await r2jRes.text();
+        const articles = parseRss2Json(text, src);
+        if (articles && articles.length) {
           allArticles.push(...articles);
           sourceStatus[src.id] = 'loaded';
           updateSourceItem(src.id, articles.length);
           return;
         }
       }
-    }
-  } catch { /* fall through */ }
+    } catch { /* try next candidate URL */ }
 
-  // ── STEP 2: CORS proxy chain — try each proxy with the raw XML approach
-  for (const proxy of CORS_PROXIES) {
+    // ── STEP 4: Feedly Cloud public API (no auth, great for blocked feeds)
     try {
-      const proxyUrl = proxy.url(src.url);
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-      if (!res.ok) continue;
-      let text = await res.text();
-      if (proxy.parse) {
-        const parsed = proxy.parse(text);
-        if (parsed?.xml) text = parsed.xml;
-        else if (!parsed) continue;
+      const feedlyRes = await fetch(FEEDLY_URL(candidateUrl), {
+        signal: AbortSignal.timeout(10000),
+        headers: { 'Accept': 'application/json' }
+      });
+      if (feedlyRes.ok) {
+        const json = await feedlyRes.json();
+        const items = json.items || [];
+        if (items.length) {
+          const articles = items.map(item => {
+            const content = item.summary?.content || item.content?.content || '';
+            const desc = content.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,500);
+            return {
+              id: src.id + '_' + (item.id||Math.random()).toString().replace(/[^a-z0-9]/gi,'').slice(0,12),
+              title: item.title || 'Untitled',
+              desc,
+              link: item.canonicalUrl || item.alternate?.[0]?.href || '',
+              date: item.published ? new Date(item.published) : new Date(),
+              source: src,
+              tags: [src.tag]
+            };
+          }).filter(a => a.title && a.title !== 'Untitled');
+          if (articles.length) {
+            allArticles.push(...articles);
+            sourceStatus[src.id] = 'loaded';
+            updateSourceItem(src.id, articles.length);
+            return;
+          }
+        }
       }
-      const trimmed = text.trim();
-      if (trimmed.startsWith('{') && !trimmed.includes('<rss') && !trimmed.includes('<feed') && !trimmed.includes('<item')) continue;
-      if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) continue;
-      const articles = parseRSS(text, src);
-      if (!articles.length) continue;
-      allArticles.push(...articles);
-      sourceStatus[src.id] = 'loaded';
-      updateSourceItem(src.id, articles.length);
-      return;
-    } catch { continue; }
+    } catch { /* try next candidate URL */ }
   }
-
-  // ── STEP 3: rss2json.com — server-side fetcher, last resort
-  // Free tier limited to ~10 req/day without API key, so save for hard cases
-  try {
-    const r2jRes = await fetch(RSS2JSON_URL(src.url), { signal: AbortSignal.timeout(15000) });
-    if (r2jRes.ok) {
-      const text = await r2jRes.text();
-      const articles = parseRss2Json(text, src);
-      if (articles && articles.length) {
-        allArticles.push(...articles);
-        sourceStatus[src.id] = 'loaded';
-        updateSourceItem(src.id, articles.length);
-        return;
-      }
-    }
-  } catch { /* fall through */ }
 
   sourceStatus[src.id] = 'error';
   updateSourceItem(src.id, 0);
@@ -2953,20 +3112,24 @@ Your core principles:
 - For threat actors: always map to MITRE ATT&CK where evidence supports it.
 - Format cleanly. Use plain text with clear section headers. No markdown decorations.`;
 
-const CTI_QUICK_SUMMARY_PROMPT = `You are writing a personal CTI brief — the kind a 25-year veteran analyst scribbles after reading a morning feed article. This is NOT a structured report. It is a short, opinionated, direct read written in first person as someone who has seen every version of this threat before.
+const CTI_QUICK_SUMMARY_PROMPT = `Senior CTI analyst, 25 years experience. Write a concise professional intelligence brief for a technical audience (SOC leads, IR, detection engineers).
 
-Write 3-5 sentences MAXIMUM. No headers, no bullets, no labels, no template. Just the analyst's take in flowing prose.
+RULES: Only use information explicitly stated in the source. No fabricated CVEs, actor names, or versions. Cut vendor marketing to technical substance.
 
-Cover what the article actually warrants — in natural order, not a checklist:
-- What this actually is, cut through any vendor spin or hype
-- Whether it matters and why — place it in the broader threat landscape
-- What an experienced defender should do first, as a direct recommendation
-- Any pattern, technique, or indicator worth flagging from years of similar cases
-- Confidence level if attribution or severity is genuinely uncertain
+Use EXACTLY this format — no extra text, no deviations:
 
-Tone: direct, dry, occasionally sardonic. Like a senior analyst's Slack message, not a press release. Never say "it is important to note", "defenders should be aware", "in conclusion", or any other filler. Say the thing.
+**ASSESSMENT**
+One sentence. What this is and why it matters now.
 
-Write only the brief. No preamble, no label, no sign-off.`;
+**KEY FINDINGS**
+- One line: the most significant technical detail (TTP, CVE, campaign trait)
+- One line: scope or exploitation status (only if article states it)
+
+**RECOMMENDED ACTION**
+One sentence. The single most important immediate action for a blue team.
+
+**ANALYST NOTE**
+One sentence. Experience-based context, pattern recognition, or confidence qualifier.`;
 
 const CTI_EXEC_SUMMARY_PROMPT = `You are the Director of Security Operations presenting to executive leadership: CEO, CFO, board-level stakeholders. Your audience is intelligent but non-technical. They do not know what CVEs, TTPs, or exploit chains are. They care about business risk, financial exposure, operational continuity, reputational damage, and what decisions they need to make now.
 
@@ -3137,6 +3300,153 @@ What patterns are building across multiple sources? What might this signal for t
 [P2] Second priority action
 [P3] Third priority action`;
 
+
+
+// ── CTI BRIEF RENDERER ─────────────────────────────────────────
+// Parses the structured CTI brief format into labelled section blocks.
+// **LABEL** on its own line = section header; bullets and prose inside.
+function renderCtiBrief(text) {
+  if (!text) return '';
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function inlineFmt(s) {
+    s = esc(s);
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<span class="brief-bold">$1</span>');
+    s = s.replace(/`([^`]+)`/g, '<span class="md-code">$1</span>');
+    s = s.replace(/\bCRITICAL\b/g, '<span class="md-risk-critical">CRITICAL</span>');
+    s = s.replace(/\bHIGH\b/g,     '<span class="md-risk-high">HIGH</span>');
+    s = s.replace(/\bMEDIUM\b/g,   '<span class="md-risk-medium">MEDIUM</span>');
+    s = s.replace(/\bLOW\b/g,      '<span class="md-risk-low">LOW</span>');
+    return s;
+  }
+
+  const lines = text.split('\n');
+  let html = '';
+  let inSection = false;
+  let bodyBuf = [];
+
+  const sectionIcons = {
+    'ASSESSMENT':         '⬡',
+    'KEY FINDINGS':       '▸',
+    'RECOMMENDED ACTION': '⚡',
+    'ANALYST NOTE':       '◈',
+  };
+
+  function flushSection(label) {
+    if (!inSection) return;
+    const icon = sectionIcons[label] || '▸';
+    // close previous section body
+    const body = bodyBuf.join('').trim();
+    if (body) html += `<div class="brief-section-body">${body}</div>`;
+    bodyBuf = [];
+  }
+
+  function openSection(label) {
+    if (inSection) {
+      // flush previous body without knowing old label — just close
+      const body = bodyBuf.join('').trim();
+      if (body) html += `<div class="brief-section-body">${body}</div>`;
+      bodyBuf = [];
+    }
+    const icon = sectionIcons[label] || '▸';
+    html += `<div class="brief-section"><div class="brief-section-label">${icon} ${esc(label)}</div>`;
+    inSection = true;
+  }
+
+  for (const raw of lines) {
+    const line = raw.trim();
+
+    // Blank line — skip but preserve spacing in body via small gap
+    if (!line) {
+      if (inSection) bodyBuf.push('<div style="height:3px"></div>');
+      continue;
+    }
+
+    // Section header: **LABEL** alone on a line (with or without colon)
+    const headerMatch = line.match(/^\*\*([A-Z][A-Z\s]+[A-Z])\*\*:?$/);
+    if (headerMatch) {
+      openSection(headerMatch[1].trim());
+      continue;
+    }
+
+    // Bullet item
+    if (/^[-*▸•]\s/.test(line) && inSection) {
+      bodyBuf.push(`<div class="brief-li">${inlineFmt(line.replace(/^[-*▸•]\s*/,''))}</div>`);
+      continue;
+    }
+
+    // Plain paragraph line
+    if (inSection) {
+      bodyBuf.push(`<div style="margin:2px 0;font-family:var(--body);font-size:13px;color:var(--text2);line-height:1.75">${inlineFmt(line)}</div>`);
+    } else {
+      // Pre-section text (shouldn't happen with well-formed output)
+      html += `<div style="padding:6px 14px;font-size:13px;color:var(--text2)">${inlineFmt(line)}</div>`;
+    }
+  }
+
+  // Flush last section
+  if (inSection) {
+    const body = bodyBuf.join('').trim();
+    if (body) html += `<div class="brief-section-body">${body}</div>`;
+    html += '</div>'; // close last .brief-section
+  }
+
+  return html;
+}
+
+// ── REMOTE ARTICLE FETCH ────────────────────────────────────────
+// Attempts to retrieve the full article text via CORS proxy.
+// Returns plain text (stripped of HTML tags) or null on failure.
+async function fetchArticleText(url) {
+  if (!url) return null;
+  const proxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+  ];
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy(url), { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) continue;
+      let text = await res.text();
+      // allorigins /get returns JSON with .contents
+      if (text.trimStart().startsWith('{')) {
+        try { const j = JSON.parse(text); text = j.contents || text; } catch {}
+      }
+      // Strip HTML to readable text
+      const plain = htmlToPlainText(text);
+      if (plain && plain.length > 200) return plain.slice(0, 6000); // cap at ~6k chars
+    } catch { /* try next proxy */ }
+  }
+  return null;
+}
+
+// Strip HTML tags and decode common entities to plain readable text
+function htmlToPlainText(html) {
+  if (!html) return '';
+  // Remove scripts, styles, nav, footer, ads — noise elements
+  let t = html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<nav[\s\S]*?<\/nav>/gi, ' ')
+    .replace(/<footer[\s\S]*?<\/footer>/gi, ' ')
+    .replace(/<header[\s\S]*?<\/header>/gi, ' ')
+    .replace(/<aside[\s\S]*?<\/aside>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ');
+  // Preserve paragraph / heading breaks
+  t = t.replace(/<\/?(p|div|h[1-6]|li|br|tr)[^>]*>/gi, '\n');
+  // Strip remaining tags
+  t = t.replace(/<[^>]+>/g, ' ');
+  // Decode entities
+  t = t
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, ' ');
+  // Collapse whitespace
+  t = t.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  return t;
+}
+
 // ============================================================
 // AI ACTIONS
 // ============================================================
@@ -3144,25 +3454,44 @@ async function summarizeCard(id) {
   if (!aiReady()) { toast(aiReadyLabel(), 'error'); return; }
   const a = allArticles.find(x => x.id === id);
   if (!a) return;
-  const btn = document.getElementById(`aibtn-${id}`);
-  const box = document.getElementById(`aibox-${id}`);
+  const btn    = document.getElementById(`aibtn-${id}`);
+  const box    = document.getElementById(`aibox-${id}`);
   const textEl = document.getElementById(`aitext-${id}`);
-  btn.disabled = true; btn.className = 'card-ai-btn summarizing'; btn.textContent = '⬡ ANALYZING…';
+
+  btn.disabled = true; btn.className = 'card-ai-btn summarizing'; btn.textContent = '⬡ FETCHING…';
   box.className = 'ai-summary-box visible';
   textEl.className = 'analyst-prose typing'; textEl.textContent = '';
+
+  // Attempt to fetch full article text via CORS proxy for richer analysis
+  let fullText = null;
+  try { fullText = await fetchArticleText(a.link); } catch { /* fall back to desc */ }
+
+  const sourceLabel   = fullText ? `FULL ARTICLE (fetched from source)` : `ARTICLE SUMMARY (full text unavailable — analysis based on feed description)`;
+  const sourceContent = fullText || a.desc || '(no content available)';
+
+  btn.textContent = '⬡ ANALYZING…';
+
+  const prompt = `${CTI_QUICK_SUMMARY_PROMPT}
+
+SOURCE PUBLICATION: ${a.source.name}
+ARTICLE TITLE: ${a.title}
+${sourceLabel}:
+${sourceContent}`;
+
   try {
     await aiChat(
       CTI_SYSTEM_PROMPT,
-      `${CTI_QUICK_SUMMARY_PROMPT}\n\nARTICLE TITLE: ${a.title}\nARTICLE CONTENT: ${a.desc}`,
-      (_, full) => { textEl.textContent = full; }
+      prompt,
+      (_, full) => { textEl.innerHTML = renderCtiBrief(full); }
     );
-    textEl.className = 'analyst-prose';
-    btn.disabled = false; btn.className = 'card-ai-btn'; btn.textContent = '⬡ CTI BRIEF ✓';
+    textEl.classList.remove('typing');
+    const badge = fullText ? ' ✓ FULL' : ' · PREVIEW';
+    btn.disabled = false; btn.className = 'card-ai-btn'; btn.textContent = `⬡ CTI BRIEF${badge}`;
   } catch(e) {
-    textEl.className = '';
-    textEl.textContent = `Error: ${e.message}`;
+    textEl.classList.remove('typing');
+    textEl.textContent = 'Error: ' + e.message;
     btn.disabled = false; btn.className = 'card-ai-btn'; btn.textContent = '⬡ RETRY';
-    toast(activeProvider.toUpperCase() + ' request failed: ' + e.message, 'error');
+    toast(activeProvider.toUpperCase() + ' failed: ' + e.message, 'error');
   }
 }
 
@@ -3606,7 +3935,7 @@ function getTabForBtn(btnId) {
   return map[btnId] || 'cti';
 }
 
-async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, prefillText) {
+async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, prefillText, renderer) {
   if (!currentArticle) return;
   if (!aiReady()) { toast(aiReadyLabel(), 'error'); return; }
 
@@ -3629,11 +3958,12 @@ async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, prefillText
 
   // If prefill text provided (e.g. regex IOC scan), show it first
   const prefix = prefillText ? prefillText + '\n\n--- AI ANALYSIS ---\n' : '';
-  panel.innerHTML = prefix ? renderMd(prefix) : '';
+  const _render = renderer || renderMd;
+  panel.innerHTML = prefix ? _render(prefix) : '';
 
   try {
     await aiChat(systemPrompt, userPrompt, (_, full) => {
-      panel.innerHTML = renderMd(prefix ? prefix + '\n' + full : full);
+      panel.innerHTML = _render(prefix ? prefix + '\n' + full : full);
     });
     panel.classList.remove('typing');
     tab?.classList.remove('loading-tab');
@@ -3641,7 +3971,7 @@ async function runModalAI(systemPrompt, userPrompt, btnId, btnLabel, prefillText
   } catch(e) {
     panel.classList.remove('typing');
     tab?.classList.remove('loading-tab');
-    panel.innerHTML = renderMd((prefix || '') + `\nError: ${e.message}`);
+    panel.innerHTML = _render((prefix || '') + `\nError: ${e.message}`);
     toast('AI request failed', 'error');
   } finally {
     const still = aiReady();
@@ -3682,7 +4012,8 @@ function quickSummaryFromModal() {
   runModalAI(
     CTI_SYSTEM_PROMPT,
     `${CTI_QUICK_SUMMARY_PROMPT}\n\nARTICLE TITLE: ${currentArticle.title}\nARTICLE CONTENT: ${currentArticle.desc}`,
-    'modalBriefBtn', '⬡ CTI BRIEF'
+    'modalBriefBtn', '⬡ CTI BRIEF',
+    null, renderCtiBrief
   );
 }
 
