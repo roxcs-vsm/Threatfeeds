@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+  // Instant theme apply before paint — prevents green flash on blue theme
+  (function(){
+    const t = localStorage.getItem('tf_theme');
+    const attrMap = { blue:'blue', dark:'dark' };
+    if (attrMap[t]) document.documentElement.setAttribute('data-theme', attrMap[t]);
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THFeeds</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23030a06'/><rect x='2' y='2' width='28' height='28' rx='3' fill='none' stroke='%2300ff41' stroke-width='1.5'/><text x='5' y='22' font-family='monospace' font-size='16' font-weight='900' fill='%2300ff41'>TH</text><line x1='5' y1='25' x2='27' y2='25' stroke='%2300cc33' stroke-width='1'/><rect x='5' y='27' width='8' height='2' rx='1' fill='%2300ff41'/></svg>">
@@ -61,11 +69,12 @@
   }
   .header-logo {
     font-family:var(--display);
-    font-size:14px; font-weight:900;
-    color:var(--accent); letter-spacing:3px;
-    padding:0 20px; border-right:1px solid var(--border2);
-    display:flex; align-items:center; gap:10px; flex-shrink:0;
+    font-size:13px; font-weight:900;
+    color:var(--accent); letter-spacing:2px;
+    padding:0 14px; border-right:1px solid var(--border2);
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
     text-shadow: 0 0 20px rgba(0,255,65,0.5);
+    white-space:nowrap;
   }
   .blink-dot {
     width:8px; height:8px; background:var(--accent); border-radius:50%;
@@ -73,15 +82,15 @@
   }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.1} }
   .header-stats {
-    display:flex; align-items:center; gap:24px;
-    padding:0 20px; flex:1;
-    font-family:var(--mono); font-size:11px; color:var(--text3);
+    display:flex; align-items:center; gap:16px;
+    padding:0 14px; flex:1; min-width:0; overflow:hidden;
+    font-family:var(--mono); font-size:10px; color:var(--text3);
   }
-  .header-stats .val { color:var(--accent2); font-size:13px; }
+  .header-stats .val { color:var(--accent2); font-size:12px; }
   .header-ai-status {
-    display:flex; align-items:center; gap:8px;
-    padding:0 16px; border-left:1px solid var(--border);
-    font-family:var(--mono); font-size:10px;
+    display:flex; align-items:center; gap:6px;
+    padding:0 10px; border-left:1px solid var(--border);
+    font-family:var(--mono); font-size:9px; flex-shrink:0;
   }
   .ai-dot {
     width:7px; height:7px; border-radius:50%;
@@ -91,12 +100,13 @@
   .ai-dot.offline { background:var(--red); box-shadow:0 0 6px var(--red); }
   .ai-dot.checking { background:var(--yellow); animation:blink 0.5s infinite; }
   .header-controls {
-    display:flex; align-items:center; gap:6px;
-    padding:0 14px; border-left:1px solid var(--border);
+    display:flex; align-items:center; gap:5px;
+    padding:0 8px; border-left:1px solid var(--border);
+    flex-shrink:0;
   }
   .btn {
-    font-family:var(--mono); font-size:10px;
-    padding:6px 12px; border:1px solid var(--border2);
+    font-family:var(--mono); font-size:9px;
+    padding:5px 10px; border:1px solid var(--border2);
     background:transparent; color:var(--text2);
     cursor:pointer; text-transform:uppercase; letter-spacing:1px;
     transition:all 0.15s; white-space:nowrap;
@@ -1116,14 +1126,231 @@
     font-family:var(--mono); font-size:10px; color:var(--text3); line-height:1.9;
   }
 
+
+  /* ═══ BLUE / TACTICAL HUD THEME ═══ */
+  [data-theme="blue"] {
+    --bg:     #070e1f;
+    --bg2:    #0b1530;
+    --bg3:    #0f1d3d;
+    --panel:  #132248;
+    --panel2: #172850;
+    --border: #1e3d7a;
+    --border2:#2a4f90;
+    --accent: #38d0ff;
+    --accent2:#1aabee;
+    --accent3:#1e4a88;
+    --red:    #ff4466;
+    --orange: #ff7722;
+    --yellow: #ffe600;
+    --blue:   #5599ff;
+    --purple: #cc55ff;
+    --dim:    #2a5080;
+    --text:   #d4eeff;
+    --text2:  #80b8e8;
+    --text3:  #3a6898;
+  }
+
+  /* Scanline tint — blue version */
+  [data-theme="blue"] body::before {
+    background: repeating-linear-gradient(
+      0deg,transparent,transparent 2px,
+      rgba(0,180,255,0.012) 2px,rgba(0,180,255,0.012) 4px
+    );
+  }
+
+  /* Glow on logo in blue theme */
+  [data-theme="blue"] .header-logo {
+    color: #00e5ff;
+    text-shadow: 0 0 20px rgba(0,229,255,0.5), 0 0 40px rgba(0,229,255,0.2);
+  }
+
+  /* Blink dot becomes cyan */
+  [data-theme="blue"] .blink-dot {
+    background: #00e5ff;
+    box-shadow: 0 0 8px #00e5ff;
+  }
+
+  /* Active card border glow */
+  [data-theme="blue"] .article-card:hover {
+    border-color: #00e5ff33;
+    box-shadow: 0 0 12px rgba(0,229,255,0.07);
+  }
+
+  /* Chapter headers */
+  [data-theme="blue"] .dg-chapter {
+    color: #00e5ff;
+    border-top-color: #0d4080;
+    background: linear-gradient(90deg,rgba(0,229,255,0.07) 0%,transparent 100%);
+  }
+  [data-theme="blue"] .dg-chapter::before { background:#00e5ff; }
+
+  /* Scrollbar */
+  [data-theme="blue"] ::-webkit-scrollbar-thumb { background:#0d4080; }
+  [data-theme="blue"] ::-webkit-scrollbar-thumb:hover { background:#0099dd; }
+
+  /* Brief section labels */
+  [data-theme="blue"] .brief-section-label { color:#00e5ff; }
+  [data-theme="blue"] .brief-section-label::before { background:#00e5ff; }
+
+  /* Source LEDs */
+  [data-theme="blue"] .source-item.loaded::before { background:#00e5ff; box-shadow:0 0 6px #00e5ff; }
+
+  /* dg-label color */
+  [data-theme="blue"] .dg-label { color:#55ccff; }
+  [data-theme="blue"] .dg-hunt-box  .dg-label { color:#88ddff; }
+  [data-theme="blue"] .dg-detection-box .dg-label { color:#cc88ff; }
+
+  /* qbot panel border */
+  [data-theme="blue"] .qbot-panel { border-left-color:#00e5ff44; }
+  [data-theme="blue"] .qbot-header-title { color:#00e5ff; }
+
+  /* weekly brief panel */
+  [data-theme="blue"] .wb-panel { border-left-color:#00e5ff44; }
+  [data-theme="blue"] .wb-header-title { color:#00e5ff; }
+
+  /* THEME TOGGLE BUTTON */
+  .header-logo:hover { opacity:0.85; }
+
+
+  /* ═══ DARK MODE THEME ═══ */
+  [data-theme="dark"] {
+    --bg:     #111214;
+    --bg2:    #18191d;
+    --bg3:    #1e2025;
+    --panel:  #23252b;
+    --panel2: #2a2c33;
+    --border: #35373f;
+    --border2:#424550;
+    --accent: #a78bfa;
+    --accent2:#7c5cdc;
+    --accent3:#3d3060;
+    --red:    #f87171;
+    --orange: #fb923c;
+    --yellow: #fbbf24;
+    --blue:   #60a5fa;
+    --purple: #e879f9;
+    --dim:    #4b4d5a;
+    --text:   #e8e9ec;
+    --text2:  #9ca0b0;
+    --text3:  #5a5d6e;
+  }
+
+  /* No scanline in dark mode — cleaner look */
+  [data-theme="dark"] body::before { display:none; }
+
+  /* Logo */
+  [data-theme="dark"] .header-logo {
+    color:#a78bfa;
+    text-shadow:0 0 16px rgba(167,139,250,0.35);
+    letter-spacing:5px;
+  }
+  [data-theme="dark"] .blink-dot {
+    background:#a78bfa;
+    box-shadow:0 0 8px #a78bfa;
+  }
+
+  /* Cards — subtle lift, soft border */
+  [data-theme="dark"] .article-card {
+    border-color:#35373f;
+    background:#18191d;
+  }
+  [data-theme="dark"] .article-card:hover {
+    border-color:#a78bfa44;
+    background:#1e2025;
+    box-shadow:0 2px 16px rgba(167,139,250,0.08);
+  }
+
+  /* Tags */
+  [data-theme="dark"] .tag.critical  { background:rgba(248,113,113,0.12); border-color:#f87171; color:#f87171; }
+  [data-theme="dark"] .tag.high      { background:rgba(251,146,60,0.12);  border-color:#fb923c; color:#fb923c; }
+  [data-theme="dark"] .tag.medium    { background:rgba(251,191,36,0.12);  border-color:#fbbf24; color:#fbbf24; }
+  [data-theme="dark"] .tag.malware   { background:rgba(167,139,250,0.12); border-color:#a78bfa; color:#a78bfa; }
+  [data-theme="dark"] .tag.info      { background:rgba(96,165,250,0.10);  border-color:#60a5fa; color:#60a5fa; }
+
+  /* Sidebar / source list */
+  [data-theme="dark"] .source-item.loaded::before {
+    background:#a78bfa; box-shadow:0 0 6px #a78bfa;
+  }
+  [data-theme="dark"] .source-item.loaded { color:#e8e9ec; }
+
+  /* Buttons */
+  [data-theme="dark"] .btn { border-color:#424550; color:#9ca0b0; }
+  [data-theme="dark"] .btn:hover { border-color:#a78bfa; color:#a78bfa; }
+  [data-theme="dark"] .btn.active { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
+  [data-theme="dark"] .card-ai-btn { border-color:#3d3060; color:#7c5cdc; }
+  [data-theme="dark"] .card-ai-btn:hover:not(:disabled) { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
+
+  /* Search input */
+  [data-theme="dark"] .filter-input { border-color:#35373f; background:#1e2025; color:#e8e9ec; }
+  [data-theme="dark"] .filter-input:focus { border-color:#a78bfa; }
+
+  /* Tag filter buttons */
+  [data-theme="dark"] .tag-btn { border-color:#35373f; color:#5a5d6e; background:transparent; }
+  [data-theme="dark"] .tag-btn:hover { border-color:#a78bfa; color:#a78bfa; }
+  [data-theme="dark"] .tag-btn.active { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
+
+  /* Scrollbar */
+  [data-theme="dark"] ::-webkit-scrollbar-thumb { background:#35373f; }
+  [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background:#a78bfa; }
+
+  /* Digest / chapter headers */
+  [data-theme="dark"] .dg-chapter {
+    color:#a78bfa; border-top-color:#3d3060;
+    background:linear-gradient(90deg,rgba(167,139,250,0.06) 0%,transparent 100%);
+  }
+  [data-theme="dark"] .dg-chapter::before { background:#a78bfa; }
+  [data-theme="dark"] .dg-subchapter { color:#7c5cdc; border-left-color:#7c5cdc; }
+  [data-theme="dark"] .dg-label { color:#a78bfa; }
+  [data-theme="dark"] .dg-hunt-box { border-left-color:#60a5fa; background:rgba(96,165,250,0.04); }
+  [data-theme="dark"] .dg-detection-box { border-left-color:#e879f9; background:rgba(232,121,249,0.04); }
+  [data-theme="dark"] .dg-hunt-box .dg-label { color:#60a5fa; }
+  [data-theme="dark"] .dg-detection-box .dg-label { color:#e879f9; }
+
+  /* CTI brief sections */
+  [data-theme="dark"] .brief-section-label { color:#a78bfa; }
+  [data-theme="dark"] .brief-section-label::before { background:#a78bfa; }
+  [data-theme="dark"] .ai-summary-box { border-left-color:#a78bfa; border-color:#35373f; background:rgba(167,139,250,0.03); }
+  [data-theme="dark"] .analyst-byline { color:#7c5cdc; }
+
+  /* Modals */
+  [data-theme="dark"] .modal-tab.active { color:#a78bfa; border-bottom-color:#a78bfa; }
+  [data-theme="dark"] .modal-panel { background:rgba(167,139,250,0.02); }
+  [data-theme="dark"] .md-h1 { color:#a78bfa; }
+  [data-theme="dark"] .md-h2 { color:#7c5cdc; }
+
+  /* Query bot */
+  [data-theme="dark"] .qbot-header-title { color:#a78bfa; }
+  [data-theme="dark"] .qbot-panel { border-left-color:#a78bfa44; box-shadow:-8px 0 40px rgba(167,139,250,0.08); }
+  [data-theme="dark"] .qbot-msg.bot .qbot-msg-bubble { border-color:#35373f; background:rgba(167,139,250,0.04); }
+  [data-theme="dark"] .qbot-send { background:rgba(167,139,250,0.12); border-color:#7c5cdc; color:#a78bfa; }
+  [data-theme="dark"] .qbot-suggestion { border-color:#35373f; }
+  [data-theme="dark"] .qbot-suggestion:hover { color:#a78bfa; border-color:#a78bfa55; }
+
+  /* Weekly brief */
+  [data-theme="dark"] .wb-panel { border-left-color:#a78bfa44; }
+  [data-theme="dark"] .wb-header-title { color:#a78bfa; }
+  [data-theme="dark"] .wb-btn { border-color:#424550; color:#9ca0b0; }
+  [data-theme="dark"] .wb-btn:hover { background:rgba(167,139,250,0.1); color:#a78bfa; }
+  [data-theme="dark"] .wb-btn.added { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
+  [data-theme="dark"] .wb-count-badge { color:#a78bfa; border-color:#3d3060; background:rgba(167,139,250,0.1); }
+
+  /* Right panel stat boxes */
+  [data-theme="dark"] .stat-val { color:#a78bfa; text-shadow:0 0 12px rgba(167,139,250,0.4); }
+  [data-theme="dark"] .trend-bar-fill { background:#7c5cdc; }
+  [data-theme="dark"] .trend-item.active { border-left-color:#a78bfa; }
+  [data-theme="dark"] .trend-item.active .trend-label { color:#a78bfa; }
+
+  /* Theme toggle overrides */
+
+
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <header class="header">
-  <div class="header-logo">
-    <div class="blink-dot"></div>
+  <div class="header-logo" onclick="toggleTheme()" id="themeToggle" title="Click to switch theme" style="cursor:pointer">
+    <div class="blink-dot" id="themeSwatch"></div>
     THREATFEED
   </div>
   <div class="header-stats">
@@ -1143,7 +1370,6 @@
     <button class="btn" id="btnRefresh" onclick="fetchAllFeeds()">↻ REFRESH</button>
     <button class="btn" onclick="generateDigest()" id="btnDigest">AI DIGEST</button>
     <button class="wb-btn" id="btnWeeklyBrief" onclick="openWeeklyBrief()" title="Weekly CTI Debrief">📋 WEEKLY BRIEF <span id="wbHeaderCount" style="display:none"></span></button>
-    <button class="btn" id="btnHunts" onclick="openHuntsList()" style="border-color:#aa66ff;color:#aa66ff">🎯 HUNTS</button>
     <button class="qbot-btn" id="btnQueryBot" onclick="openQueryBot()">⬡ QUERY BOT</button>
   </div>
 </header>
@@ -1534,6 +1760,41 @@
 </div>
 
 <script>
+
+// ============================================================
+// THEME TOGGLE  (green terminal ↔ blue tactical HUD)
+// ============================================================
+let currentTheme = localStorage.getItem('tf_theme') || 'green';
+
+// Theme registry — easy to add more themes later
+const THEMES = {
+  green: { label: 'GREEN',  color: '#00ff41', attr: null   },
+  blue:  { label: 'BLUE',   color: '#38d0ff', attr: 'blue' },
+  dark:  { label: 'DARK',   color: '#a78bfa', attr: 'dark' },
+};
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  const def    = THEMES[theme] || THEMES.green;
+  const html   = document.documentElement;
+  const pip    = document.getElementById('themeSwatch');
+  const toggle = document.getElementById('themeToggle');
+  if (def.attr) html.setAttribute('data-theme', def.attr);
+  else          html.removeAttribute('data-theme');
+  if (pip) { pip.style.background = def.color; pip.style.boxShadow = '0 0 7px ' + def.color; }
+  if (toggle) toggle.title = 'Theme: ' + def.label + ' — click to switch';
+  localStorage.setItem('tf_theme', theme);
+}
+
+function toggleTheme() {
+  const order = Object.keys(THEMES);  // ['green','blue','dark']
+  const next  = order[(order.indexOf(currentTheme) + 1) % order.length];
+  applyTheme(next);
+}
+
+// Apply on load before first paint
+applyTheme(currentTheme);
+
 // AbortSignal.timeout polyfill for older browsers
 if (!AbortSignal.timeout) {
   AbortSignal.timeout = function(ms) {
