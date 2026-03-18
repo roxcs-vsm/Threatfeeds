@@ -3880,24 +3880,36 @@ Your core principles:
 - For threat actors: always map to MITRE ATT&CK where evidence supports it.
 - Format cleanly. Use plain text with clear section headers. No markdown decorations.`;
 
-const CTI_QUICK_SUMMARY_PROMPT = `Senior CTI analyst, 25 years experience. Write a concise professional intelligence brief for a technical audience (SOC leads, IR, detection engineers).
+const CTI_QUICK_SUMMARY_PROMPT = `You are a Senior Cyber Threat Intelligence (CTI) Analyst. Analyze the provided article and extract actionable intelligence. Move beyond a simple summary and provide specific insights tailored to two distinct organizational levels.
 
-RULES: Only use information explicitly stated in the source. No fabricated CVEs, actor names, or versions. Cut vendor marketing to technical substance.
+GROUNDING RULES:
+- Only use information explicitly stated in the article. Never fabricate threat actor names, CVE IDs, TTPs, or details not present in the source.
+- If attribution is unknown, state "unattributed". If a section has no evidence, write "Insufficient data in source."
+- Be concise and precise. No filler, no padding.
 
-Use EXACTLY this format — no extra text, no deviations:
+Use EXACTLY this structure with ** markers as shown:
 
-**ASSESSMENT**
-One sentence. What this is and why it matters now.
+**EXECUTIVE SUMMARY**
 
-**KEY FINDINGS**
-- One line: the most significant technical detail (TTP, CVE, campaign trait)
-- One line: scope or exploitation status (only if article states it)
+**SO WHAT:** One sentence — the bottom-line business risk in plain language.
 
-**RECOMMENDED ACTION**
-One sentence. The single most important immediate action for a blue team.
+**IMPACT:** Potential cost, reputational damage, or regulatory risk based on what the article states.
 
-**ANALYST NOTE**
-One sentence. Experience-based context, pattern recognition, or confidence qualifier.`;
+**STRATEGIC RECOMMENDATION:** One high-level investment or policy shift to mitigate this threat class.
+
+---
+
+**ANALYTICAL DEEP-DIVE**
+
+**THREAT ACTOR / CAMPAIGN:** Who is behind this and what is their motivation. If unknown, state unattributed.
+
+**TARGETING TRENDS:** Which sectors, regions, or technologies are being targeted according to the article.
+
+**TTP MAPPING:**
+- Initial Access: [technique if stated]
+- Execution / Persistence: [technique if stated]
+- Exfiltration / Impact: [technique if stated]
+Map only what the article explicitly supports. Use MITRE ATT&CK terminology where applicable.`;
 
 const CTI_EXEC_SUMMARY_PROMPT = `You are the Director of Security Operations presenting to executive leadership: CEO, CFO, board-level stakeholders. Your audience is intelligent but non-technical. They do not know what CVEs, TTPs, or exploit chains are. They care about business risk, financial exposure, operational continuity, reputational damage, and what decisions they need to make now.
 
@@ -4094,10 +4106,19 @@ function renderCtiBrief(text) {
   let bodyBuf = [];
 
   const sectionIcons = {
-    'ASSESSMENT':         '⬡',
-    'KEY FINDINGS':       '▸',
-    'RECOMMENDED ACTION': '⚡',
-    'ANALYST NOTE':       '◈',
+    'EXECUTIVE SUMMARY':        '◈',
+    'SO WHAT':                  '⬡',
+    'IMPACT':                   '⚠',
+    'STRATEGIC RECOMMENDATION': '⚡',
+    'ANALYTICAL DEEP-DIVE':     '⬡',
+    'THREAT ACTOR / CAMPAIGN':  '▸',
+    'TARGETING TRENDS':         '◎',
+    'TTP MAPPING':              '⊕',
+    // legacy
+    'ASSESSMENT':               '⬡',
+    'KEY FINDINGS':             '▸',
+    'RECOMMENDED ACTION':       '⚡',
+    'ANALYST NOTE':             '◈',
   };
 
   function flushSection(label) {
@@ -4165,6 +4186,30 @@ function renderCtiBrief(text) {
 // ── REMOTE ARTICLE FETCH ────────────────────────────────────────
 // Attempts to retrieve the full article text via CORS proxy.
 // Returns plain text (stripped of HTML tags) or null on failure.
+// Returns raw HTML (for IOC extraction — hashes in code blocks, URLs in href)
+async function fetchArticleRaw(url) {
+  if (!url) return null;
+  const proxies = [
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+  ];
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy(url), { signal: AbortSignal.timeout(12000) });
+      if (!res.ok) continue;
+      let text = await res.text();
+      if (text.trimStart().startsWith('{')) {
+        try { const j = JSON.parse(text); text = j.contents || text; } catch {}
+      }
+      // Return raw HTML up to 150k — IOCs can be anywhere in the page
+      if (text && text.length > 200) return text.slice(0, 150000);
+    } catch { /* try next proxy */ }
+  }
+  return null;
+}
+
+// Returns plain text (for CTI brief / AI analysis — 6k cap for AI context limits)
 async function fetchArticleText(url) {
   if (!url) return null;
   const proxies = [
@@ -4177,13 +4222,11 @@ async function fetchArticleText(url) {
       const res = await fetch(proxy(url), { signal: AbortSignal.timeout(10000) });
       if (!res.ok) continue;
       let text = await res.text();
-      // allorigins /get returns JSON with .contents
       if (text.trimStart().startsWith('{')) {
         try { const j = JSON.parse(text); text = j.contents || text; } catch {}
       }
-      // Strip HTML to readable text
       const plain = htmlToPlainText(text);
-      if (plain && plain.length > 200) return plain.slice(0, 6000); // cap at ~6k chars
+      if (plain && plain.length > 200) return plain.slice(0, 6000);
     } catch { /* try next proxy */ }
   }
   return null;
@@ -4812,33 +4855,112 @@ function defangDecode(text) {
 }
 
 // ── REGEX IOC EXTRACTOR (runs on raw text) ──────────────────────────────
-function regexExtractIOCs(rawText) {
+function regexExtractIOCs(rawText, rawHtml) {
   const decoded = defangDecode(rawText);
   const results = { ips: new Set(), domains: new Set(), urls: new Set(), hashes: new Set(), cves: new Set() };
 
-  // IPs (v4) — including defanged originals
-  const ipRaw = rawText.match(/\b(?:\d{1,3}[\[\({\.]?\]?\d{1,3}[\[\({\.]?\]?\d{1,3}[\[\({\.]?\]?\d{1,3})\b/g) || [];
-  const ipClean = decoded.match(/\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b/g) || [];
-  [...ipRaw, ...ipClean].forEach(ip => { const clean = defangDecode(ip); if (/^\d+\.\d+\.\d+\.\d+$/.test(clean)) results.ips.add(clean); });
+  // ── Benign infrastructure domains to exclude from results ──
+  const BENIGN_DOMAINS = new Set([
+    'google.com','googleapis.com','fonts.googleapis.com','fonts.gstatic.com',
+    'gstatic.com','googletagmanager.com','analytics.google.com','doubleclick.net',
+    'schema.org','w3.org','www.w3.org','ogp.me','json-ld.org',
+    'cdn.jsdelivr.net','jsdelivr.net','cdnjs.cloudflare.com','cloudflare.com',
+    'ajax.googleapis.com','maps.googleapis.com','accounts.google.com',
+    'facebook.com','twitter.com','linkedin.com','youtube.com','instagram.com',
+    'amazonaws.com','cloudfront.net','akamaihd.net','fastly.net',
+    'ghost.io','wordpress.com','wordpress.org','jquery.com',
+    'disqus.com','gravatar.com','wp.com','bootstrapcdn.com',
+    'unpkg.com','stackpath.bootstrapcdn.com','maxcdn.bootstrapcdn.com',
+    'apple.com','microsoft.com','mozilla.org','github.com','github.io',
+  ]);
 
-  // URLs — including hxxp/hxxps defanged
-  const urlRaw = rawText.match(/(?:hxxps?|https?)\s*(?:\[:\]|:)\s*(?:\/\/|\[\/\/\]|\[:\/{2}\]|\/\/)[\w\[\]\.\-\/\?=&#%_+]+/gi) || [];
-  const urlClean = decoded.match(/https?:\/\/[\w\.\-\/\?=&#%_+]+/gi) || [];
-  [...urlRaw, ...urlClean].forEach(u => results.urls.add(defangDecode(u)));
+  // Helper: is this a benign infra domain?
+  function isBenign(host) {
+    const h = host.toLowerCase().replace(/^www\./, '');
+    if (BENIGN_DOMAINS.has(h)) return true;
+    // Also check if it ends with a known benign apex
+    return ['googleapis.com','gstatic.com','jsdelivr.net','cloudflare.com',
+            'amazonaws.com','cloudfront.net','akamaihd.net','fastly.net',
+            'ghost.io','wp.com','github.io','github.com'].some(b => h === b || h.endsWith('.'+b));
+  }
 
-  // Domains — anything that looks like domain.tld (from defanged context)
-  const domainRaw = rawText.match(/(?:[\w\-]+\[[\.\]\({\)}\.][\w\-]+)+(?:\[[\.\]\({\)}\.][\w]{2,})+/g) || [];
-  domainRaw.forEach(d => { const clean = defangDecode(d); if (clean.includes('.') && !clean.match(/^\d+\.\d+/)) results.domains.add(clean); });
+  // ── Extract article body from raw HTML to avoid nav/header/footer noise ──
+  let bodyText = rawText;  // default: use plain text passed in
+  if (rawHtml) {
+    let body = rawHtml;
+    // Try to isolate article body: strip nav/header/footer/aside/scripts/styles first
+    body = body
+      .replace(/<(script|style|nav|header|footer|aside)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ');
+    // Try to find main content area
+    const mainMatch = body.match(/<(article|main|div[^>]*(?:post|content|entry|article)[^>]*)>([\s\S]{500,}?)<\/\1>/i);
+    if (mainMatch) body = mainMatch[0];
+    bodyText = body + '\n' + rawText;
+  }
+  const bodyDecoded = defangDecode(bodyText);
 
-  // Hashes — MD5/SHA1/SHA256
-  const md5    = rawText.match(/\b[a-fA-F0-9]{32}\b/g) || [];
-  const sha1   = rawText.match(/\b[a-fA-F0-9]{40}\b/g) || [];
-  const sha256 = rawText.match(/\b[a-fA-F0-9]{64}\b/g) || [];
-  [...md5, ...sha1, ...sha256].forEach(h => results.hashes.add(h));
+  // ── IPv4 — plain and defanged — scan body text only ──
+  const ipPlain  = bodyDecoded.match(/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/g) || [];
+  const ipDefang = bodyText.match(/\b\d{1,3}(?:\[\.\]|\(\.\)|\{\.\}|\s+DOT\s+)\d{1,3}(?:\[\.\]|\(\.\)|\{\.\}|\s+DOT\s+)\d{1,3}(?:\[\.\]|\(\.\)|\{\.\}|\s+DOT\s+)\d{1,3}\b/gi) || [];
+  [...ipPlain, ...ipDefang.map(defangDecode)].forEach(ip => {
+    const clean = ip.trim();
+    if (/^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/.test(clean)) {
+      // Exclude private/loopback/broadcast
+      if (!/^(?:127\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.|0\.0\.0\.0|255\.|169\.254\.)/.test(clean)) {
+        results.ips.add(clean);
+      }
+    }
+  });
 
-  // CVEs
-  const cves = rawText.match(/CVE-\d{4}-\d{4,7}/gi) || [];
-  cves.forEach(v => results.cves.add(v.toUpperCase()));
+  // ── URLs — ONLY defanged ones (intentionally obfuscated = malicious) ──
+  // Plain URLs are too noisy; defanged URLs are a strong IOC signal
+  const urlsFound = new Set();
+  [
+    /hxxps?:\/\/[\w\[\]\.\-\/\?=&#%_+:@!~,;]+/gi,
+    /hxxps?\s*\[:\]\s*\/\/[\w\[\]\.\-\/\?=&#%_+@!~,;]+/gi,
+    /hxxps?\s*\[:\/{2}\][\w\[\]\.\-\/\?=&#%_+@!~,;]+/gi,
+  ].forEach(p => {
+    (bodyText.match(p) || []).forEach(u => {
+      const clean = defangDecode(u).trim().replace(/[.,;)>\]'"]+$/, '');
+      if (clean.length > 12 && !isBenign(clean.replace(/^https?:\/\//i,'').split('/')[0])) {
+        urlsFound.add(clean);
+      }
+    });
+  });
+  urlsFound.forEach(u => results.urls.add(u));
+
+  // ── Domains — ONLY defanged patterns (e.g. evil[.]com, bad(.)net) ──
+  // These are intentionally sanitized = strong IOC signal
+  const domainDefang = bodyText.match(/[\w\-]{2,}(?:\[\.\]|\(\.\)|\{\.\})[\w\-\.\[\]\(\){}]+/gi) || [];
+  domainDefang.forEach(d => {
+    const clean = defangDecode(d).toLowerCase().trim();
+    if (clean.includes('.') && !clean.match(/^\d+\.\d+\.\d+/) && !isBenign(clean)) {
+      results.domains.add(clean);
+    }
+  });
+  // Add hostnames from defanged URLs (those are already filtered above)
+  results.urls.forEach(u => {
+    try {
+      const host = new URL(u).hostname;
+      if (host && !/^\d+\.\d+\.\d+\.\d+$/.test(host) && !isBenign(host)) results.domains.add(host);
+    } catch {}
+  });
+
+  // ── File hashes — MD5(32), SHA1(40), SHA256(64) — scan full body ──
+  // Run on both body text and raw HTML (hashes appear in code blocks, tables, href ?s=hash)
+  const hashSources = [bodyText, rawHtml || ''].join('\n');
+  const hashRe = /\b([a-fA-F0-9]{64}|[a-fA-F0-9]{40}|[a-fA-F0-9]{32})\b/g;
+  let m;
+  while ((m = hashRe.exec(hashSources)) !== null) {
+    const h = m[1];
+    // Filter: not all-same-char, not a short CSS colour repeated, min entropy check
+    if (!/^([a-fA-F0-9])\1+$/.test(h) && new Set(h.toLowerCase()).size > 4) {
+      results.hashes.add(h.toLowerCase());
+    }
+  }
+
+  // ── CVEs — scan full body ──
+  (bodyText.match(/CVE-\d{4}-\d{4,7}/gi) || []).forEach(v => results.cves.add(v.toUpperCase()));
 
   return results;
 }
@@ -4859,24 +4981,119 @@ function iocResultsToText(iocs) {
   return out.trim() ? out.trim() : null;
 }
 
-function extractIOCs() {
+async function extractIOCs() {
   if (!currentArticle) return;
-  const rawText = (currentArticle.title || '') + '\n' + (currentArticle.desc || '');
 
-  // Run regex extractor immediately — instant results shown as prefill
-  const regexIOCs = regexExtractIOCs(rawText);
-  const regexBlock = iocResultsToText(regexIOCs);
-  const prefill = regexBlock
-    ? 'PATTERN-MATCHED IOCs (regex scan):\n' + regexBlock
-    : null;
+  // Switch to IOC tab immediately and show loading state
+  switchTab('ioc');
+  const panel = document.getElementById('panel-ioc');
+  const btn   = document.getElementById('modalIOCBtn');
+  if (panel) {
+    panel.classList.remove('empty');
+    panel.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:8px 0">'
+      + '<span style="color:var(--accent2)">⬡</span> FETCHING ARTICLE FOR IOC SCAN…</div>';
+  }
+  if (btn) btn.disabled = true;
 
-  // Pass raw text to AI — simple, direct
-  runModalAI(
-    CTI_SYSTEM_PROMPT,
-    `${CTI_IOC_PROMPT}\n\nARTICLE TEXT:\n${rawText}`,
-    'modalIOCBtn', '⚑ IOCs',
-    prefill
-  );
+  // ── Step 1: fetch raw HTML + plain text for maximum IOC coverage ──
+  let rawHtml   = null;
+  let plainText = null;
+  const url = currentArticle.link;
+  if (url) {
+    rawHtml   = await fetchArticleRaw(url);       // raw HTML — catches hashes in <code>/<pre>/href
+    plainText = rawHtml ? htmlToPlainText(rawHtml) : await fetchArticleText(url);
+  }
+
+  // ── Step 2: build scan text — raw HTML + plain text + desc + title ──
+  // Run regex on everything: raw HTML catches href/src IOCs, plain text catches prose IOCs
+  const scanText = [
+    rawHtml   || '',
+    plainText || '',
+    currentArticle.desc  || '',
+    currentArticle.title || ''
+  ].join('\n');
+
+  // ── Step 3: regex extraction on full text ───────────────────
+  const iocs = regexExtractIOCs(scanText, rawHtml);
+
+  // ── Step 4: render results directly — no AI hallucinations ──
+  const hasResults = iocs.ips.size || iocs.domains.size ||
+                     iocs.urls.size || iocs.hashes.size || iocs.cves.size;
+
+  if (panel) {
+    const sourceNote = (rawHtml || plainText)
+      ? '<div style="font-family:var(--mono);font-size:8px;color:var(--accent3);letter-spacing:1px;margin-bottom:12px">⬡ SCANNED FULL ARTICLE · ' + (scanText.length).toLocaleString() + ' CHARS</div>'
+      : '<div style="font-family:var(--mono);font-size:8px;color:var(--yellow);letter-spacing:1px;margin-bottom:12px">⚠ FULL ARTICLE UNAVAILABLE · SCANNING FEED DESCRIPTION ONLY</div>';
+
+    if (!hasResults) {
+      panel.innerHTML = sourceNote +
+        '<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">No extractable IOCs found in this article.</div>';
+    } else {
+      panel.innerHTML = sourceNote + renderIOCs(iocs);
+    }
+    panel.className = 'modal-panel active';
+  }
+
+  if (btn) btn.disabled = false;
+  const tab = document.querySelector('[data-tab="ioc"]');
+  if (tab) { tab.classList.remove('loading-tab'); tab.classList.add('has-content'); }
+}
+
+// Render IOC results as styled HTML (no AI, pure regex output)
+function renderIOCs(iocs) {
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function section(title, items, colorClass) {
+    if (!items.size) return '';
+    const rows = [...items].map((v, i) => {
+      const wasDefanged = /hxxp|\[\.|DOT|\[:\]|\[@\]/i.test(v) ? 'yes' : 'no';
+      return `<div class="ioc-item">
+        <span class="ioc-num">${i+1}.</span>
+        <span class="ioc-val">${esc(v)}</span>
+        <span class="ioc-meta">[defanged: ${wasDefanged}]</span>
+      </div>`;
+    }).join('');
+    return `<div class="ioc-section">
+      <div class="ioc-section-title" style="color:${colorClass}">${title}</div>
+      ${rows}
+    </div>`;
+  }
+
+  function hashSection(hashes) {
+    if (!hashes.size) return '';
+    const rows = [...hashes].map((h, i) => {
+      const type = h.length === 32 ? 'MD5' : h.length === 40 ? 'SHA1' : 'SHA256';
+      return `<div class="ioc-item">
+        <span class="ioc-num">${i+1}.</span>
+        <span class="ioc-val">${esc(h)}</span>
+        <span class="ioc-meta">[${type}]</span>
+      </div>`;
+    }).join('');
+    return `<div class="ioc-section">
+      <div class="ioc-section-title" style="color:#ffaa00">FILE HASHES</div>
+      ${rows}
+    </div>`;
+  }
+
+  function cveSection(cves) {
+    if (!cves.size) return '';
+    const rows = [...cves].map((v, i) =>
+      `<div class="ioc-item">
+        <span class="ioc-num">${i+1}.</span>
+        <span class="ioc-val" style="color:#ff8800">${esc(v)}</span>
+      </div>`
+    ).join('');
+    return `<div class="ioc-section">
+      <div class="ioc-section-title" style="color:#ff8800">CVEs</div>
+      ${rows}
+    </div>`;
+  }
+
+  return section('IP ADDRESSES', iocs.ips, '#ff4444')
+       + section('DOMAINS',      iocs.domains, '#00cc99')
+       + section('URLS',         iocs.urls, '#4488ff')
+       + hashSection(iocs.hashes)
+       + cveSection(iocs.cves);
 }
 
 async function generateDigest() {
