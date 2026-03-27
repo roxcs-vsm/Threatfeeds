@@ -5,10 +5,63 @@
 <script>
   // Instant theme apply before paint — prevents green flash on blue theme
   (function(){
-    const t = localStorage.getItem('tf_theme');
+    const t = localStorage.getItem('tf_theme') || 'dark';
     const attrMap = { blue:'blue', dark:'dark', light:'light' };
     if (attrMap[t]) document.documentElement.setAttribute('data-theme', attrMap[t]);
   })();
+
+// ============================================================
+// EXPORT THEME HELPERS
+// ============================================================
+function getExportColors() {
+  const theme = document.documentElement.getAttribute('data-theme') || 'green';
+  const palettes = {
+    green: { bg:'#030a06', bg2:'#060f09', bg3:'#0a160d', border:'#1a3d20', border2:'#224428', accent:'#00ff41', accent2:'#00cc33', accent3:'#1a5c26', red:'#ff2244', orange:'#ff8800', yellow:'#ffcc00', blue:'#00aaff', purple:'#cc44ff', text:'#c8e8cb', text2:'#7aaa80', text3:'#4a7050' },
+    blue:  { bg:'#070e1f', bg2:'#0b1530', bg3:'#0f1d3d', border:'#1e3d7a', border2:'#2a4f90', accent:'#38d0ff', accent2:'#1aabee', accent3:'#1e4a88', red:'#ff4466', orange:'#ff7722', yellow:'#ffe600', blue:'#5599ff', purple:'#cc55ff', text:'#d4eeff', text2:'#80b8e8', text3:'#3a6898' },
+    dark:  { bg:'#0d0e11', bg2:'#13151a', bg3:'#191c23', border:'#2a2f3d', border2:'#323848', accent:'#00e8ff', accent2:'#00b8cc', accent3:'#003d4d', red:'#ff3355', orange:'#ff6b2b', yellow:'#ffd000', blue:'#4da6ff', purple:'#b44dff', text:'#e2e8f0', text2:'#8899aa', text3:'#445566' },
+    light: { bg:'#eef4fb', bg2:'#e2edf8', bg3:'#d6e6f4', border:'#9bbedd', border2:'#7aaecf', accent:'#1565c0', accent2:'#1976d2', accent3:'#90b8e0', red:'#c62828', orange:'#e65100', yellow:'#f57f17', blue:'#0277bd', purple:'#6a1b9a', text:'#0d2137', text2:'#2c5282', text3:'#5a82a6' },
+  };
+  return palettes[theme] || palettes.green;
+}
+
+function getExportStyles(c) {
+  return `
+  body { background:${c.bg}; color:${c.text}; font-family:'Rajdhani',sans-serif; margin:0; padding:32px; max-width:920px; }
+  h1 { font-family:'Orbitron',monospace; color:${c.accent}; letter-spacing:3px; font-size:16px; border-bottom:2px solid ${c.border}; padding-bottom:10px; }
+  .meta { font-family:'Share Tech Mono',monospace; font-size:10px; color:${c.text3}; margin-bottom:20px; }
+  .digest-body { margin-bottom:24px; }
+  .dg-chapter { font-family:'Orbitron',monospace; font-size:11px; color:${c.accent}; letter-spacing:3px; padding:8px 12px; margin:18px 0 8px; border-top:2px solid ${c.border}; background:linear-gradient(90deg,${c.accent}0f,transparent); display:flex; align-items:center; gap:8px; }
+  .dg-chapter::before { content:''; width:5px; height:5px; background:${c.accent}; flex-shrink:0; }
+  .dg-subchapter { font-family:'Share Tech Mono',monospace; font-size:10px; color:${c.accent2}; letter-spacing:2px; padding:8px 0 4px 12px; border-left:3px solid ${c.accent2}; margin:12px 0 6px; }
+  .dg-threat-block { background:${c.bg2}; border:1px solid ${c.border}; border-left:4px solid ${c.accent3}; padding:10px 14px; margin:6px 0 12px; }
+  .dg-threat-block.sev-critical { border-left-color:${c.red}; } .dg-threat-block.sev-high { border-left-color:${c.orange}; } .dg-threat-block.sev-medium { border-left-color:${c.yellow}; }
+  .dg-threat-name { font-family:'Share Tech Mono',monospace; font-size:11px; color:${c.text}; text-transform:uppercase; margin-bottom:5px; padding-bottom:4px; border-bottom:1px solid ${c.border}; }
+  .dg-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:${c.accent2}; letter-spacing:1.5px; text-transform:uppercase; min-width:110px; display:inline-block; }
+  .dg-label-line { display:flex; gap:8px; margin:4px 0; font-size:13px; color:${c.text}; border-bottom:1px solid ${c.border}; padding-bottom:4px; }
+  .dg-p { font-size:13px; color:${c.text2}; line-height:1.8; margin:4px 0 8px; }
+  .dg-li { display:flex; gap:8px; margin:4px 0; font-size:13px; color:${c.text2}; } .dg-li::before { content:'▸'; color:${c.accent3}; flex-shrink:0; }
+  .dg-priority-block { display:flex; gap:10px; margin:5px 0; padding:8px 12px; background:${c.bg2}; border:1px solid ${c.border}; }
+  .dg-priority-tag { font-family:'Share Tech Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; padding:2px 6px; flex-shrink:0; }
+  .dg-priority-tag.p1 { background:${c.red}22; color:${c.red}; border:1px solid ${c.red}44; }
+  .dg-priority-tag.p2 { background:${c.orange}22; color:${c.orange}; border:1px solid ${c.orange}44; }
+  .dg-priority-tag.p3 { background:${c.yellow}22; color:${c.yellow}; border:1px solid ${c.yellow}44; }
+  .dg-priority-text { font-size:13px; color:${c.text2}; line-height:1.6; }
+  .dg-hunt-box { padding:14px 16px; background:${c.blue}0a; border:1px solid ${c.blue}22; border-left:4px solid ${c.blue}; margin:6px 0 12px; }
+  .dg-detection-box { padding:14px 16px; background:${c.purple}0a; border:1px solid ${c.purple}22; border-left:4px solid ${c.purple}; margin:6px 0 12px; }
+  .dg-overview-box { padding:14px 16px; background:${c.bg2}; border:1px solid ${c.border}; border-left:4px solid ${c.accent3}; margin:6px 0 12px; font-size:13px; color:${c.text2}; line-height:1.8; }
+  .dg-section-rule { border:none; border-top:1px solid ${c.border}; margin:10px 0 14px; }
+  .dg-bold { color:${c.text}; font-weight:700; }
+  .dg-code { font-family:'Share Tech Mono',monospace; font-size:11px; color:${c.accent2}; background:${c.bg3}; padding:1px 5px; }
+  .md-risk-critical { color:${c.red}; font-weight:700; } .md-risk-high { color:${c.orange}; font-weight:700; } .md-risk-medium { color:${c.yellow}; font-weight:700; }
+  .sources { border-top:2px solid ${c.border}; padding-top:16px; margin-top:24px; }
+  .sources-title { font-family:'Share Tech Mono',monospace; font-size:9px; color:${c.accent3}; letter-spacing:2px; margin-bottom:10px; }
+  hr { border:none; border-top:1px solid ${c.border}; margin:20px 0; }
+  footer { font-family:'Share Tech Mono',monospace; font-size:9px; color:${c.accent3}; margin-top:28px; padding-top:10px; border-top:1px solid ${c.border}; }
+  a { color:${c.blue}; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  @media print { body { padding:20px; } .no-print { display:none !important; } }
+  `;
+}
 
 // ============================================================
 // SEVERITY FILTER (clickable threat counter)
@@ -89,12 +142,19 @@ async function exportDailyDigest() {
     return;
   }
 
+  // Strip the .digest-sources div already appended by digestAppendLinks() to avoid duplication
+  const tmpDiv = document.createElement('div');
+  tmpDiv.innerHTML = digestHtml;
+  tmpDiv.querySelector('.digest-sources')?.remove();
+  const cleanDigestHtml = tmpDiv.innerHTML;
+
   const today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
   const articles = allArticles.slice(0, 25);
+  const c = getExportColors();
   const srcLinks = articles.map((a, i) =>
     `<div style="display:flex;gap:8px;margin:3px 0">
-      <span style="font-family:monospace;color:#4a7050;flex-shrink:0">${String(i+1).padStart(2,'0')}.</span>
-      <a href="${a.link}" target="_blank" style="color:#00aaff;font-family:monospace;font-size:11px;word-break:break-all;text-decoration:none">
+      <span style="font-family:monospace;color:${c.text3};flex-shrink:0">${String(i+1).padStart(2,'0')}.</span>
+      <a href="${a.link}" target="_blank" style="color:${c.blue};font-family:monospace;font-size:11px;word-break:break-all;text-decoration:none">
         [${a.source.name}] ${a.title.slice(0,80)}${a.title.length>80?'…':''}
       </a>
     </div>`
@@ -103,42 +163,12 @@ async function exportDailyDigest() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <title>Daily CTI Digest — ${today}</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
-<style>
-  body { background:#030a06; color:#c8e8cb; font-family:'Rajdhani',sans-serif; margin:0; padding:32px; max-width:920px; }
-  h1 { font-family:'Orbitron',monospace; color:#00ff41; letter-spacing:3px; font-size:16px; border-bottom:2px solid #1a3d20; padding-bottom:10px; }
-  .meta { font-family:'Share Tech Mono',monospace; font-size:10px; color:#4a7050; margin-bottom:20px; }
-  .digest-body { margin-bottom:24px; }
-  .dg-chapter { font-family:'Orbitron',monospace; font-size:11px; color:#00ff41; letter-spacing:3px; padding:8px 12px; margin:18px 0 8px; border-top:2px solid #1a3d20; background:linear-gradient(90deg,rgba(0,255,65,0.06),transparent); display:flex; align-items:center; gap:8px; }
-  .dg-chapter::before { content:''; width:5px; height:5px; background:#00ff41; flex-shrink:0; }
-  .dg-subchapter { font-family:'Share Tech Mono',monospace; font-size:10px; color:#00cc33; letter-spacing:2px; padding:8px 0 4px 12px; border-left:3px solid #00cc33; margin:12px 0 6px; }
-  .dg-threat-block { background:#050f08; border:1px solid #1a3d20; border-left:4px solid #1a5c26; padding:10px 14px; margin:6px 0 12px; }
-  .dg-threat-block.sev-critical { border-left-color:#ff2244; } .dg-threat-block.sev-high { border-left-color:#ff8800; } .dg-threat-block.sev-medium { border-left-color:#ffcc00; }
-  .dg-threat-name { font-family:'Share Tech Mono',monospace; font-size:11px; color:#c8e8cb; text-transform:uppercase; margin-bottom:5px; padding-bottom:4px; border-bottom:1px solid #1a3d20; }
-  .dg-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:#4cdd6e; letter-spacing:1.5px; text-transform:uppercase; min-width:110px; display:inline-block; }
-  .dg-label-line { display:flex; gap:8px; margin:4px 0; font-size:13px; color:#c8e8cb; border-bottom:1px solid rgba(255,255,255,0.04); padding-bottom:4px; }
-  .dg-p { font-size:13px; color:#7aaa80; line-height:1.8; margin:4px 0 8px; }
-  .dg-li { display:flex; gap:8px; margin:4px 0; font-size:13px; color:#7aaa80; } .dg-li::before { content:'▸'; color:#1a5c26; flex-shrink:0; }
-  .dg-priority-block { display:flex; gap:10px; margin:5px 0; padding:8px 12px; background:#050f08; border:1px solid #1a3d20; }
-  .dg-priority-tag { font-family:'Share Tech Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; padding:2px 6px; flex-shrink:0; }
-  .dg-priority-tag.p1 { background:rgba(255,34,68,0.15); color:#ff2244; border:1px solid #ff224444; }
-  .dg-priority-tag.p2 { background:rgba(255,136,0,0.12); color:#ff8800; border:1px solid #ff880044; }
-  .dg-priority-tag.p3 { background:rgba(255,204,0,0.10); color:#ffcc00; border:1px solid #ffcc0044; }
-  .dg-priority-text { font-size:13px; color:#7aaa80; line-height:1.6; }
-  .dg-hunt-box { padding:14px 16px; background:rgba(0,170,255,0.04); border:1px solid #00aaff22; border-left:4px solid #00aaff; margin:6px 0 12px; }
-  .dg-detection-box { padding:14px 16px; background:rgba(170,102,255,0.04); border:1px solid #aa66ff22; border-left:4px solid #aa66ff; margin:6px 0 12px; }
-  .dg-overview-box { padding:14px 16px; background:rgba(0,255,65,0.03); border:1px solid #1a3d20; border-left:4px solid #1a5c26; margin:6px 0 12px; font-size:13px; color:#7aaa80; line-height:1.8; }
-  .dg-section-rule { border:none; border-top:1px solid #1a3d20; margin:10px 0 14px; }
-  .md-risk-critical { color:#ff2244; font-weight:700; } .md-risk-high { color:#ff8800; font-weight:700; } .md-risk-medium { color:#ffcc00; font-weight:700; }
-  .sources { border-top:2px solid #1a3d20; padding-top:16px; margin-top:24px; }
-  .sources-title { font-family:'Share Tech Mono',monospace; font-size:9px; color:#1a5c26; letter-spacing:2px; margin-bottom:10px; }
-  hr { border:none; border-top:1px solid #1a3d20; margin:20px 0; }
-  footer { font-family:'Share Tech Mono',monospace; font-size:9px; color:#1a5c26; margin-top:28px; padding-top:10px; border-top:1px solid #1a3d20; }
-</style>
+<style>${getExportStyles(c)}</style>
 </head><body>
 <h1>📊 DAILY CTI INTELLIGENCE DIGEST</h1>
 <div class="meta">${today} &nbsp;·&nbsp; ${articles.length} sources analysed &nbsp;·&nbsp; THFeeds</div>
 <hr>
-<div class="digest-body">${digestHtml}</div>
+<div class="digest-body">${cleanDigestHtml}</div>
 <div class="sources">
   <div class="sources-title">⬡ SOURCE REFERENCES (${articles.length} articles)</div>
   ${srcLinks}
@@ -154,6 +184,52 @@ async function exportDailyDigest() {
   a.click();
   URL.revokeObjectURL(url);
   toast('Daily digest exported!', 'info');
+}
+
+async function exportDailyDigestPDF() {
+  const digestEl  = document.getElementById('digestText');
+  const digestHtml = digestEl?.innerHTML || '';
+  if (!digestHtml || digestHtml.length < 50) {
+    toast('Generate the AI Digest first', 'info');
+    return;
+  }
+
+  // Strip the .digest-sources div already appended by digestAppendLinks() to avoid duplication
+  const tmpDiv = document.createElement('div');
+  tmpDiv.innerHTML = digestHtml;
+  tmpDiv.querySelector('.digest-sources')?.remove();
+  const cleanDigestHtml = tmpDiv.innerHTML;
+
+  const today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  const articles = allArticles.slice(0, 25);
+  const c = getExportColors();
+  const srcLinks = articles.map((a, i) =>
+    `<div style="display:flex;gap:8px;margin:3px 0">
+      <span style="font-family:monospace;color:${c.text3};flex-shrink:0">${String(i+1).padStart(2,'0')}.</span>
+      <a href="${a.link}" target="_blank" style="color:${c.blue};font-family:monospace;font-size:11px;word-break:break-all;text-decoration:none">
+        [${a.source.name}] ${a.title.slice(0,80)}${a.title.length>80?'…':''}
+      </a>
+    </div>`
+  ).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Daily CTI Digest — ${today}</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>\${getExportStyles(c)}</style>
+</head><body>
+<h1>📊 DAILY CTI INTELLIGENCE DIGEST</h1>
+<div class="meta">${today} &nbsp;·&nbsp; ${articles.length} sources analysed &nbsp;·&nbsp; THFeeds</div>
+<hr>
+<div class="digest-body">${cleanDigestHtml}</div>
+<div class="sources">
+  <div class="sources-title">⬡ SOURCE REFERENCES (${articles.length} articles)</div>
+  ${srcLinks}
+</div>
+<footer>Generated by THFeeds · ${new Date().toISOString()}</footer>
+</body></html>`);
+  win.document.close();
+  win.onload = () => { win.focus(); win.print(); };
 }
 
 </script>
@@ -415,6 +491,7 @@ async function exportDailyDigest() {
     width:40%; height:100%; background:var(--accent); animation:load 1s ease-in-out infinite;
   }
   @keyframes load { 0%{left:-40%} 100%{left:100%} }
+  @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 
   /* ARTICLE CARD */
   .article-card {
@@ -1951,21 +2028,25 @@ async function exportDailyDigest() {
 
       <!-- Ollama config -->
       <div id="cfg-ollama">
-        <input class="ollama-url-input" id="ollamaUrl" value="http://localhost:11434" placeholder="http://localhost:11434">
-        <select class="model-select" id="modelSelect">
-          <option value="llama3.2">llama3.2</option>
-          <option value="llama3.1">llama3.1</option>
-          <option value="llama3">llama3</option>
-          <option value="mistral">mistral</option>
-          <option value="mistral-nemo">mistral-nemo</option>
-          <option value="phi3">phi3</option>
-          <option value="phi3.5">phi3.5</option>
-          <option value="gemma2">gemma2</option>
-          <option value="gemma3">gemma3</option>
-          <option value="qwen2.5">qwen2.5</option>
-          <option value="deepseek-r1">deepseek-r1</option>
-          <option value="mixtral">mixtral</option>
-        </select>
+        <input class="ollama-url-input" id="ollamaUrl" value="http://localhost:11434" placeholder="http://localhost:11434"
+          onblur="fetchOllamaModels()">
+        <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px">
+          <select class="model-select" id="modelSelect" style="flex:1;margin-bottom:0">
+            <option value="llama3.2">llama3.2</option>
+            <option value="llama3.1">llama3.1</option>
+            <option value="llama3">llama3</option>
+            <option value="mistral">mistral</option>
+            <option value="mistral-nemo">mistral-nemo</option>
+            <option value="phi3">phi3</option>
+            <option value="phi3.5">phi3.5</option>
+            <option value="gemma2">gemma2</option>
+            <option value="gemma3">gemma3</option>
+            <option value="qwen2.5">qwen2.5</option>
+            <option value="deepseek-r1">deepseek-r1</option>
+            <option value="mixtral">mixtral</option>
+          </select>
+          <button id="ollamaDetectBtn" class="btn" style="padding:5px 8px;font-size:11px;flex-shrink:0;border-color:var(--accent3);color:var(--accent2)" onclick="fetchOllamaModels()" title="Detect local Ollama models">↻</button>
+        </div>
         <button class="btn" style="width:100%;margin-top:2px" onclick="checkOllama()">▶ TEST CONNECTION</button>
         <div id="ollamaDiag" style="display:none;margin-top:8px;padding:8px;background:rgba(255,34,68,0.07);border:1px solid #ff224440;font-family:var(--mono);font-size:10px;line-height:1.8;color:var(--text3)"></div>
       </div>
@@ -2332,7 +2413,7 @@ async function exportDailyDigest() {
 // ============================================================
 // THEME TOGGLE  (green terminal ↔ blue tactical HUD)
 // ============================================================
-let currentTheme = localStorage.getItem('tf_theme') || 'green';
+let currentTheme = localStorage.getItem('tf_theme') || 'dark';
 
 // Theme registry — easy to add more themes later
 const THEMES = {
@@ -2766,12 +2847,59 @@ function enableAIButtons(on) {
   });
 }
 
-function updateModelSelect(models) {
+function updateModelSelect(localModels) {
   const sel = document.getElementById('modelSelect');
   const current = sel.value;
   const defaults = ['llama3.2','llama3.1','llama3','mistral','mistral-nemo','phi3','phi3.5','gemma2','gemma3','qwen2.5','deepseek-r1','mixtral'];
-  const all = [...new Set([...models, ...defaults])];
-  sel.innerHTML = all.map(m => `<option value="${m}"${m===current?' selected':''}>${m}</option>`).join('');
+
+  let html = '';
+  if (localModels.length) {
+    html += `<optgroup label="── Local Models (${localModels.length} detected) ──">`;
+    html += localModels.map(m => `<option value="${m}"${m===current?' selected':''}>${m}</option>`).join('');
+    html += '</optgroup>';
+    const extras = defaults.filter(d => !localModels.includes(d));
+    if (extras.length) {
+      html += `<optgroup label="── Common Models ──">`;
+      html += extras.map(m => `<option value="${m}"${m===current?' selected':''}>${m}</option>`).join('');
+      html += '</optgroup>';
+    }
+  } else {
+    html += defaults.map(m => `<option value="${m}"${m===current?' selected':''}>${m}</option>`).join('');
+  }
+  sel.innerHTML = html;
+  // Re-select previous value if still present, else pick first local model
+  if (localModels.length && !sel.value) sel.value = localModels[0];
+}
+
+async function fetchOllamaModels() {
+  const sel   = document.getElementById('modelSelect');
+  const btn   = document.getElementById('ollamaDetectBtn');
+  const url   = (document.getElementById('ollamaUrl').value || 'http://localhost:11434').replace(/\/$/, '');
+
+  if (btn) { btn.textContent = '↻'; btn.disabled = true; btn.style.animation = 'spin 1s linear infinite'; }
+  sel.innerHTML = '<option disabled selected>Detecting models…</option>';
+
+  try {
+    const res = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const models = (data.models || []).map(m => m.name.replace(/:latest$/, ''));
+    if (models.length) {
+      updateModelSelect(models);
+      document.getElementById('ollamaModelInfo').textContent = `${models.length} MODEL${models.length !== 1 ? 'S' : ''}`;
+      toast(`${models.length} local model${models.length !== 1 ? 's' : ''} detected`);
+    } else {
+      updateModelSelect([]);
+      document.getElementById('ollamaModelInfo').textContent = 'NO LOCAL MODELS';
+      toast('No local models found — pull one with: ollama pull llama3.2', 'info');
+    }
+  } catch(e) {
+    updateModelSelect([]);
+    document.getElementById('ollamaModelInfo').textContent = '';
+    // Silently fall back to default list; checkOllama() will show detailed error
+  } finally {
+    if (btn) { btn.textContent = '↻'; btn.disabled = false; btn.style.animation = ''; }
+  }
 }
 
 // ============================================================
@@ -2806,6 +2934,7 @@ function switchProvider(p) {
   const dot = document.getElementById('aiDot');
   const status = document.getElementById('aiStatus');
   if (p === 'ollama') {
+    fetchOllamaModels();
     checkOllama();
   } else {
     const key = p === 'claude'
@@ -5377,6 +5506,9 @@ async function generateDigest() {
   digestEl.style.display = 'block';
   digestEl.className = 'digest-text typing';
   digestEl.innerHTML = '';
+  // Open the expanded view immediately so user sees streaming content
+  expandBody.innerHTML = '';
+  document.getElementById('digestExpandOverlay').style.display = 'flex';
   const headlines = allArticles.slice(0, 25).map(a =>
     `[${a.source.name}] ${a.title}${a.desc ? ' — ' + a.desc.slice(0,120) : ''}`
   ).join('\n');
@@ -5972,16 +6104,10 @@ For each critical item (max 4), use this format:
 ## VULNERABILITY WATCH
 List any CVEs or exploited vulnerabilities mentioned across the curated articles.
 
-## DETECTION & HUNTING OPPORTUNITIES
-One or two actionable detection/hunting leads derived from this week's intelligence.
-
 ## RECOMMENDED ACTIONS FOR THE WEEK
 [P1] Highest priority action — due within 24h
 [P2] Second priority — due within 72h
 [P3] Third priority — due end of week
-
-## INTELLIGENCE SOURCES
-List the articles with their source and title (use the provided list).
 
 RULES: Only reference what is in the provided articles. No fabrication. Be specific and actionable. Write for a professional security audience.`;
 
@@ -6034,26 +6160,34 @@ async function wbExportReport() {
   const body = document.getElementById('wbReportBody');
   if (!body._reportText) { toast('Generate report first', 'info'); return; }
   const entries = await wbGetAll();
+  entries.sort((a,b) => a.addedAt - b.addedAt);
   const week = body._reportDate || new Date().toLocaleDateString('en-GB');
+  const c = getExportColors();
+
+  const srcLinks = entries.map((e, i) => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    return `<div style="display:flex;gap:8px;margin:3px 0">
+      <span style="font-family:monospace;color:${c.text3};flex-shrink:0">${String(i+1).padStart(2,'0')}.</span>
+      <a href="${e.link||'#'}" target="_blank" style="color:${c.blue};font-family:monospace;font-size:11px;word-break:break-all;text-decoration:none">
+        [${e.source}] ${(e.title||'').slice(0,90)}${(e.title||'').length>90?'…':''} <span style="color:${c.text3};font-size:10px">(${dateStr})</span>
+      </a>
+    </div>`;
+  }).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <title>Weekly CTI Report — ${week}</title>
-<style>
-body{background:#030a06;color:#c8e8cb;font-family:'Rajdhani',sans-serif;margin:0;padding:40px;max-width:900px}
-h1{font-family:monospace;color:#00ff41;letter-spacing:3px;border-bottom:2px solid #1a3d20;padding-bottom:12px;font-size:18px}
-h2{font-family:monospace;color:#00cc33;letter-spacing:2px;font-size:13px;margin:24px 0 8px;border-left:3px solid #00cc33;padding-left:10px}
-p,li{color:#7aaa80;line-height:1.8;font-size:13px}
-.block{background:#060f09;border:1px solid #1a3d20;border-left:3px solid #00cc33;padding:12px 16px;margin:8px 0}
-.critical{color:#ff2244;font-weight:700} .high{color:#ff8800;font-weight:700}
-.p1{color:#ff2244} .p2{color:#ff8800} .p3{color:#ffcc00}
-a{color:#00aaff} hr{border-color:#1a3d20;margin:20px 0}
-</style></head><body>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>${getExportStyles(c)}</style>
+</head><body>
 <h1>📋 WEEKLY CTI INTELLIGENCE REPORT</h1>
-<p style="font-family:monospace;font-size:10px;color:#4a7050">Week ending ${week} &nbsp;·&nbsp; ${entries.length} articles · THFeeds</p>
+<div class="meta">Week ending ${week} &nbsp;·&nbsp; ${entries.length} articles curated &nbsp;·&nbsp; THFeeds</div>
 <hr>
-<div>${document.getElementById('wbReportBody').innerHTML}</div>
-<hr>
-<p style="font-family:monospace;font-size:9px;color:#1a5c26">Generated by THFeeds · ${new Date().toISOString()}</p>
+<div class="digest-body">${body.innerHTML}</div>
+<div class="sources">
+  <div class="sources-title">⬡ INTELLIGENCE SOURCES (${entries.length} articles)</div>
+  ${srcLinks}
+</div>
+<footer>Generated by THFeeds · ${new Date().toISOString()}</footer>
 </body></html>`;
 
   const blob = new Blob([html], {type:'text/html'});
@@ -6062,6 +6196,44 @@ a{color:#00aaff} hr{border-color:#1a3d20;margin:20px 0}
   a.href = url; a.download = `cti-weekly-report-${new Date().toISOString().slice(0,10)}.html`;
   a.click(); URL.revokeObjectURL(url);
   toast('Weekly report exported', 'info');
+}
+
+async function wbPrintReport() {
+  const body = document.getElementById('wbReportBody');
+  if (!body._reportText) { toast('Generate report first', 'info'); return; }
+  const entries = await wbGetAll();
+  entries.sort((a,b) => a.addedAt - b.addedAt);
+  const week = body._reportDate || new Date().toLocaleDateString('en-GB');
+  const c = getExportColors();
+
+  const srcLinks = entries.map((e, i) => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    return `<div style="display:flex;gap:8px;margin:3px 0">
+      <span style="font-family:monospace;color:${c.text3};flex-shrink:0">${String(i+1).padStart(2,'0')}.</span>
+      <a href="${e.link||'#'}" style="color:${c.blue};font-family:monospace;font-size:11px;word-break:break-all;text-decoration:none">
+        [${e.source}] ${(e.title||'').slice(0,90)}${(e.title||'').length>90?'…':''} <span style="color:${c.text3};font-size:10px">(${dateStr})</span>
+      </a>
+    </div>`;
+  }).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Weekly CTI Report — ${week}</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>${getExportStyles(c)}</style>
+</head><body>
+<h1>📋 WEEKLY CTI INTELLIGENCE REPORT</h1>
+<div class="meta">Week ending ${week} &nbsp;·&nbsp; ${entries.length} articles curated &nbsp;·&nbsp; THFeeds</div>
+<hr>
+<div class="digest-body">${body.innerHTML}</div>
+<div class="sources">
+  <div class="sources-title">⬡ INTELLIGENCE SOURCES (${entries.length} articles)</div>
+  ${srcLinks}
+</div>
+<footer>Generated by THFeeds · ${new Date().toISOString()}</footer>
+</body></html>`);
+  win.document.close();
+  win.onload = () => { win.focus(); win.print(); };
 }
 
 // ============================================================
@@ -6929,6 +7101,8 @@ async function wbInit() {
   <div class="digest-expand-panel">
     <div class="digest-expand-header">
       <div class="digest-expand-title">AI THREAT DIGEST</div>
+      <button class="btn" style="padding:4px 10px;font-size:9px;margin-left:auto;margin-right:8px" onclick="exportDailyDigestPDF()" title="Download as PDF">↓ PDF</button>
+      <button class="btn" style="padding:4px 10px;font-size:9px;margin-right:8px" onclick="exportDailyDigest()" title="Download as HTML">↓ EXPORT</button>
       <button class="modal-close" onclick="collapseDigest()">✕</button>
     </div>
     <div class="digest-expand-body" id="digestExpandBody"></div>
@@ -6967,6 +7141,7 @@ async function wbInit() {
         <button class="btn" style="padding:2px 8px;font-size:8px;border-color:#ffcc0066;color:#ffcc00" onclick="wbGenerateReport()" id="wbReportGenBtn">⬡ GENERATE</button>
         <button class="btn" style="padding:2px 8px;font-size:8px" onclick="wbCopyReport()" id="wbReportCopyBtn">⎘ COPY</button>
         <button class="btn" style="padding:2px 8px;font-size:8px" onclick="wbExportReport()" id="wbReportExportBtn">↓ EXPORT</button>
+        <button class="btn" style="padding:2px 8px;font-size:8px;border-color:#cc44ff55;color:#cc44ff" onclick="wbPrintReport()" id="wbReportPdfBtn">⎙ PDF</button>
       </div>
       <div class="wb-report-body" id="wbReportBody">
         <div style="font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.9">
