@@ -9,6 +9,153 @@
     const attrMap = { blue:'blue', dark:'dark', light:'light' };
     if (attrMap[t]) document.documentElement.setAttribute('data-theme', attrMap[t]);
   })();
+
+// ============================================================
+// SEVERITY FILTER (clickable threat counter)
+// ============================================================
+let activeSeverityFilter = null;
+
+// Single source of truth for severity classification
+// Used by BOTH counter and filter — guarantees numbers always match
+function classifyArticleSeverity(a) {
+  const text = ((a.title || '') + ' ' + (a.desc || '')).toLowerCase();
+  const tags  = (a.tags || []).join(' ').toLowerCase();
+  if (/zero.?day|0.?day|actively exploit|in the wild|ransomware|nation.?state|supply chain attack|critical infrastructure|destructive/.test(text)
+      || tags.includes('ransomware')) return 'critical';
+  if (/remote code exec|\brce\b|privilege escal|unauthenticated|data breach|lateral movement|command.and.control|backdoor|rootkit/.test(text)
+      || (tags.includes('apt') && !/zero.?day|ransomware/.test(text))) return 'high';
+  if (/vulnerabilit|cve-|patch|advisory|phishing|malware|trojan|infostealer|botnet/.test(text)
+      || tags.includes('vuln') || tags.includes('malware') || tags.includes('apt')) return 'medium';
+  return null;
+}
+
+function filterBySeverity(severity) {
+  if (activeSeverityFilter === severity) {
+    activeSeverityFilter = null;
+    ['tcBoxCritical','tcBoxHigh','tcBoxMedium'].forEach(id => document.getElementById(id)?.classList.remove('active-filter'));
+    clearThreatFilter();
+    return;
+  }
+  activeSeverityFilter = severity;
+  ['tcBoxCritical','tcBoxHigh','tcBoxMedium'].forEach(id => document.getElementById(id)?.classList.remove('active-filter'));
+  const boxId = { critical:'tcBoxCritical', high:'tcBoxHigh', medium:'tcBoxMedium' }[severity];
+  document.getElementById(boxId)?.classList.add('active-filter');
+
+  // Use same classifier as counter — guaranteed match
+  filteredArticles = allArticles.filter(a => classifyArticleSeverity(a) === severity);
+  document.getElementById('visibleCount').textContent = filteredArticles.length;
+  renderFeed();
+  toast(`Showing ${filteredArticles.length} ${severity.toUpperCase()} severity articles`, 'info');
+}
+
+function clearThreatFilter() {
+  activeSeverityFilter = null;
+  ['tcBoxCritical','tcBoxHigh','tcBoxMedium'].forEach(id => {
+    document.getElementById(id)?.classList.remove('active-filter');
+  });
+  applyFilters();
+}
+
+// ============================================================
+// GEO HOTSPOT CLICK FILTER
+// ============================================================
+let activeGeoFilter = null;
+
+function filterByGeo(geoName) {
+  if (activeGeoFilter === geoName) {
+    activeGeoFilter = null;
+    applyFilters();
+    toast('Geo filter cleared', 'info');
+    return;
+  }
+  activeGeoFilter = geoName;
+  const pat = new RegExp('\\b' + geoName.replace(/\s+/g, '\\s+') + '\\b', 'i');
+  filteredArticles = allArticles.filter(a =>
+    pat.test((a.title || '') + ' ' + (a.desc || ''))
+  );
+  document.getElementById('visibleCount').textContent = filteredArticles.length;
+  renderFeed();
+  toast(`Showing ${filteredArticles.length} articles mentioning ${geoName}`, 'info');
+}
+
+// ============================================================
+// DAILY CTI DIGEST EXPORT
+// ============================================================
+async function exportDailyDigest() {
+  const digestEl  = document.getElementById('digestText');
+  const digestHtml = digestEl?.innerHTML || '';
+  if (!digestHtml || digestHtml.length < 50) {
+    toast('Generate the AI Digest first', 'info');
+    return;
+  }
+
+  const today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  const articles = allArticles.slice(0, 25);
+  const srcLinks = articles.map((a, i) =>
+    `<div style="display:flex;gap:8px;margin:3px 0">
+      <span style="font-family:monospace;color:#4a7050;flex-shrink:0">${String(i+1).padStart(2,'0')}.</span>
+      <a href="${a.link}" target="_blank" style="color:#00aaff;font-family:monospace;font-size:11px;word-break:break-all;text-decoration:none">
+        [${a.source.name}] ${a.title.slice(0,80)}${a.title.length>80?'…':''}
+      </a>
+    </div>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Daily CTI Digest — ${today}</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+  body { background:#030a06; color:#c8e8cb; font-family:'Rajdhani',sans-serif; margin:0; padding:32px; max-width:920px; }
+  h1 { font-family:'Orbitron',monospace; color:#00ff41; letter-spacing:3px; font-size:16px; border-bottom:2px solid #1a3d20; padding-bottom:10px; }
+  .meta { font-family:'Share Tech Mono',monospace; font-size:10px; color:#4a7050; margin-bottom:20px; }
+  .digest-body { margin-bottom:24px; }
+  .dg-chapter { font-family:'Orbitron',monospace; font-size:11px; color:#00ff41; letter-spacing:3px; padding:8px 12px; margin:18px 0 8px; border-top:2px solid #1a3d20; background:linear-gradient(90deg,rgba(0,255,65,0.06),transparent); display:flex; align-items:center; gap:8px; }
+  .dg-chapter::before { content:''; width:5px; height:5px; background:#00ff41; flex-shrink:0; }
+  .dg-subchapter { font-family:'Share Tech Mono',monospace; font-size:10px; color:#00cc33; letter-spacing:2px; padding:8px 0 4px 12px; border-left:3px solid #00cc33; margin:12px 0 6px; }
+  .dg-threat-block { background:#050f08; border:1px solid #1a3d20; border-left:4px solid #1a5c26; padding:10px 14px; margin:6px 0 12px; }
+  .dg-threat-block.sev-critical { border-left-color:#ff2244; } .dg-threat-block.sev-high { border-left-color:#ff8800; } .dg-threat-block.sev-medium { border-left-color:#ffcc00; }
+  .dg-threat-name { font-family:'Share Tech Mono',monospace; font-size:11px; color:#c8e8cb; text-transform:uppercase; margin-bottom:5px; padding-bottom:4px; border-bottom:1px solid #1a3d20; }
+  .dg-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:#4cdd6e; letter-spacing:1.5px; text-transform:uppercase; min-width:110px; display:inline-block; }
+  .dg-label-line { display:flex; gap:8px; margin:4px 0; font-size:13px; color:#c8e8cb; border-bottom:1px solid rgba(255,255,255,0.04); padding-bottom:4px; }
+  .dg-p { font-size:13px; color:#7aaa80; line-height:1.8; margin:4px 0 8px; }
+  .dg-li { display:flex; gap:8px; margin:4px 0; font-size:13px; color:#7aaa80; } .dg-li::before { content:'▸'; color:#1a5c26; flex-shrink:0; }
+  .dg-priority-block { display:flex; gap:10px; margin:5px 0; padding:8px 12px; background:#050f08; border:1px solid #1a3d20; }
+  .dg-priority-tag { font-family:'Share Tech Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; padding:2px 6px; flex-shrink:0; }
+  .dg-priority-tag.p1 { background:rgba(255,34,68,0.15); color:#ff2244; border:1px solid #ff224444; }
+  .dg-priority-tag.p2 { background:rgba(255,136,0,0.12); color:#ff8800; border:1px solid #ff880044; }
+  .dg-priority-tag.p3 { background:rgba(255,204,0,0.10); color:#ffcc00; border:1px solid #ffcc0044; }
+  .dg-priority-text { font-size:13px; color:#7aaa80; line-height:1.6; }
+  .dg-hunt-box { padding:14px 16px; background:rgba(0,170,255,0.04); border:1px solid #00aaff22; border-left:4px solid #00aaff; margin:6px 0 12px; }
+  .dg-detection-box { padding:14px 16px; background:rgba(170,102,255,0.04); border:1px solid #aa66ff22; border-left:4px solid #aa66ff; margin:6px 0 12px; }
+  .dg-overview-box { padding:14px 16px; background:rgba(0,255,65,0.03); border:1px solid #1a3d20; border-left:4px solid #1a5c26; margin:6px 0 12px; font-size:13px; color:#7aaa80; line-height:1.8; }
+  .dg-section-rule { border:none; border-top:1px solid #1a3d20; margin:10px 0 14px; }
+  .md-risk-critical { color:#ff2244; font-weight:700; } .md-risk-high { color:#ff8800; font-weight:700; } .md-risk-medium { color:#ffcc00; font-weight:700; }
+  .sources { border-top:2px solid #1a3d20; padding-top:16px; margin-top:24px; }
+  .sources-title { font-family:'Share Tech Mono',monospace; font-size:9px; color:#1a5c26; letter-spacing:2px; margin-bottom:10px; }
+  hr { border:none; border-top:1px solid #1a3d20; margin:20px 0; }
+  footer { font-family:'Share Tech Mono',monospace; font-size:9px; color:#1a5c26; margin-top:28px; padding-top:10px; border-top:1px solid #1a3d20; }
+</style>
+</head><body>
+<h1>📊 DAILY CTI INTELLIGENCE DIGEST</h1>
+<div class="meta">${today} &nbsp;·&nbsp; ${articles.length} sources analysed &nbsp;·&nbsp; THFeeds</div>
+<hr>
+<div class="digest-body">${digestHtml}</div>
+<div class="sources">
+  <div class="sources-title">⬡ SOURCE REFERENCES (${articles.length} articles)</div>
+  ${srcLinks}
+</div>
+<footer>Generated by THFeeds · ${new Date().toISOString()}</footer>
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `cti-daily-digest-${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Daily digest exported!', 'info');
+}
+
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THFeeds</title>
@@ -1214,25 +1361,25 @@
 
   /* ═══ DARK MODE THEME ═══ */
   [data-theme="dark"] {
-    --bg:     #111214;
-    --bg2:    #18191d;
-    --bg3:    #1e2025;
-    --panel:  #23252b;
-    --panel2: #2a2c33;
-    --border: #35373f;
-    --border2:#424550;
-    --accent: #a78bfa;
-    --accent2:#7c5cdc;
-    --accent3:#3d3060;
-    --red:    #f87171;
-    --orange: #fb923c;
-    --yellow: #fbbf24;
-    --blue:   #60a5fa;
-    --purple: #e879f9;
-    --dim:    #4b4d5a;
-    --text:   #e8e9ec;
-    --text2:  #9ca0b0;
-    --text3:  #5a5d6e;
+    --bg:     #0d0e11;
+    --bg2:    #13151a;
+    --bg3:    #191c23;
+    --panel:  #1f222b;
+    --panel2: #252830;
+    --border: #2a2f3d;
+    --border2:#323848;
+    --accent: #00e8ff;
+    --accent2:#00b8cc;
+    --accent3:#003d4d;
+    --red:    #ff3355;
+    --orange: #ff6b2b;
+    --yellow: #ffd000;
+    --blue:   #4da6ff;
+    --purple: #b44dff;
+    --dim:    #2a3040;
+    --text:   #e2e8f0;
+    --text2:  #8899aa;
+    --text3:  #445566;
   }
 
   /* No scanline in dark mode — cleaner look */
@@ -1240,13 +1387,13 @@
 
   /* Logo */
   [data-theme="dark"] .header-logo {
-    color:#a78bfa;
-    text-shadow:0 0 16px rgba(167,139,250,0.35);
+    color:#00e8ff;
+    text-shadow:0 0 16px rgba(0,232,255,0.35);
     letter-spacing:5px;
   }
   [data-theme="dark"] .blink-dot {
-    background:#a78bfa;
-    box-shadow:0 0 8px #a78bfa;
+    background:#00e8ff;
+    box-shadow:0 0 8px #00e8ff;
   }
 
   /* Cards — subtle lift, soft border */
@@ -1255,7 +1402,7 @@
     background:#18191d;
   }
   [data-theme="dark"] .article-card:hover {
-    border-color:#a78bfa44;
+    border-color:#00e8ff44;
     background:#1e2025;
     box-shadow:0 2px 16px rgba(167,139,250,0.08);
   }
@@ -1264,81 +1411,81 @@
   [data-theme="dark"] .tag.critical  { background:rgba(248,113,113,0.12); border-color:#f87171; color:#f87171; }
   [data-theme="dark"] .tag.high      { background:rgba(251,146,60,0.12);  border-color:#fb923c; color:#fb923c; }
   [data-theme="dark"] .tag.medium    { background:rgba(251,191,36,0.12);  border-color:#fbbf24; color:#fbbf24; }
-  [data-theme="dark"] .tag.malware   { background:rgba(167,139,250,0.12); border-color:#a78bfa; color:#a78bfa; }
+  [data-theme="dark"] .tag.malware   { background:rgba(0,232,255,0.10); border-color:#00e8ff; color:#00e8ff; }
   [data-theme="dark"] .tag.info      { background:rgba(96,165,250,0.10);  border-color:#60a5fa; color:#60a5fa; }
 
   /* Sidebar / source list */
   [data-theme="dark"] .source-item.loaded::before {
-    background:#a78bfa; box-shadow:0 0 6px #a78bfa;
+    background:#00e8ff; box-shadow:0 0 6px #00e8ff;
   }
   [data-theme="dark"] .source-item.loaded { color:#e8e9ec; }
 
   /* Buttons */
   [data-theme="dark"] .btn { border-color:#424550; color:#9ca0b0; }
-  [data-theme="dark"] .btn:hover { border-color:#a78bfa; color:#a78bfa; }
-  [data-theme="dark"] .btn.active { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
-  [data-theme="dark"] .card-ai-btn { border-color:#3d3060; color:#7c5cdc; }
-  [data-theme="dark"] .card-ai-btn:hover:not(:disabled) { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
+  [data-theme="dark"] .btn:hover { border-color:#00e8ff; color:#00e8ff; }
+  [data-theme="dark"] .btn.active { border-color:#00e8ff; color:#00e8ff; background:rgba(0,232,255,0.08); }
+  [data-theme="dark"] .card-ai-btn { border-color:#003d4d; color:#00b8cc; }
+  [data-theme="dark"] .card-ai-btn:hover:not(:disabled) { border-color:#00e8ff; color:#00e8ff; background:rgba(0,232,255,0.08); }
 
   /* Search input */
   [data-theme="dark"] .filter-input { border-color:#35373f; background:#1e2025; color:#e8e9ec; }
-  [data-theme="dark"] .filter-input:focus { border-color:#a78bfa; }
+  [data-theme="dark"] .filter-input:focus { border-color:#00e8ff; }
 
   /* Tag filter buttons */
   [data-theme="dark"] .tag-btn { border-color:#35373f; color:#5a5d6e; background:transparent; }
-  [data-theme="dark"] .tag-btn:hover { border-color:#a78bfa; color:#a78bfa; }
-  [data-theme="dark"] .tag-btn.active { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
+  [data-theme="dark"] .tag-btn:hover { border-color:#00e8ff; color:#00e8ff; }
+  [data-theme="dark"] .tag-btn.active { border-color:#00e8ff; color:#00e8ff; background:rgba(0,232,255,0.08); }
 
   /* Scrollbar */
   [data-theme="dark"] ::-webkit-scrollbar-thumb { background:#35373f; }
-  [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background:#a78bfa; }
+  [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background:#00e8ff; }
 
   /* Digest / chapter headers */
   [data-theme="dark"] .dg-chapter {
-    color:#a78bfa; border-top-color:#3d3060;
-    background:linear-gradient(90deg,rgba(167,139,250,0.06) 0%,transparent 100%);
+    color:#00e8ff; border-top-color:#003d4d;
+    background:linear-gradient(90deg,rgba(0,232,255,0.05) 0%,transparent 100%);
   }
-  [data-theme="dark"] .dg-chapter::before { background:#a78bfa; }
-  [data-theme="dark"] .dg-subchapter { color:#7c5cdc; border-left-color:#7c5cdc; }
-  [data-theme="dark"] .dg-label { color:#a78bfa; }
+  [data-theme="dark"] .dg-chapter::before { background:#00e8ff; }
+  [data-theme="dark"] .dg-subchapter { color:#00b8cc; border-left-color:#00b8cc; }
+  [data-theme="dark"] .dg-label { color:#00e8ff; }
   [data-theme="dark"] .dg-hunt-box { border-left-color:#60a5fa; background:rgba(96,165,250,0.04); }
   [data-theme="dark"] .dg-detection-box { border-left-color:#e879f9; background:rgba(232,121,249,0.04); }
   [data-theme="dark"] .dg-hunt-box .dg-label { color:#60a5fa; }
   [data-theme="dark"] .dg-detection-box .dg-label { color:#e879f9; }
 
   /* CTI brief sections */
-  [data-theme="dark"] .brief-section-label { color:#a78bfa; }
-  [data-theme="dark"] .brief-section-label::before { background:#a78bfa; }
-  [data-theme="dark"] .ai-summary-box { border-left-color:#a78bfa; border-color:#35373f; background:rgba(167,139,250,0.03); }
-  [data-theme="dark"] .analyst-byline { color:#7c5cdc; }
+  [data-theme="dark"] .brief-section-label { color:#00e8ff; }
+  [data-theme="dark"] .brief-section-label::before { background:#00e8ff; }
+  [data-theme="dark"] .ai-summary-box { border-left-color:#00e8ff; border-color:#35373f; background:rgba(167,139,250,0.03); }
+  [data-theme="dark"] .analyst-byline { color:#00b8cc; }
 
   /* Modals */
-  [data-theme="dark"] .modal-tab.active { color:#a78bfa; border-bottom-color:#a78bfa; }
+  [data-theme="dark"] .modal-tab.active { color:#00e8ff; border-bottom-color:#00e8ff; }
   [data-theme="dark"] .modal-panel { background:rgba(167,139,250,0.02); }
-  [data-theme="dark"] .md-h1 { color:#a78bfa; }
-  [data-theme="dark"] .md-h2 { color:#7c5cdc; }
+  [data-theme="dark"] .md-h1 { color:#00e8ff; }
+  [data-theme="dark"] .md-h2 { color:#00b8cc; }
 
   /* Query bot */
-  [data-theme="dark"] .qbot-header-title { color:#a78bfa; }
-  [data-theme="dark"] .qbot-panel { border-left-color:#a78bfa44; box-shadow:-8px 0 40px rgba(167,139,250,0.08); }
+  [data-theme="dark"] .qbot-header-title { color:#00e8ff; }
+  [data-theme="dark"] .qbot-panel { border-left-color:#00e8ff44; box-shadow:-8px 0 40px rgba(167,139,250,0.08); }
   [data-theme="dark"] .qbot-msg.bot .qbot-msg-bubble { border-color:#35373f; background:rgba(167,139,250,0.04); }
-  [data-theme="dark"] .qbot-send { background:rgba(167,139,250,0.12); border-color:#7c5cdc; color:#a78bfa; }
+  [data-theme="dark"] .qbot-send { background:rgba(0,232,255,0.10); border-color:#00b8cc; color:#00e8ff; }
   [data-theme="dark"] .qbot-suggestion { border-color:#35373f; }
-  [data-theme="dark"] .qbot-suggestion:hover { color:#a78bfa; border-color:#a78bfa55; }
+  [data-theme="dark"] .qbot-suggestion:hover { color:#00e8ff; border-color:#00e8ff55; }
 
   /* Weekly brief */
-  [data-theme="dark"] .wb-panel { border-left-color:#a78bfa44; }
-  [data-theme="dark"] .wb-header-title { color:#a78bfa; }
+  [data-theme="dark"] .wb-panel { border-left-color:#00e8ff44; }
+  [data-theme="dark"] .wb-header-title { color:#00e8ff; }
   [data-theme="dark"] .wb-btn { border-color:#424550; color:#9ca0b0; }
-  [data-theme="dark"] .wb-btn:hover { background:rgba(167,139,250,0.1); color:#a78bfa; }
-  [data-theme="dark"] .wb-btn.added { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.1); }
-  [data-theme="dark"] .wb-count-badge { color:#a78bfa; border-color:#3d3060; background:rgba(167,139,250,0.1); }
+  [data-theme="dark"] .wb-btn:hover { background:rgba(0,232,255,0.08); color:#00e8ff; }
+  [data-theme="dark"] .wb-btn.added { border-color:#00e8ff; color:#00e8ff; background:rgba(0,232,255,0.08); }
+  [data-theme="dark"] .wb-count-badge { color:#00e8ff; border-color:#003d4d; background:rgba(0,232,255,0.08); }
 
   /* Right panel stat boxes */
-  [data-theme="dark"] .stat-val { color:#a78bfa; text-shadow:0 0 12px rgba(167,139,250,0.4); }
-  [data-theme="dark"] .trend-bar-fill { background:#7c5cdc; }
-  [data-theme="dark"] .trend-item.active { border-left-color:#a78bfa; }
-  [data-theme="dark"] .trend-item.active .trend-label { color:#a78bfa; }
+  [data-theme="dark"] .stat-val { color:#00e8ff; text-shadow:0 0 12px rgba(167,139,250,0.4); }
+  [data-theme="dark"] .trend-bar-fill { background:#00b8cc; }
+  [data-theme="dark"] .trend-item.active { border-left-color:#00e8ff; }
+  [data-theme="dark"] .trend-item.active .trend-label { color:#00e8ff; }
 
   /* Theme toggle overrides */
 
@@ -1640,6 +1787,106 @@
   [data-theme="light"] .toast.error { border-left-color:#c62828; }
   [data-theme="light"] .toast.info  { border-left-color:#0277bd; }
 
+
+  /* ═══ WORLD THREAT COUNTER ═══ */
+  .threat-counter-grid {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:6px; padding:8px 12px 10px;
+  }
+  .tc-box {
+    display:flex; flex-direction:column; align-items:center;
+    padding:6px 4px; background:var(--bg3); border:1px solid var(--border);
+    cursor:pointer; transition:all 0.15s; user-select:none;
+  }
+  .tc-box:hover { border-color:var(--accent2); background:var(--bg2); }
+  .tc-box.active-filter { border-color:var(--accent); background:rgba(0,255,65,0.06); }
+  .tc-val {
+    font-family:var(--display); font-size:18px; font-weight:700; line-height:1;
+    transition:all 0.4s;
+  }
+  .tc-val.critical { color:#ff2244; text-shadow:0 0 10px rgba(255,34,68,0.4); }
+  .tc-val.high     { color:#ff8800; text-shadow:0 0 10px rgba(255,136,0,0.35); }
+  .tc-val.medium   { color:#ffcc00; text-shadow:0 0 10px rgba(255,204,0,0.3); }
+  .tc-lbl { font-family:var(--mono); font-size:8px; color:var(--text3); letter-spacing:1px; margin-top:3px; }
+
+  /* ═══ GEO HOTSPOT MAP ═══ */
+  .geo-map-wrap {
+    position:relative; padding:8px 10px 10px;
+  }
+  .geo-map-title {
+    font-family:var(--mono); font-size:8px; color:var(--accent3);
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:6px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .geo-map-title::before {
+    content:''; display:inline-block; width:6px; height:6px;
+    background:var(--accent); border-radius:50%;
+    box-shadow:0 0 6px var(--accent);
+  }
+  .geo-svg { width:100%; height:auto; display:block; }
+
+  /* hotspot dots */
+  .geo-dot {
+    cursor:pointer; transition:r 0.2s;
+  }
+  .geo-dot circle {
+    animation:geoPulse 2s infinite;
+  }
+  .geo-dot circle.outer {
+    fill:none; stroke:var(--red); opacity:0.4;
+    animation:geoRing 2s infinite;
+  }
+  .geo-dot circle.inner {
+    fill:var(--red);
+  }
+  @keyframes geoPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  @keyframes geoRing  { 0%{r:4;opacity:0.6} 100%{r:10;opacity:0} }
+
+  .geo-label {
+    font-family:var(--mono); font-size:8px; fill:var(--text2);
+    pointer-events:none;
+  }
+  .geo-tooltip {
+    position:absolute; background:var(--bg3); border:1px solid var(--border2);
+    padding:4px 8px; font-family:var(--mono); font-size:9px; color:var(--text);
+    pointer-events:none; white-space:nowrap; z-index:10;
+    opacity:0; transition:opacity 0.15s;
+  }
+  .geo-tooltip.visible { opacity:1; }
+
+  /* modal geo tab */
+  #panel-geo {
+    padding:0;
+  }
+  .geo-modal-map { padding:12px 16px; }
+  .geo-modal-title {
+    font-family:var(--mono); font-size:9px; color:var(--accent3);
+    letter-spacing:2px; margin-bottom:10px;
+  }
+  .geo-no-data {
+    padding:20px 16px; font-family:var(--mono); font-size:10px; color:var(--text3);
+  }
+
+  /* ═══ WEEKLY REPORT PANEL ═══ */
+  .wb-report-section {
+    border-top:2px solid #ffcc0033; flex-shrink:0;
+    max-height:40vh; display:flex; flex-direction:column;
+  }
+  .wb-report-header {
+    padding:8px 16px; background:rgba(255,204,0,0.04);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+  }
+  .wb-report-title {
+    flex:1; font-family:var(--mono); font-size:9px;
+    color:#ffcc00; letter-spacing:2px; text-transform:uppercase;
+  }
+  .wb-report-body {
+    flex:1; overflow-y:auto; padding:14px 18px;
+    font-size:13px; color:var(--text2); line-height:1.75;
+  }
+  .wb-report-body::-webkit-scrollbar { width:3px; }
+
 </style>
 </head>
 <body>
@@ -1801,6 +2048,25 @@
     </div>
 
     <div class="rp-section">
+      <div class="rp-title">🌍 WORLD THREAT ACTIVITY</div>
+      <div class="threat-counter-grid">
+        <div class="tc-box" id="tcBoxCritical" onclick="filterBySeverity('critical')" title="Filter critical articles"><span class="tc-val critical" id="tcCritical">0</span><span class="tc-lbl">CRITICAL</span></div>
+        <div class="tc-box" id="tcBoxHigh"     onclick="filterBySeverity('high')"     title="Filter high severity articles"><span class="tc-val high"     id="tcHigh">0</span><span class="tc-lbl">HIGH</span></div>
+        <div class="tc-box" id="tcBoxMedium"   onclick="filterBySeverity('medium')"   title="Filter medium severity articles"><span class="tc-val medium"   id="tcMedium">0</span><span class="tc-lbl">MEDIUM</span></div>
+      </div>
+    </div>
+
+    <div class="rp-section" id="rpGeoSection">
+      <div class="rp-title" style="display:flex;align-items:center;gap:6px">
+        <span>🌍 GEOGRAPHIC HOTSPOTS</span>
+        <span style="font-family:var(--mono);font-size:8px;color:var(--text3)" id="rpGeoCount"></span>
+      </div>
+      <div id="rpGeoMap" style="padding:6px 10px 10px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:8px 0">Load feeds to see hotspots…</div>
+      </div>
+    </div>
+
+    <div class="rp-section">
       <div class="rp-title">TRENDING TOPICS <span class="trend-clear" id="trendClear" onclick="clearTrendFilter()">✕ CLEAR</span></div>
       <div class="trend-list" id="trendList">
         <div style="padding:10px 0;font-family:var(--mono);font-size:10px;color:var(--text3)">Loading…</div>
@@ -1810,7 +2076,10 @@
     <div class="rp-section">
       <div class="rp-title">
         <span>AI THREAT DIGEST</span>
-        <button class="btn" style="padding:3px 8px;font-size:9px" onclick="generateDigest()">GENERATE</button>
+        <div style="display:flex;gap:4px">
+          <button class="btn" style="padding:3px 8px;font-size:9px" onclick="generateDigest()">GENERATE</button>
+          <button class="btn" style="padding:3px 8px;font-size:9px" onclick="exportDailyDigest()" title="Export daily digest as HTML">↓</button>
+        </div>
       </div>
       <div class="digest-area" id="digestArea" onclick="expandDigest()">
         <div class="digest-placeholder" id="digestPlaceholder">
@@ -1894,6 +2163,7 @@
         <button class="modal-tab"        data-tab="hunt"      onclick="switchTab('hunt')">🎯 HUNT LEADS<span class="tab-dot"></span></button>
         <button class="modal-tab"        data-tab="ioc"       onclick="switchTab('ioc')">⚑ IOCs<span class="tab-dot"></span></button>
         <button class="modal-tab"        data-tab="brief"     onclick="switchTab('brief')">⬡ CTI BRIEF<span class="tab-dot"></span></button>
+        <button class="modal-tab"        data-tab="geo"       onclick="switchTab('geo');renderGeoTab()">🌍 GEO<span class="tab-dot"></span></button>
       </div>
 
       <!-- PANELS — one per tab, content persists independently -->
@@ -1902,6 +2172,7 @@
       <div class="modal-panel empty"        id="panel-hunt">Click HUNT LEADS to extract threat actor TTPs and hunting hypotheses.</div>
       <div class="modal-panel empty"        id="panel-ioc">Click IOCs to extract and defang indicators of compromise.</div>
       <div class="modal-panel empty"        id="panel-brief">Click CTI BRIEF for a rapid triage summary.</div>
+      <div class="modal-panel empty"        id="panel-geo"></div>
 
       <div class="modal-footer">
         <a class="card-link" id="modalLink" href="#" target="_blank" rel="noopener">[ OPEN ORIGINAL → ]</a>
@@ -2067,7 +2338,7 @@ let currentTheme = localStorage.getItem('tf_theme') || 'green';
 const THEMES = {
   green: { label: 'GREEN',  color: '#00ff41', attr: null    },
   blue:  { label: 'BLUE',   color: '#38d0ff', attr: 'blue'  },
-  dark:  { label: 'DARK',   color: '#a78bfa', attr: 'dark'  },
+  dark:  { label: 'DARK',   color: '#00e8ff', attr: 'dark'  },
   light: { label: 'LIGHT',  color: '#1565c0', attr: 'light' },
 };
 
@@ -4343,7 +4614,7 @@ function closeModal() {
 
 function resetModalTabs() {
   // Clear all panel content and reset tab state
-  ['exec','cti','hunt','ioc','brief'].forEach(tabId => {
+  ['exec','cti','hunt','ioc','brief','geo'].forEach(tabId => {
     const panel = document.getElementById(`panel-${tabId}`);
     const tab   = document.querySelector(`[data-tab="${tabId}"]`);
     if (panel) {
@@ -5123,6 +5394,7 @@ async function generateDigest() {
     );
     digestEl.className = 'digest-text';
   markDigestHasContent();
+  digestAppendLinks();
   // Final sync to expanded panel
   if (document.getElementById('digestExpandOverlay').style.display !== 'none') {
     document.getElementById('digestExpandBody').innerHTML = digestEl.innerHTML;
@@ -5230,6 +5502,7 @@ function closeFocusDigest() {
 // STATS & TRENDS
 // ============================================================
 function updateStats() {
+  updateThreatCounter();
   const now = Date.now();
   document.getElementById('statTotal').textContent = allArticles.length;
   document.getElementById('statToday').textContent = allArticles.filter(a => now - a.date < 86400000).length;
@@ -5374,6 +5647,422 @@ document.addEventListener('keydown', e => {
     else closeModal();
   }
 });
+
+
+// ============================================================
+// WORLD THREAT COUNTER
+// ============================================================
+function updateThreatCounter() {
+  let critical = 0, high = 0, medium = 0;
+  allArticles.forEach(a => {
+    const sev = classifyArticleSeverity(a);
+    if (sev === 'critical') critical++;
+    else if (sev === 'high') high++;
+    else if (sev === 'medium') medium++;
+  });
+  const cEl = document.getElementById('tcCritical');
+  const hEl = document.getElementById('tcHigh');
+  const mEl = document.getElementById('tcMedium');
+  if (cEl) cEl.textContent = critical;
+  if (hEl) hEl.textContent = high;
+  if (mEl) mEl.textContent = medium;
+  updateFeedGeoMap();
+}
+
+// ============================================================
+// GEOGRAPHIC HOTSPOT MAP
+// ============================================================
+
+// Country name → approximate SVG coordinate on a 800x400 equirectangular map
+const GEO_COORDS = {
+  'united states': [160, 155], 'usa': [160, 155], 'us': [160, 155],
+  'united kingdom': [370, 115], 'uk': [370, 115], 'britain': [370, 115],
+  'russia': [520, 100], 'ukraine': [470, 115], 'germany': [405, 115],
+  'france': [385, 125], 'china': [590, 155], 'japan': [640, 145],
+  'north korea': [630, 145], 'south korea': [635, 155], 'iran': [500, 160],
+  'israel': [475, 160], 'saudi arabia': [490, 175], 'india': [545, 180],
+  'brazil': [230, 240], 'australia': [635, 280], 'canada': [155, 110],
+  'mexico': [145, 180], 'poland': [430, 115], 'romania': [445, 120],
+  'netherlands': [390, 112], 'spain': [375, 140], 'italy': [410, 135],
+  'turkey': [470, 145], 'taiwan': [625, 170], 'indonesia': [610, 220],
+  'europe': [415, 125], 'asia': [580, 175], 'middle east': [490, 165],
+  'southeast asia': [605, 205], 'latin america': [215, 235],
+  'africa': [420, 220], 'central europe': [425, 120],
+};
+
+// Extract country/region mentions from article text
+function extractGeoMentions(article) {
+  const text = ((article.title || '') + ' ' + (article.desc || '')).toLowerCase();
+  const hits = [];
+  for (const [name, coords] of Object.entries(GEO_COORDS)) {
+    if (new RegExp('\\b' + name.replace(/\s+/g, '\\s+') + '\\b').test(text)) {
+      hits.push({ name, coords, label: name.replace(/\b\w/g, l => l.toUpperCase()) });
+    }
+  }
+  // Deduplicate: if 'usa' and 'united states' both hit, keep longer match
+  const unique = hits.filter((h, i) => !hits.some((o, j) => j !== i && o.coords[0] === h.coords[0] && o.coords[1] === h.coords[1] && o.name.length > h.name.length));
+  return unique;
+}
+
+// Detailed SVG world map — simplified but recognizable continent shapes
+// Viewbox 0 0 800 400, equirectangular projection
+const WORLD_SVG_PATHS = `
+  <rect width="800" height="400" fill="var(--bg3)"/>
+  <!-- Graticule lines -->
+  <g stroke="var(--border)" stroke-width="0.4" opacity="0.4">
+    <line x1="0" y1="200" x2="800" y2="200"/>
+    <line x1="400" y1="0" x2="400" y2="400"/>
+    <line x1="0" y1="100" x2="800" y2="100"/><line x1="0" y1="300" x2="800" y2="300"/>
+    <line x1="200" y1="0" x2="200" y2="400"/><line x1="600" y1="0" x2="600" y2="400"/>
+  </g>
+  <!-- North America -->
+  <path d="M90,60 L130,55 L170,60 L195,72 L210,88 L210,105 L200,120 L185,135
+           L175,152 L165,170 L150,185 L130,192 L110,185 L90,175 L75,160
+           L65,145 L62,128 L68,110 L78,90 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- Central America -->
+  <path d="M150,192 L160,195 L165,205 L158,215 L145,218 L135,210 L130,200 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- South America -->
+  <path d="M175,220 L200,212 L225,218 L242,232 L248,252 L245,278 L235,300
+           L220,320 L205,332 L190,328 L178,315 L168,295 L162,270 L162,248
+           L168,232 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- Greenland -->
+  <path d="M310,28 L335,22 L355,28 L358,42 L345,52 L325,55 L308,48 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="0.8" opacity="0.5"/>
+  <!-- Europe -->
+  <path d="M355,78 L375,72 L400,70 L420,74 L438,80 L448,92 L445,105
+           L432,115 L415,120 L398,122 L380,118 L365,110 L355,98 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- UK -->
+  <path d="M355,82 L362,78 L368,82 L366,92 L358,96 L352,90 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="0.8" opacity="0.6"/>
+  <!-- Scandinavia -->
+  <path d="M385,55 L395,48 L408,52 L412,65 L402,75 L390,72 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="0.8" opacity="0.6"/>
+  <!-- Africa -->
+  <path d="M355,128 L378,122 L405,124 L425,132 L438,148 L442,168 L440,192
+           L432,215 L418,238 L400,258 L382,268 L362,268 L345,252 L338,228
+           L338,205 L342,182 L348,160 L352,142 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- Middle East / Arabian Peninsula -->
+  <path d="M445,108 L468,105 L488,112 L495,128 L488,145 L472,152 L455,148
+           L445,135 L442,120 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- Russia / Central Asia -->
+  <path d="M448,55 L490,45 L538,42 L578,48 L612,55 L638,65 L648,80
+           L640,92 L620,98 L595,100 L568,98 L542,100 L518,98 L495,92
+           L472,88 L455,80 L448,68 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- India / South Asia -->
+  <path d="M498,108 L522,105 L540,112 L548,128 L545,148 L535,165 L520,175
+           L505,168 L495,152 L490,135 L492,118 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- East Asia / China -->
+  <path d="M548,72 L578,68 L610,72 L635,82 L648,98 L645,115 L628,125
+           L605,130 L580,128 L558,120 L545,108 L542,92 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- Japan -->
+  <path d="M648,88 L655,82 L665,85 L668,95 L660,102 L650,100 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="0.8" opacity="0.6"/>
+  <!-- Southeast Asia -->
+  <path d="M588,135 L610,132 L628,140 L632,155 L618,165 L600,168 L585,158
+           L582,145 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="0.8" opacity="0.6"/>
+  <!-- Australia -->
+  <path d="M608,248 L640,242 L668,248 L682,262 L685,280 L678,298 L660,308
+           L638,310 L618,302 L605,285 L602,268 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="1" opacity="0.7"/>
+  <!-- New Zealand -->
+  <path d="M698,295 L705,288 L712,295 L708,308 L700,310 Z"
+        fill="var(--bg2)" stroke="var(--accent3)" stroke-width="0.8" opacity="0.5"/>
+`;
+
+// updateFeedGeoMap — shows hotspots from ALL loaded articles in right panel
+function updateFeedGeoMap() {
+  const mapEl   = document.getElementById('rpGeoMap');
+  const countEl = document.getElementById('rpGeoCount');
+  if (!mapEl || !allArticles.length) return;
+
+  // Count mentions per country across all articles
+  const counts = {};
+  allArticles.forEach(a => {
+    const text = ((a.title || '') + ' ' + (a.desc || '')).toLowerCase();
+    for (const [name, coords] of Object.entries(GEO_COORDS)) {
+      if (new RegExp('\\b' + name.replace(/\s+/g, '\\s+') + '\\b').test(text)) {
+        const key = coords.join(',');
+        if (!counts[key]) counts[key] = { name, coords, count: 0, label: name.replace(/\b\w/g, l => l.toUpperCase()) };
+        counts[key].count++;
+      }
+    }
+  });
+
+  const hotspots = Object.values(counts).sort((a, b) => b.count - a.count);
+  if (!hotspots.length) {
+    mapEl.innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:4px 0">No geographic mentions found.</div>';
+    return;
+  }
+
+  if (countEl) countEl.textContent = hotspots.length + ' REGION' + (hotspots.length !== 1 ? 'S' : '');
+
+  const maxCount = hotspots[0].count;
+  const W = 260, H = 130;
+  const scaleX = W / 800, scaleY = H / 400;
+
+  let dots = '';
+  hotspots.forEach((h, idx) => {
+    const x  = h.coords[0] * scaleX;
+    const y  = h.coords[1] * scaleY;
+    const r  = Math.max(2.5, Math.min(7, 2.5 + (h.count / maxCount) * 4.5));
+    const op = 0.5 + (h.count / maxCount) * 0.5;
+    const col = h.count >= maxCount * 0.7 ? '#ff2244' : h.count >= maxCount * 0.4 ? '#ff8800' : '#ffcc00';
+    const delay = idx * 0.2;
+    dots += `<g class="geo-dot rp-geo-dot" data-label="${h.label} (${h.count})">
+      <circle cx="${x}" cy="${y}" r="${r*1.8}" fill="${col}" opacity="0" style="animation:geoRing 2s ${delay}s infinite"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${col}" opacity="${op}"/>
+    </g>`;
+  });
+
+  mapEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+      style="width:100%;border:1px solid var(--border);display:block;cursor:crosshair" id="rpGeoSvg">
+    <g transform="scale(${scaleX},${scaleY})">${WORLD_SVG_PATHS}</g>
+    <g>${dots}</g>
+  </svg>
+  <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px" id="rpGeoLegend">
+    ${hotspots.slice(0, 8).map(h => `<span onclick="filterByGeo('${h.name}')" style="font-family:var(--mono);font-size:8px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);padding:1px 5px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent2)';this.style.color='var(--accent2)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">${h.label} <span style="color:var(--accent2)">${h.count}</span></span>`).join('')}
+  </div>`;
+
+  // Tooltip
+  mapEl.querySelectorAll('.rp-geo-dot').forEach(dot => {
+    dot.style.cursor = 'pointer';
+    dot.addEventListener('mouseenter', e => {
+      let tip = document.getElementById('rpGeoTip');
+      if (!tip) { tip = document.createElement('div'); tip.id='rpGeoTip'; tip.className='geo-tooltip'; mapEl.style.position='relative'; mapEl.appendChild(tip); }
+      tip.textContent = '📍 ' + dot.getAttribute('data-label');
+      tip.style.cssText = `position:absolute;left:${e.offsetX+8}px;top:${e.offsetY-20}px;opacity:1;pointer-events:none`;
+      tip.classList.add('visible');
+    });
+    dot.addEventListener('mouseleave', () => {
+      document.getElementById('rpGeoTip')?.classList.remove('visible');
+    });
+  });
+}
+
+function buildGeoSVG(hotspots, width, height) {
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const scaleX = width / 800;
+  const scaleY = height / 400;
+
+  let dots = '';
+  hotspots.forEach((h, idx) => {
+    const x = h.coords[0] * scaleX;
+    const y = h.coords[1] * scaleY;
+    const delay = idx * 0.3;
+    dots += `<g class="geo-dot" data-label="${esc(h.label)}">
+      <circle class="outer" cx="${x}" cy="${y}" r="5" style="animation-delay:${delay}s"/>
+      <circle class="inner" cx="${x}" cy="${y}" r="3"/>
+      <text class="geo-label" x="${x + 6}" y="${y + 3}">${esc(h.label)}</text>
+    </g>`;
+  });
+
+  return `<svg class="geo-svg" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="background:var(--bg3);border:1px solid var(--border)">
+    <g style="color:var(--text3)">${WORLD_SVG_PATHS}</g>
+    <g>${dots}</g>
+  </svg>`;
+}
+
+function renderGeoTab() {
+  if (!currentArticle) return;
+  const panel = document.getElementById('panel-geo');
+  if (!panel) return;
+  panel.classList.remove('empty');
+
+  const hotspots = extractGeoMentions(currentArticle);
+
+  if (!hotspots.length) {
+    panel.innerHTML = '<div class="geo-no-data">No geographic locations detected in this article.</div>';
+    return;
+  }
+
+  const mapSvg = buildGeoSVG(hotspots, 580, 280);
+  const listHtml = hotspots.map(h =>
+    `<span style="font-family:var(--mono);font-size:9px;color:var(--red);background:rgba(255,34,68,0.1);border:1px solid rgba(255,34,68,0.3);padding:2px 7px;margin:2px">${h.label}</span>`
+  ).join('');
+
+  panel.innerHTML = `<div class="geo-modal-map">
+    <div class="geo-modal-title">⬡ GEOGRAPHIC HOTSPOTS · ${hotspots.length} LOCATION${hotspots.length !== 1 ? 'S' : ''} DETECTED</div>
+    ${mapSvg}
+    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${listHtml}</div>
+  </div>`;
+
+  // Tooltip on hover
+  panel.querySelectorAll('.geo-dot').forEach(dot => {
+    dot.addEventListener('mouseenter', e => {
+      const label = dot.getAttribute('data-label');
+      let tip = panel.querySelector('.geo-tooltip');
+      if (!tip) { tip = document.createElement('div'); tip.className = 'geo-tooltip'; panel.appendChild(tip); }
+      tip.textContent = '📍 ' + label;
+      tip.style.left = (e.offsetX + 10) + 'px';
+      tip.style.top  = (e.offsetY - 20) + 'px';
+      tip.classList.add('visible');
+    });
+    dot.addEventListener('mouseleave', () => {
+      panel.querySelector('.geo-tooltip')?.classList.remove('visible');
+    });
+  });
+}
+
+// ============================================================
+// DIGEST ARTICLE LINKS — append source links after digest generates
+// ============================================================
+function digestAppendLinks() {
+  const digestEl = document.getElementById('digestText');
+  if (!digestEl || !allArticles.length) return;
+  // Remove any existing links section
+  const existing = digestEl.querySelector('.digest-sources');
+  if (existing) existing.remove();
+
+  const top = allArticles.slice(0, 25);
+  const linksHtml = top.map((a, i) =>
+    `<div style="display:flex;gap:8px;margin:3px 0;font-size:11px">
+      <span style="font-family:var(--mono);color:var(--text3);flex-shrink:0">${String(i+1).padStart(2,'0')}.</span>
+      <a href="${a.link}" target="_blank" rel="noopener"
+         style="color:var(--accent2);font-family:var(--mono);font-size:10px;word-break:break-all;text-decoration:none;border-bottom:1px solid var(--border2)"
+         onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--accent2)'">
+        [${a.source.name}] ${a.title.slice(0, 80)}${a.title.length > 80 ? '…' : ''}
+      </a>
+    </div>`
+  ).join('');
+
+  const section = document.createElement('div');
+  section.className = 'digest-sources';
+  section.innerHTML = `<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">
+    <div style="font-family:var(--mono);font-size:8px;color:var(--accent3);letter-spacing:2px;margin-bottom:8px">⬡ SOURCE REFERENCES (${top.length} articles)</div>
+    ${linksHtml}
+  </div>`;
+  digestEl.appendChild(section);
+}
+
+// ============================================================
+// WEEKLY CTI REPORT (full professional report)
+// ============================================================
+const WEEKLY_REPORT_PROMPT = `You are a senior CTI analyst producing a formal weekly intelligence report for distribution to security leadership and operational teams.
+
+Based on the curated article list provided (with analyst notes), produce a comprehensive Weekly CTI Intelligence Report using this EXACT structure:
+
+# WEEKLY CTI INTELLIGENCE REPORT
+
+## EXECUTIVE OVERVIEW
+A concise 3-4 sentence brief for leadership. Cover the dominant threat theme, most critical development, and recommended strategic posture for the week.
+
+## THREAT LANDSCAPE SUMMARY
+Analyse the week's intelligence holistically. Identify:
+- Primary active threat categories (ransomware, APT, vulnerability exploitation, phishing)
+- Notable shifts from previous periods
+- Threat actor activity worth flagging
+
+## TOP CRITICAL ITEMS
+For each critical item (max 4), use this format:
+▸ ITEM TITLE
+  Priority: CRITICAL or HIGH
+  Summary: What happened and who is affected
+  Action Required: Specific immediate action for the security team
+
+## VULNERABILITY WATCH
+List any CVEs or exploited vulnerabilities mentioned across the curated articles.
+
+## DETECTION & HUNTING OPPORTUNITIES
+One or two actionable detection/hunting leads derived from this week's intelligence.
+
+## RECOMMENDED ACTIONS FOR THE WEEK
+[P1] Highest priority action — due within 24h
+[P2] Second priority — due within 72h
+[P3] Third priority — due end of week
+
+## INTELLIGENCE SOURCES
+List the articles with their source and title (use the provided list).
+
+RULES: Only reference what is in the provided articles. No fabrication. Be specific and actionable. Write for a professional security audience.`;
+
+async function wbGenerateReport() {
+  if (!aiReady()) { toast(aiReadyLabel(), 'error'); return; }
+  const entries = await wbGetAll();
+  if (!entries.length) { toast('Add articles to brief first', 'info'); return; }
+
+  const body    = document.getElementById('wbReportBody');
+  const genBtn  = document.getElementById('wbReportGenBtn');
+  if (genBtn) genBtn.disabled = true;
+  body.innerHTML = '<div class="typing" style="font-family:var(--mono);font-size:11px;color:var(--text3)">Generating weekly report…</div>';
+
+  entries.sort((a, b) => a.addedAt - b.addedAt);
+  const articleList = entries.map((e, i) => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+    return `${i+1}. [${e.source}] "${e.title}" (${dateStr})${e.note ? ' — Analyst note: ' + e.note : ''}${e.link ? ' — URL: ' + e.link : ''}`;
+  }).join('\n');
+
+  const week = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  const prompt = `${WEEKLY_REPORT_PROMPT}\n\nREPORT PERIOD: Week ending ${week}\nCURATED ARTICLES (${entries.length} total):\n${articleList}`;
+
+  try {
+    let full = '';
+    await aiChat(CTI_SYSTEM_PROMPT, prompt, (_, f) => {
+      full = f;
+      body.innerHTML = renderDigestMd(f);
+    });
+    body.innerHTML = renderDigestMd(full);
+    // Store report for copy/export
+    body._reportText = full;
+    body._reportDate = week;
+  } catch(e) {
+    body.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  if (genBtn) genBtn.disabled = false;
+}
+
+async function wbCopyReport() {
+  const body = document.getElementById('wbReportBody');
+  const text = body._reportText || body.innerText;
+  if (!text || text.includes('cti-weekly')) { toast('Generate report first', 'info'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Report copied as Markdown', 'info');
+  } catch { toast('Copy failed — use EXPORT', 'error'); }
+}
+
+async function wbExportReport() {
+  const body = document.getElementById('wbReportBody');
+  if (!body._reportText) { toast('Generate report first', 'info'); return; }
+  const entries = await wbGetAll();
+  const week = body._reportDate || new Date().toLocaleDateString('en-GB');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Weekly CTI Report — ${week}</title>
+<style>
+body{background:#030a06;color:#c8e8cb;font-family:'Rajdhani',sans-serif;margin:0;padding:40px;max-width:900px}
+h1{font-family:monospace;color:#00ff41;letter-spacing:3px;border-bottom:2px solid #1a3d20;padding-bottom:12px;font-size:18px}
+h2{font-family:monospace;color:#00cc33;letter-spacing:2px;font-size:13px;margin:24px 0 8px;border-left:3px solid #00cc33;padding-left:10px}
+p,li{color:#7aaa80;line-height:1.8;font-size:13px}
+.block{background:#060f09;border:1px solid #1a3d20;border-left:3px solid #00cc33;padding:12px 16px;margin:8px 0}
+.critical{color:#ff2244;font-weight:700} .high{color:#ff8800;font-weight:700}
+.p1{color:#ff2244} .p2{color:#ff8800} .p3{color:#ffcc00}
+a{color:#00aaff} hr{border-color:#1a3d20;margin:20px 0}
+</style></head><body>
+<h1>📋 WEEKLY CTI INTELLIGENCE REPORT</h1>
+<p style="font-family:monospace;font-size:10px;color:#4a7050">Week ending ${week} &nbsp;·&nbsp; ${entries.length} articles · THFeeds</p>
+<hr>
+<div>${document.getElementById('wbReportBody').innerHTML}</div>
+<hr>
+<p style="font-family:monospace;font-size:9px;color:#1a5c26">Generated by THFeeds · ${new Date().toISOString()}</p>
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `cti-weekly-report-${new Date().toISOString().slice(0,10)}.html`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Weekly report exported', 'info');
+}
 
 // ============================================================
 // QUERY BOT
@@ -6264,7 +6953,7 @@ async function wbInit() {
       <span class="wb-toolbar-label">ARTICLES:</span>
       <span class="wb-count-badge" id="wbCount">0</span>
       <button class="btn" style="padding:3px 10px;font-size:9px;border-color:#ff8800;color:#ff8800" onclick="wbPickTop3()" id="wbTop3Btn" title="Let AI pick the 3 most critical articles from your feed">⬡ AI TOP 3</button>
-      <button class="btn" style="padding:3px 10px;font-size:9px;border-color:#ffcc00;color:#ffcc00" onclick="wbGenerateSummary()" id="wbGenBtn">⬡ AI NARRATIVE</button>
+
       <button class="btn" style="padding:3px 10px;font-size:9px" onclick="wbCopyMarkdown()" id="wbCopyBtn">⎘ COPY</button>
       <button class="btn" style="padding:3px 10px;font-size:9px" onclick="wbExportHTML()" id="wbExportBtn">↓ EXPORT</button>
       <button class="btn" style="padding:3px 10px;font-size:9px;border-color:var(--red);color:var(--red);margin-left:auto" onclick="wbClearAll()">✕ CLEAR ALL</button>
@@ -6272,20 +6961,22 @@ async function wbInit() {
 
     <div class="wb-articles" id="wbArticleList"></div>
 
-    <div class="wb-narrative-section" id="wbNarrativeSection">
-      <div class="wb-narrative-header">
-        <div class="wb-narrative-title">⬡ AI WEEKLY NARRATIVE</div>
-        <button class="btn" style="padding:2px 8px;font-size:8px;border-color:#ffcc0066;color:#ffcc00" onclick="wbGenerateSummary()" id="wbRegenBtn">↻ REGEN</button>
+    <div class="wb-report-section" id="wbReportSection">
+      <div class="wb-report-header">
+        <div class="wb-report-title">📄 WEEKLY CTI REPORT</div>
+        <button class="btn" style="padding:2px 8px;font-size:8px;border-color:#ffcc0066;color:#ffcc00" onclick="wbGenerateReport()" id="wbReportGenBtn">⬡ GENERATE</button>
+        <button class="btn" style="padding:2px 8px;font-size:8px" onclick="wbCopyReport()" id="wbReportCopyBtn">⎘ COPY</button>
+        <button class="btn" style="padding:2px 8px;font-size:8px" onclick="wbExportReport()" id="wbReportExportBtn">↓ EXPORT</button>
       </div>
-      <div class="wb-narrative-body" id="wbNarrativeBody">
-        <div class="wb-narrative-placeholder">
-          <span style="color:var(--accent2)">$</span> cti-weekly --generate-narrative<br>
-          <span style="color:var(--text3)">&gt;</span> Add articles to your brief first,<br>
-          <span style="color:var(--text3)">&gt;</span> then click AI NARRATIVE to generate<br>
-          <span style="color:var(--text3)">&gt;</span> a weekly debrief summary
+      <div class="wb-report-body" id="wbReportBody">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.9">
+          <span style="color:var(--accent2)">$</span> cti-weekly --generate-report<br>
+          <span style="color:var(--text3)">&gt;</span> Add articles, then click GENERATE<br>
+          <span style="color:var(--text3)">&gt;</span> for a full weekly CTI report
         </div>
       </div>
     </div>
+
 
   </div>
 </div>
