@@ -10,7 +10,6 @@
 ## 🚀 Key Features
 
 * **Aggregation:** Real-time monitoring of 39+ CTI sources, including Mandiant, CISA, and Unit 42.
-* **Ransomware Intel:** Dedicated tracking for ransomware victims, active gangs, and targeted sectors.
 * **AI Analysis:** Built-in support for **Ollama** (Local), **Claude**, and **Gemini** to generate executive summaries and IOC extractions.
 * **Threat Hunting:** Direct integration to convert articles into structured hunt tasks with AI auto-fill capabilities.
 * **Privacy First:** Local LLM support and client-side data persistence using IndexedDB.
