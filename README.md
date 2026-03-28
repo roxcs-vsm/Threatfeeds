@@ -2,14 +2,14 @@
 
 **ThreatFeed** is a high-performance, browser-based Cyber Threat Intelligence (CTI) aggregator. It centralizes intelligence from 39+ sources, offering local AI analysis and a dedicated threat hunting workflow in a single, portable HTML file.
 
-<img width="1914" height="941" alt="image" src="https://github.com/user-attachments/assets/c55e318d-43a9-4e83-9b19-559ee684d768" />
+<img width="1501" height="628" alt="image" src="https://github.com/user-attachments/assets/e5ef20a4-7e0c-49fb-999d-af46d2de3e97" />
+
 
 ---
 
 ## 🚀 Key Features
 
 * **Aggregation:** Real-time monitoring of 39+ CTI sources, including Mandiant, CISA, and Unit 42.
-* **Ransomware Intel:** Dedicated tracking for ransomware victims, active gangs, and targeted sectors.
 * **AI Analysis:** Built-in support for **Ollama** (Local), **Claude**, and **Gemini** to generate executive summaries and IOC extractions.
 * **Threat Hunting:** Direct integration to convert articles into structured hunt tasks with AI auto-fill capabilities.
 * **Privacy First:** Local LLM support and client-side data persistence using IndexedDB.
