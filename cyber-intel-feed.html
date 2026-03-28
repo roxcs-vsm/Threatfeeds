@@ -101,12 +101,84 @@ function getExportStyles(c) {
   @media print {
     @page { size:A4; margin:1.8cm 1.5cm 2cm 1.5cm; }
     @page :first { margin:0; }
-    body { padding:0; max-width:none; }
+    body { padding:0; max-width:none; background:#ffffff !important; color:#1a1e2e !important; }
     .report-content { padding:24px 28px; }
     .no-print { display:none !important; }
     .print-btn-bar { display:none !important; }
-    .report-cover { min-height:100vh; page-break-after:always; break-after:page; }
-    .sources { page-break-before:always; break-before:page; }
+
+    /* Cover page — dark navy on white */
+    .report-cover { min-height:100vh; page-break-after:always; break-after:page; background:#f2f5fa !important; border-bottom:4px solid #1a3a6e !important; }
+    .tlp-bar { background:#1a3a6e !important; color:#ffffff !important; }
+    .tlp-bar.tlp-white { background:#4a5568 !important; color:#ffffff !important; }
+    .cover-tlp-bottom { background:#1a3a6e !important; color:#ffffff !important; }
+    .cover-org { color:#4a5a7a !important; }
+    .cover-type { color:#1a3a6e !important; }
+    .cover-subtitle { color:#3a5080 !important; }
+    .cover-divider { background:#1a3a6e !important; }
+    .cover-meta-label { color:#4a5a7a !important; }
+    .cover-meta-value { color:#1a1e2e !important; }
+    .cover-logo { color:#4a5a7a !important; border-top-color:#c0cce0 !important; }
+
+    /* Report header */
+    .report-header { border-bottom-color:#c0cce0 !important; }
+    .report-header-title { color:#1a3a6e !important; }
+    .report-header-meta { color:#4a5a7a !important; }
+    .tlp-badge { background:#1a3a6e !important; color:#ffffff !important; }
+    .meta { color:#4a5a7a !important; }
+
+    /* Executive summary */
+    .exec-summary-box { background:#f0f4fb !important; border-color:#1a3a6e !important; border-left-color:#1a3a6e !important; }
+    .exec-summary-label { color:#1a3a6e !important; }
+    .exec-summary-text { color:#1a1e2e !important; }
+
+    /* Section headings */
+    h1 { color:#1a3a6e !important; border-bottom-color:#c0cce0 !important; }
+    .dg-chapter { background:linear-gradient(90deg,#e8eef8,#f5f7fc) !important; color:#1a3a6e !important; border-top-color:#c0cce0 !important; }
+    .dg-chapter::before { background:#1a3a6e !important; }
+    .dg-subchapter { color:#1a3a6e !important; border-left-color:#3a6aae !important; }
+
+    /* Threat blocks */
+    .dg-threat-block { background:#f8f9fc !important; border-color:#c0cce0 !important; border-left-color:#3a6aae !important; }
+    .dg-threat-block.sev-critical { border-left-color:#b91c1c !important; }
+    .dg-threat-block.sev-high { border-left-color:#c2570a !important; }
+    .dg-threat-block.sev-medium { border-left-color:#a16207 !important; }
+    .dg-threat-name { color:#1a1e2e !important; border-bottom-color:#c0cce0 !important; }
+    .dg-label { color:#3a6aae !important; }
+    .dg-label-line { color:#1a1e2e !important; border-bottom-color:#e0e6f0 !important; }
+    .dg-p { color:#2a3040 !important; }
+    .dg-li { color:#2a3040 !important; }
+    .dg-li::before { color:#3a6aae !important; }
+    .dg-bold { color:#1a1e2e !important; }
+    .dg-code { color:#1a3a6e !important; background:#eef1f8 !important; }
+
+    /* Priority blocks */
+    .dg-priority-block { background:#f8f9fc !important; border-color:#c0cce0 !important; }
+    .dg-priority-tag.p1 { background:#fef2f2 !important; color:#b91c1c !important; border-color:#fca5a5 !important; }
+    .dg-priority-tag.p2 { background:#fff7ed !important; color:#c2570a !important; border-color:#fdba74 !important; }
+    .dg-priority-tag.p3 { background:#fefce8 !important; color:#a16207 !important; border-color:#fde047 !important; }
+    .dg-priority-text { color:#2a3040 !important; }
+
+    /* Hunt & detection boxes */
+    .dg-hunt-box { background:#f0f6ff !important; border-color:#bfdbfe !important; border-left-color:#2563eb !important; }
+    .dg-detection-box { background:#faf0ff !important; border-color:#e9d5ff !important; border-left-color:#7c3aed !important; }
+    .dg-overview-box { background:#f8f9fc !important; border-color:#c0cce0 !important; border-left-color:#3a6aae !important; color:#2a3040 !important; }
+
+    /* Risk labels */
+    .md-risk-critical { color:#b91c1c !important; }
+    .md-risk-high { color:#c2570a !important; }
+    .md-risk-medium { color:#a16207 !important; }
+
+    /* Sources & footer */
+    .sources { page-break-before:always; break-before:page; border-top-color:#c0cce0 !important; }
+    .sources-title { color:#3a6aae !important; }
+    hr { border-top-color:#c0cce0 !important; }
+    footer { color:#4a5a7a !important; border-top-color:#c0cce0 !important; }
+    a { color:#1a3a6e !important; }
+
+    /* Misc */
+    .dg-section-rule { border-top-color:#e0e6f0 !important; }
+
+    /* Keep page break rules */
     .dg-chapter { page-break-after:avoid; break-after:avoid; }
     .dg-threat-block, .dg-priority-block, .dg-hunt-box, .dg-detection-box { page-break-inside:avoid; break-inside:avoid; }
   }
