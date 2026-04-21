@@ -7194,17 +7194,17 @@ ${hasNarrative ? `<h2>EXECUTIVE NARRATIVE</h2><div class="narrative">${narrative
 }
 
 
-// ── AI TOP 3 PICKER ──────────────────────────────────────────────
-// Sends current feed headlines to AI, asks it to pick 3 most critical
+// ── AI TOP 10 PICKER ──────────────────────────────────────────────
+// Sends articles from the last 7 days to AI, asks it to pick 10 most critical
 // articles from CTI perspective, then auto-adds them to the brief.
-const WEEKLY_TOP3_PROMPT = `You are a senior CTI analyst selecting the three most operationally important articles from a feed for a weekly security debrief.
+const WEEKLY_TOP3_PROMPT = `You are a senior CTI analyst selecting the ten most operationally important articles from the last 7 days for a security debrief.
 
-Given the article list below, select EXACTLY 3 articles that are:
-1. Highest priority for defenders to act on this week
+Given the article list below, select EXACTLY 10 articles that are:
+1. Highest priority for defenders to act on
 2. Most likely to be directly relevant to enterprise blue teams
-3. Represent distinct threat categories (don't pick 3 of the same type)
+3. Represent distinct threat categories (avoid picking multiple articles of the same type)
 
-Respond ONLY with a JSON array of exactly 3 objects. No other text, no markdown, no explanation.
+Respond ONLY with a JSON array of exactly 10 objects. No other text, no markdown, no explanation.
 Format: [{"index": 1, "reason": "one sentence why this is top priority"}, ...]
 
 Index numbers correspond to the numbered list provided.`;
@@ -7216,9 +7216,14 @@ async function wbPickTop3() {
   const btn = document.getElementById('wbTop3Btn');
   if (btn) { btn.disabled = true; btn.textContent = '⬡ PICKING…'; }
 
-  // Use filtered articles if filter active, otherwise top 50 newest
-  const pool = (filteredArticles.length ? filteredArticles : allArticles)
-    .slice(0, 50);
+  // Filter articles from the last 7 days
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const base = filteredArticles.length ? filteredArticles : allArticles;
+  const pool = base
+    .filter(a => new Date(a.date).getTime() >= cutoff)
+    .slice(0, 100);
+
+  if (!pool.length) { toast('No articles from the last 7 days', 'info'); if (btn) { btn.disabled = false; btn.textContent = '⬡ AI TOP 10'; } return; }
 
   const list = pool.map((a, i) => {
     const dateStr = new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
@@ -7249,7 +7254,7 @@ async function wbPickTop3() {
 
     // Add picked articles to brief
     let added = 0;
-    for (const pick of picks.slice(0, 3)) {
+    for (const pick of picks.slice(0, 10)) {
       const idx = parseInt(pick.index) - 1;
       const a = pool[idx];
       if (!a) continue;
@@ -7282,9 +7287,9 @@ async function wbPickTop3() {
       toast('Top articles already in brief', 'info');
     }
   } catch(e) {
-    toast('AI TOP 3 failed: ' + e.message, 'error');
+    toast('AI TOP 10 failed: ' + e.message, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '⬡ AI TOP 3'; }
+    if (btn) { btn.disabled = false; btn.textContent = '⬡ AI TOP 10'; }
   }
 }
 
@@ -7424,7 +7429,7 @@ async function wbInit() {
     <div class="wb-toolbar">
       <span class="wb-toolbar-label">ARTICLES:</span>
       <span class="wb-count-badge" id="wbCount">0</span>
-      <button class="btn" style="padding:3px 10px;font-size:9px;border-color:#ff8800;color:#ff8800" onclick="wbPickTop3()" id="wbTop3Btn" title="Let AI pick the 3 most critical articles from your feed">⬡ AI TOP 3</button>
+      <button class="btn" style="padding:3px 10px;font-size:9px;border-color:#ff8800;color:#ff8800" onclick="wbPickTop3()" id="wbTop3Btn" title="Let AI pick the 10 most critical articles from the last 7 days">⬡ AI TOP 10</button>
 
       <button class="btn" style="padding:3px 10px;font-size:9px" onclick="wbCopyMarkdown()" id="wbCopyBtn">⎘ COPY</button>
       <button class="btn" style="padding:3px 10px;font-size:9px" onclick="wbExportHTML()" id="wbExportBtn">↓ EXPORT</button>
